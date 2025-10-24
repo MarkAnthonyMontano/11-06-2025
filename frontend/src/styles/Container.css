@@ -1,4 +1,4 @@
-.Container{
+.Container {
     transform: scale(0.8);
     margin-top: -7.5%;
     background-color: white;
@@ -7,13 +7,17 @@
     width: 100%;
     border-radius: 10px;
     box-shadow: 1px 1px 10px 1px rgba(0, 0, 0, 0.1);
+    border: 5px solid white;          /* white outline around whole box */
+    overflow: hidden;                 /* para walang gap sa header */
 }
 
-.Header{
+.Header {
     padding: 20px;
     background-color: #6D2323;
-    border-radius: 10px 10px 0px 0px;
+    border-radius: 5px 5px 0 0;
+    margin: -5px -5px 0 -5px;         /* connects header to white border flush */
 }
+
 
 .HeaderTitle{
     width: 100%;
@@ -58,9 +62,10 @@
     margin-top: -1px;
 }
 
-.Body{
-    padding: 30px 28px;
+.Body {
+    padding: 30px 28px 0 28px; /* remove bottom padding */
 }
+
 
 .TextField{
     display: flex;
@@ -134,14 +139,22 @@
     text-underline-offset: 8px;
 }
 
-.Footer{
+.Footer {
     padding: 18px 0;
-    margin-top: -33px;
+    margin: 0; /* reset all margins */
     text-align: center;
     font-size: 15px;
     color: rgba(0, 0, 0, 0.6);
     background-color: rgba(243, 219, 173, 0.531);
+
+    /* Make it sagad sa border like Header */
+    margin-left: -33px;  /* same as Body padding (30px + border space) */
+    margin-right: -33px;
+    margin-bottom: -5px;
+    border-radius: 0 0 10px 10px;
 }
+
+
 
 .Checkbox{
     display: flex;

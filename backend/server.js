@@ -1443,58 +1443,48 @@ app.put("/api/interview_applicants/:applicant_id/status", async (req, res) => {
 });
 
 // ✅ UPDATE Remarks ONLY (no notification, no io.emit, no evaluator lookup)
+// ✅ Update remarks only
 app.put("/uploads/remarks/:upload_id", async (req, res) => {
   const { upload_id } = req.params;
-  const { status, remarks, document_status, user_id } = req.body;
+  const { remarks, user_id } = req.body;
 
   try {
     await db.query(
       `UPDATE requirement_uploads 
-       SET status = ?, remarks = ?, document_status = ?, last_updated_by = ?
+       SET remarks = ?, last_updated_by = ?
        WHERE upload_id = ?`,
-      [status, remarks || null, document_status || null, user_id, upload_id]
+      [remarks || null, user_id, upload_id]
     );
 
-    res.json({ message: "Document status updated successfully." });
+    res.json({ message: "Remarks updated successfully." });
   } catch (err) {
-    console.error("Error updating document status:", err);
+    console.error("Error updating remarks:", err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+// ✅ Update status only
+app.put("/uploads/status/:upload_id", async (req, res) => {
+  const { upload_id } = req.params;
+  const { status, user_id } = req.body;
+
+  try {
+    await db.query(
+      `UPDATE requirement_uploads 
+       SET status = ?, last_updated_by = ?
+       WHERE upload_id = ?`,
+      [status, user_id, upload_id]
+    );
+
+    res.json({ message: "Status updated successfully." });
+  } catch (err) {
+    console.error("Error updating status:", err);
     res.status(500).json({ message: "Internal Server Error" });
   }
 });
 
 
 
-app.put("/uploads/remarks/:id", async (req, res) => {
-  const { id } = req.params;
-  const { remarks, status, user_id } = req.body;
-
-  if (!id) return res.status(400).json({ message: "Missing upload ID" });
-  if (!user_id) return res.status(400).json({ message: "Missing user_id" });
-
-  try {
-    // 🛡 Preserve document_status
-    const [[existing]] = await db.query(
-      "SELECT document_status FROM requirement_uploads WHERE upload_id = ?",
-      [id]
-    );
-
-    if (!existing) {
-      return res.status(404).json({ message: "Upload not found" });
-    }
-
-    await db.execute(
-      `UPDATE requirement_uploads 
-       SET remarks = ?, status = ?, user_id = ?, document_status = ? 
-       WHERE upload_id = ?`,
-      [remarks || null, status || 0, user_id, existing.document_status, id]
-    );
-
-    res.json({ message: "Per-document status updated — overall document_status preserved ✅" });
-  } catch (error) {
-    console.error("❌ Error updating remarks:", error);
-    res.status(500).json({ message: "Server error" });
-  }
-});
 
 // ✅ Update registrar_status and remarks for ALL docs of the applicant
 app.put("/api/registrar-status/:person_id", async (req, res) => {

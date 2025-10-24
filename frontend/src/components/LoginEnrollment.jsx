@@ -15,11 +15,13 @@ import {
   Lock as LockIcon,
   Visibility,
   VisibilityOff,
+  Person as PersonIcon,
+  ArrowDropDown as ArrowDropDownIcon,
 } from "@mui/icons-material";
 import "../styles/Container.css";
 import CloseIcon from "@mui/icons-material/Close";
 import Logo from "../assets/Logo.png";
-import { SettingsContext } from "../App"; // ✅ Global bg_image & logo
+import { SettingsContext } from "../App";
 
 const LoginEnrollment = ({ setIsAuthenticated }) => {
   const settings = useContext(SettingsContext);
@@ -35,18 +37,17 @@ const LoginEnrollment = ({ setIsAuthenticated }) => {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [lockout, setLockout] = useState(false);
   const [lockoutTimer, setLockoutTimer] = useState(0);
-  const [currentYear, setCurrentYear] = useState(""); // ✅ Dynamic year
+  const [currentYear, setCurrentYear] = useState("");
+  const [loginType, setLoginType] = useState("user"); // ✅ Added for dropdown
   const navigate = useNavigate();
   const otpInputRef = useRef(null);
 
-  // ✅ Get current year in Manila timezone
   useEffect(() => {
     const now = new Date().toLocaleString("en-US", { timeZone: "Asia/Manila" });
     const year = new Date(now).getFullYear();
     setCurrentYear(year);
   }, []);
 
-  // ✅ Dynamic assets
   const backgroundImage = settings?.bg_image
     ? `url(http://localhost:5000${settings.bg_image})`
     : "linear-gradient(to right, #f5f5f5, #fafafa)";
@@ -54,7 +55,6 @@ const LoginEnrollment = ({ setIsAuthenticated }) => {
     ? `http://localhost:5000${settings.logo_url}`
     : Logo;
 
-  // ---------------- HANDLE LOGIN ----------------
   const handleLogin = async () => {
     if (isLoggingIn || lockoutTimer > 0) return;
     setIsLoggingIn(true);
@@ -70,8 +70,26 @@ const LoginEnrollment = ({ setIsAuthenticated }) => {
     }
 
     try {
-      const res = await axios.post("http://localhost:5000/login", { email, password });
+      const apiUrl =
+        loginType === "applicant"
+          ? "http://localhost:5000/login_applicant"
+          : "http://localhost:5000/login";
+
+      const res = await axios.post(apiUrl, { email, password });
       setTempLoginData(res.data);
+
+      if (loginType === "applicant") {
+        // Applicant direct login (no OTP)
+        localStorage.setItem("token", res.data.token);
+        localStorage.setItem("email", res.data.email);
+        localStorage.setItem("role", res.data.role);
+        localStorage.setItem("person_id", res.data.person_id);
+        setIsAuthenticated(true);
+        navigate("/applicant_dashboard");
+        return;
+      }
+
+      // User OTP login
       setShowOtpModal(true);
       startResendTimer();
       setSnack({
@@ -81,46 +99,12 @@ const LoginEnrollment = ({ setIsAuthenticated }) => {
       });
     } catch (error) {
       const msg = error.response?.data?.message || "Login failed";
-      const remaining = error.response?.data?.remaining;
-
-      if (error.response?.status === 400 && remaining !== undefined) {
-        setSnack({
-          open: true,
-          message: msg,
-          severity: "warning",
-        });
-      } else if (error.response?.status === 429) {
-        setSnack({
-          open: true,
-          message: msg,
-          severity: "error",
-        });
-        const seconds = parseInt(msg.match(/\d+/)?.[0] || 180, 10);
-        setLockout(true);
-        setLockoutTimer(seconds);
-        const interval = setInterval(() => {
-          setLockoutTimer((prev) => {
-            if (prev <= 1) {
-              clearInterval(interval);
-              setLockout(false);
-              return 0;
-            }
-            return prev - 1;
-          });
-        }, 1000);
-      } else {
-        setSnack({
-          open: true,
-          message: msg,
-          severity: "error",
-        });
-      }
+      setSnack({ open: true, message: msg, severity: "error" });
     } finally {
       setIsLoggingIn(false);
     }
   };
 
-  // ---------------- VERIFY OTP ----------------
   const verifyOtp = async () => {
     try {
       const res = await axios.post("http://localhost:5000/verify-otp", {
@@ -246,6 +230,58 @@ const LoginEnrollment = ({ setIsAuthenticated }) => {
             </div>
 
             <div className="Body">
+              {/* ✅ Login Type Dropdown (copied from Login.jsx) */}
+              <div className="TextField" style={{ position: "relative" }}>
+                <label htmlFor="loginType">Login As</label>
+                <select
+                  id="loginType"
+                  name="loginType"
+                  value={loginType}
+                  onChange={(e) => {
+                    setLoginType(e.target.value);
+                    if (e.target.value === "applicant") {
+                      navigate("/login_applicant");
+                    } else {
+                      navigate("/login_enrollment");
+                    }
+                  }}
+                  style={{
+                    width: "100%",
+                    padding: "0.8rem 2.5rem 0.8rem 2.5rem",
+                    borderRadius: "6px",
+                   border: "1px solid rgba(120, 90, 60, 0.5)", // warm brown-gray
+
+                    fontSize: "1rem",
+                    backgroundColor: "white",
+                    outline: "none",
+                    appearance: "none",
+                    WebkitAppearance: "none",
+                    MozAppearance: "none",
+                    cursor: "pointer",
+                  }}
+                >
+                  <option value="user">Student / Faculty / Registrar</option>
+                  <option value="applicant">Applicant</option>
+                </select>
+                <PersonIcon
+                  style={{
+                    position: "absolute",
+                    top: "2.5rem",
+                    left: "0.7rem",
+                    color: "rgba(0,0,0,0.4)",
+                  }}
+                />
+                <ArrowDropDownIcon
+                  style={{
+                    position: "absolute",
+                    top: "2.5rem",
+                    right: "0.7rem",
+                    color: "rgba(0,0,0,0.4)",
+                    pointerEvents: "none",
+                  }}
+                />
+              </div>
+
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -354,10 +390,10 @@ const LoginEnrollment = ({ setIsAuthenticated }) => {
               </div>
             </div>
 
-            {/* ✅ Footer with Manila-based dynamic year */}
             <div className="Footer">
               <div className="FooterText">
-                &copy; {currentYear} {settings?.company_name || "EARIST"} Student Information System. All rights reserved.
+                &copy; {currentYear} {settings?.company_name || "EARIST"} Student Information
+                System. All rights reserved.
               </div>
             </div>
           </div>

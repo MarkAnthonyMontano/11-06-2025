@@ -466,35 +466,30 @@ const StudentRequirements = () => {
     }
   };
 
-  const handleStatusChange = async (uploadId, remarkValue) => {
-    const remarks = remarksMap[uploadId] || "";
+ const handleStatusChange = async (uploadId, remarkValue) => {
+  try {
+    await axios.put(`http://localhost:5000/uploads/status/${uploadId}`, {
+      status: remarkValue,
+      user_id: userID,
+    });
 
-    try {
-      await axios.put(`http://localhost:5000/uploads/remarks/${uploadId}`, {
-        status: remarkValue,
-        remarks,
-        user_id: userID,
-      });
+    // ✅ Optimistic update for UI
+    setUploads((prev) =>
+      prev.map((u) =>
+        u.upload_id === uploadId
+          ? { ...u, status: parseInt(remarkValue, 10) }
+          : u
+      )
+    );
 
-      // ✅ Optimistically update uploads state
-      setUploads((prev) =>
-        prev.map((u) =>
-          u.upload_id === uploadId
-            ? { ...u, status: parseInt(remarkValue, 10), remarks }
-            : u
-        )
-      );
-
-      setEditingRemarkId(null);
-
-      // still fetch to keep in sync with backend
-      if (selectedPerson?.applicant_number) {
-        fetchUploadsByApplicantNumber(selectedPerson.applicant_number);
-      }
-    } catch (err) {
-      console.error("Error updating Status:", err);
+    // ✅ Refresh from backend to ensure sync
+    if (selectedPerson?.applicant_number) {
+      await fetchUploadsByApplicantNumber(selectedPerson.applicant_number);
     }
-  };
+  } catch (err) {
+    console.error("Error updating Status:", err);
+  }
+};
 
   const handleDocumentStatus = async (event) => {
     const newStatus = event.target.value;

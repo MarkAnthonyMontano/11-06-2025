@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 22, 2025 at 03:39 PM
+-- Generation Time: Oct 24, 2025 at 04:42 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -74,7 +74,7 @@ CREATE TABLE `course_table` (
 --
 
 INSERT INTO `course_table` (`course_id`, `course_code`, `course_description`, `course_unit`, `lab_unit`) VALUES
-(1, 'GEREADPH', 'Readings in Philippine History', 3, 0),
+(1, 'GEREADPH', 'Readings in Philippine History', 5, 0),
 (2, 'GEUNDETS', 'Understanding the Self', 3, 0),
 (3, 'GEARTAPP', 'Art Appreciation', 3, 0),
 (4, 'GEPURPCO', 'Purposive Communication', 3, 0),
@@ -1586,7 +1586,7 @@ INSERT INTO `prof_table` (`prof_id`, `person_id`, `profile_image`, `fname`, `mna
 (35, 35, '', 'Maria Jasmine', NULL, 'Macasil', 'jasmine.macasil@earist.edu.ph', 'MACASIL', 0, 'faculty'),
 (36, 36, '', 'Jefferson', NULL, 'Costales', 'jefferson.costales@earist.edu.ph', 'COSTALES', 0, 'faculty'),
 (37, 37, '', 'Arjo', NULL, 'Ladia', 'arjo.ladia@earist.edu.ph', 'LADIA', 0, 'faculty'),
-(38, 38, '06262003_ProfessorProfile_2025.jpg', 'Mark Anthony', 'Placido', 'Montano', 'markmontano999@gmail.com', '$2b$10$1z0TPyKFo6qtCrVAaA1D4e3qANATLI.pyTLqZinmmT8sF2zMALkDu', 1, 'faculty'),
+(38, 38, '06262003_ProfessorProfile_2025.jpg', 'Mark Anthony', 'Placido', 'Montano', 'markmontano999@gmail.com', '$2b$10$eUcFSQXtFxPNdj7vR/UVCu0Of0Y/CszW7zxQnmKj2x0.akxOQJIZi', 1, 'faculty'),
 (63, 98, '98_ProfessorProfile_2025.png', 'Dhani', 'San', 'Jose', 'disanjose@earist.edu.ph', '$2b$10$/XhdvzV/4rugRbZH5gWafenpXBkbuJT2pjsopS85Mj27vDI2ZjFxm', 1, 'faculty');
 
 -- --------------------------------------------------------
@@ -1607,7 +1607,7 @@ CREATE TABLE `program_table` (
 --
 
 INSERT INTO `program_table` (`program_id`, `program_description`, `program_code`, `major`) VALUES
-(1, 'Bachelor of Science in Architecture', 'BS ARCHI', NULL),
+(1, 'Bachelor of Science in Architecture', 'BS ARCHIS', NULL),
 (2, 'Bachelor of Science in Interior Design', 'BSID', NULL),
 (3, 'Bachelor in Fine Arts Major in Painting', 'BFA-PAINT', 'Painting'),
 (4, 'Bachelor in Fine Arts Major in Visual Communication', 'BFA-VISCOM', 'Visual Communication'),
@@ -1904,10 +1904,10 @@ INSERT INTO `room_table` (`room_id`, `room_description`, `building_description`)
 (18, 'CAS Room 406', NULL),
 (19, 'CAS Room 409', NULL),
 (20, 'CAS Room 411', NULL),
-(21, 'CAFA', NULL),
+(21, 'CAFA', 'NUDAS HALL'),
 (22, 'MIS', NULL),
 (23, 'MIS101', NULL),
-(24, '123 Mabini St.', NULL),
+(24, '123 Mabini St.', 'Pureza'),
 (25, 'CCS Room 202', 'NUDAS HALL'),
 (26, 'Cas Room 203', 'NUDAS HALL Building'),
 (27, 'CSS 202', 'MIS Building'),
@@ -2351,7 +2351,7 @@ CREATE TABLE `user_accounts` (
 --
 
 INSERT INTO `user_accounts` (`id`, `person_id`, `employee_id`, `profile_picture`, `role`, `last_name`, `middle_name`, `first_name`, `email`, `password`, `status`, `dprtmnt_id`) VALUES
-(1, 1, NULL, NULL, 'student', NULL, NULL, NULL, 'markmontao2671@gmail.com', '$2b$10$1z0TPyKFo6qtCrVAaA1D4e3qANATLI.pyTLqZinmmT8sF2zMALkDu', 1, NULL),
+(1, 1, NULL, NULL, 'student', NULL, NULL, NULL, 'markmontao2671@gmail.com', '$2b$10$eUcFSQXtFxPNdj7vR/UVCu0Of0Y/CszW7zxQnmKj2x0.akxOQJIZi', 1, NULL),
 (2, 4, NULL, NULL, 'student', NULL, NULL, NULL, 'markmontano0626@gmail.com', '$2b$10$1z0TPyKFo6qtCrVAaA1D4e3qANATLI.pyTLqZinmmT8sF2zMALkDu', 1, NULL),
 (12, 13, NULL, NULL, 'student', NULL, NULL, NULL, 'benjamin.anderson13@example.com', '$2b$10$QEsrP1R1oVa.eZiqlZRgoeFaaIJSX2ZuR9DhZvArwINLs3mR2a/cm', 0, NULL),
 (13, 14, NULL, NULL, 'student', NULL, NULL, NULL, 'ava.thomas14@example.com', '$2b$10$Bqh2HDkbbs0PabLc1ycQpOYj4RBqeb4rR7b/Iu8B5b3mM7cAFPY8W', 0, NULL),

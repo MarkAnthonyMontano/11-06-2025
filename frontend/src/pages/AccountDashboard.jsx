@@ -43,7 +43,7 @@ const AccountDashboard = () => {
       icon: <Info className="text-maroon-500 text-2xl" />,
     },
     {
-      label: "STUDENT INFO UPDATE FORM",
+      label: "DEPARTMENT SECTION PANEL",
       icon: <AssignmentInd className="text-maroon-500 text-2xl" />,
       path: "/department_section_panel",
     },

@@ -12,10 +12,12 @@ import {
   Lock as LockIcon,
   Visibility,
   VisibilityOff,
+  Person as PersonIcon,
+  ArrowDropDown as ArrowDropDownIcon,
 } from "@mui/icons-material";
 import "../styles/Container.css";
 import Logo from "../assets/Logo.png";
-import { SettingsContext } from "../App"; // ✅ Global settings
+import { SettingsContext } from "../App";
 
 const Login = ({ setIsAuthenticated }) => {
   const settings = useContext(SettingsContext);
@@ -23,14 +25,13 @@ const Login = ({ setIsAuthenticated }) => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [snack, setSnack] = useState({ open: false, message: "", severity: "info" });
-  const [currentYear, setCurrentYear] = useState(""); // ✅ Dynamic year (Manila)
+  const [currentYear, setCurrentYear] = useState("");
+  const [loginType, setLoginType] = useState("applicant");
   const navigate = useNavigate();
 
-  // ✅ Get year in Asia/Manila timezone
   useEffect(() => {
     const now = new Date().toLocaleString("en-US", { timeZone: "Asia/Manila" });
-    const year = new Date(now).getFullYear();
-    setCurrentYear(year);
+    setCurrentYear(new Date(now).getFullYear());
   }, []);
 
   const handleLogin = async () => {
@@ -40,8 +41,13 @@ const Login = ({ setIsAuthenticated }) => {
     }
 
     try {
+      const apiUrl =
+        loginType === "applicant"
+          ? "http://localhost:5000/login_applicant"
+          : "http://localhost:5000/login";
+
       const response = await axios.post(
-        "http://localhost:5000/login_applicant",
+        apiUrl,
         { email, password },
         { headers: { "Content-Type": "application/json" } }
       );
@@ -53,7 +59,12 @@ const Login = ({ setIsAuthenticated }) => {
 
       setIsAuthenticated(true);
       setSnack({ open: true, message: "Login Successfully", severity: "success" });
-      navigate("/applicant_dashboard");
+
+      if (loginType === "applicant") {
+        navigate("/applicant_dashboard");
+      } else {
+        navigate("/dashboard");
+      }
     } catch (error) {
       setSnack({
         open: true,
@@ -68,30 +79,21 @@ const Login = ({ setIsAuthenticated }) => {
     setSnack((prev) => ({ ...prev, open: false }));
   };
 
-  // 🔒 Security: Disable right-click + DevTools shortcuts
+  // Disable right-click & dev tools
   document.addEventListener("contextmenu", (e) => e.preventDefault());
   document.addEventListener("keydown", (e) => {
-    const isBlockedKey =
+    const blocked =
       e.key === "F12" ||
       e.key === "F11" ||
-      (e.ctrlKey &&
-        e.shiftKey &&
-        (e.key.toLowerCase() === "i" || e.key.toLowerCase() === "j")) ||
-      (e.ctrlKey && e.key.toLowerCase() === "u") ||
-      (e.ctrlKey && e.key.toLowerCase() === "p");
-
-    if (isBlockedKey) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
+      (e.ctrlKey && e.shiftKey && ["i", "j"].includes(e.key.toLowerCase())) ||
+      (e.ctrlKey && ["u", "p"].includes(e.key.toLowerCase()));
+    if (blocked) e.preventDefault();
   });
 
-  // ✅ Dynamic background
   const backgroundImage = settings?.bg_image
     ? `url(http://localhost:5000${settings.bg_image})`
     : "url(/default-bg.jpg)";
 
-  // ✅ Dynamic logo
   const logoSrc = settings?.logo_url
     ? `http://localhost:5000${settings.logo_url}`
     : Logo;
@@ -116,6 +118,7 @@ const Login = ({ setIsAuthenticated }) => {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            flexDirection: "column",
           }}
           maxWidth={false}
         >
@@ -135,6 +138,63 @@ const Login = ({ setIsAuthenticated }) => {
 
             {/* Body */}
             <div className="Body">
+              {/* Login Type Dropdown */}
+              <div className="TextField" style={{ position: "relative" }}>
+                <label htmlFor="loginType">Login As</label>
+                <select
+                  id="loginType"
+                  name="loginType"
+                  value={loginType}
+                  onChange={(e) => {
+                    setLoginType(e.target.value);
+                    if (e.target.value === "applicant") {
+                      navigate("/login_applicant");
+                    } else {
+                      navigate("/login");
+                    }
+                  }}
+                  style={{
+                    width: "100%",
+                    padding: "0.8rem 2.5rem 0.8rem 2.5rem",
+                    borderRadius: "6px",
+                  border: "1px solid rgba(120, 90, 60, 0.5)", // warm brown-gray
+
+                    fontSize: "1rem",
+                    backgroundColor: "white",
+                    outline: "none",
+                    appearance: "none",
+                    WebkitAppearance: "none",
+                    MozAppearance: "none",
+                    cursor: "pointer",
+                  }}
+                >
+                  <option value="user">Student / Faculty / Registrar</option>
+                  <option value="applicant">Applicant</option>
+                </select>
+
+                {/* Left Icon */}
+                <PersonIcon
+                  style={{
+                    position: "absolute",
+                    top: "2.5rem",
+                    left: "0.7rem",
+                    color: "rgba(0,0,0,0.4)",
+                  }}
+                />
+
+                {/* Dropdown Arrow Indicator */}
+                <ArrowDropDownIcon
+                  style={{
+                    position: "absolute",
+                    top: "2.5rem",
+                    right: "0.7rem",
+                    color: "rgba(0,0,0,0.4)",
+                    pointerEvents: "none",
+                  }}
+                />
+              </div>
+
+              {/* Email Field */}
               <div className="TextField" style={{ position: "relative" }}>
                 <label htmlFor="email">Email Address</label>
                 <input
@@ -158,6 +218,7 @@ const Login = ({ setIsAuthenticated }) => {
                 />
               </div>
 
+              {/* Password Field */}
               <div className="TextField" style={{ position: "relative" }}>
                 <label htmlFor="password">Password</label>
                 <input
@@ -197,16 +258,19 @@ const Login = ({ setIsAuthenticated }) => {
                 </button>
               </div>
 
+              {/* Login Button */}
               <div className="Button" onClick={handleLogin}>
                 <span>Log In</span>
               </div>
 
+              {/* Forgot Password */}
               <div className="LinkContainer">
                 <span>
                   <Link to="/applicant_forgot_password">Forgot your password</Link>
                 </span>
               </div>
 
+              {/* Register Link */}
               <div
                 className="LinkContainer RegistrationLink"
                 style={{ margin: "0.1rem 0rem" }}
@@ -216,19 +280,19 @@ const Login = ({ setIsAuthenticated }) => {
                   <Link to={"/register"}>Register Here</Link>
                 </span>
               </div>
-            </div>
 
-            {/* Footer with Manila Year */}
-            <div className="Footer">
-              <div className="FooterText">
-                &copy; {currentYear}{" "}
-                {settings?.company_name || "EARIST"} Student Information System. All rights reserved.
+              {/* Footer */}
+              <div className="Footer">
+                <div className="FooterText">
+                  &copy; {currentYear} {settings?.company_name || "EARIST"} Student Information
+                  System. All rights reserved.
+                </div>
               </div>
             </div>
           </div>
         </Container>
 
-        {/* Snackbar Notification */}
+        {/* Snackbar */}
         <Snackbar
           open={snack.open}
           autoHideDuration={4000}

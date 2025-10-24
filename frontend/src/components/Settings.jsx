@@ -121,7 +121,7 @@ function Settings({ onUpdate }) {
                 sx={{
                     p: 3,
                     width: "50%",
-                    maxWidth: "800px",
+                    maxWidth: "600px",
                     borderRadius: 4,
                     backgroundColor: "#fff",
                     border: "2px solid maroon",
