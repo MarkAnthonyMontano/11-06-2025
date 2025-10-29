@@ -79,7 +79,7 @@ const Login = ({ setIsAuthenticated }) => {
     setSnack((prev) => ({ ...prev, open: false }));
   };
 
-  // Disable right-click & dev tools
+  // Prevent dev tools
   document.addEventListener("contextmenu", (e) => e.preventDefault());
   document.addEventListener("keydown", (e) => {
     const blocked =
@@ -92,219 +92,212 @@ const Login = ({ setIsAuthenticated }) => {
 
   const backgroundImage = settings?.bg_image
     ? `url(http://localhost:5000${settings.bg_image})`
-    : "url(/default-bg.jpg)";
-
+    : "linear-gradient(to right, #f5f5f5, #fafafa)";
   const logoSrc = settings?.logo_url
     ? `http://localhost:5000${settings.logo_url}`
     : Logo;
 
   return (
-    <>
-      <Box
-        sx={{
-          backgroundImage,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-          width: "100%",
-          minHeight: "100vh",
+    <Box
+      sx={{
+        backgroundImage,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        width: "100%",
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <Container
+        style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
         }}
+        maxWidth={false}
       >
-        <Container
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexDirection: "column",
-          }}
-          maxWidth={false}
-        >
-          <div style={{ border: "5px solid white" }} className="Container">
-            {/* Header */}
-            <div className="Header">
-              <div className="HeaderTitle">
-                <div className="CircleCon">
-                  <img src={logoSrc} alt="Logo" />
-                </div>
-              </div>
-              <div className="HeaderBody">
-                <strong>{settings?.company_name || "EARIST"}</strong>
-                <p>Student Information System</p>
+        <div style={{ border: "5px solid white !important" }} className="Container">
+
+          {/* ✅ Header (same as LoginEnrollment) */}
+          <div className="Header">
+            <div className="HeaderTitle">
+              <div className="CircleCon">
+                <img src={logoSrc} alt="Logo" />
               </div>
             </div>
-
-            {/* Body */}
-            <div className="Body">
-              {/* Login Type Dropdown */}
-              <div className="TextField" style={{ position: "relative" }}>
-                <label htmlFor="loginType">Login As</label>
-                <select
-                  id="loginType"
-                  name="loginType"
-                  value={loginType}
-                  onChange={(e) => {
-                    setLoginType(e.target.value);
-                    if (e.target.value === "applicant") {
-                      navigate("/login_applicant");
-                    } else {
-                      navigate("/login");
-                    }
-                  }}
-                  style={{
-                    width: "100%",
-                    padding: "0.8rem 2.5rem 0.8rem 2.5rem",
-                    borderRadius: "6px",
-                  border: "1px solid rgba(120, 90, 60, 0.5)", // warm brown-gray
-
-                    fontSize: "1rem",
-                    backgroundColor: "white",
-                    outline: "none",
-                    appearance: "none",
-                    WebkitAppearance: "none",
-                    MozAppearance: "none",
-                    cursor: "pointer",
-                  }}
-                >
-                  <option value="user">Student / Faculty / Registrar</option>
-                  <option value="applicant">Applicant</option>
-                </select>
-
-                {/* Left Icon */}
-                <PersonIcon
-                  style={{
-                    position: "absolute",
-                    top: "2.5rem",
-                    left: "0.7rem",
-                    color: "rgba(0,0,0,0.4)",
-                  }}
-                />
-
-                {/* Dropdown Arrow Indicator */}
-                <ArrowDropDownIcon
-                  style={{
-                    position: "absolute",
-                    top: "2.5rem",
-                    right: "0.7rem",
-                    color: "rgba(0,0,0,0.4)",
-                    pointerEvents: "none",
-                  }}
-                />
-              </div>
-
-              {/* Email Field */}
-              <div className="TextField" style={{ position: "relative" }}>
-                <label htmlFor="email">Email Address</label>
-                <input
-                  type="text"
-                  id="email"
-                  name="email"
-                  placeholder="Enter your email address"
-                  className="border"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-                  style={{ paddingLeft: "2.5rem" }}
-                />
-                <EmailIcon
-                  style={{
-                    position: "absolute",
-                    top: "2.5rem",
-                    left: "0.7rem",
-                    color: "rgba(0,0,0,0.4)",
-                  }}
-                />
-              </div>
-
-              {/* Password Field */}
-              <div className="TextField" style={{ position: "relative" }}>
-                <label htmlFor="password">Password</label>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  id="password"
-                  name="password"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-                  className="border"
-                  style={{ paddingLeft: "2.5rem" }}
-                />
-                <LockIcon
-                  style={{
-                    position: "absolute",
-                    top: "2.5rem",
-                    left: "0.7rem",
-                    color: "rgba(0,0,0,0.4)",
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  style={{
-                    color: "rgba(0,0,0,0.3)",
-                    outline: "none",
-                    position: "absolute",
-                    top: "2.5rem",
-                    right: "1rem",
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                  }}
-                >
-                  {showPassword ? <Visibility /> : <VisibilityOff />}
-                </button>
-              </div>
-
-              {/* Login Button */}
-              <div className="Button" onClick={handleLogin}>
-                <span>Log In</span>
-              </div>
-
-              {/* Forgot Password */}
-              <div className="LinkContainer">
-                <span>
-                  <Link to="/applicant_forgot_password">Forgot your password</Link>
-                </span>
-              </div>
-
-              {/* Register Link */}
-              <div
-                className="LinkContainer RegistrationLink"
-                style={{ margin: "0.1rem 0rem" }}
-              >
-                <p>Doesn't Have an Account?</p>
-                <span>
-                  <Link to={"/register"}>Register Here</Link>
-                </span>
-              </div>
-
-              {/* Footer */}
-              <div className="Footer">
-                <div className="FooterText">
-                  &copy; {currentYear} {settings?.company_name || "EARIST"} Student Information
-                  System. All rights reserved.
-                </div>
-              </div>
+            <div className="HeaderBody">
+              <strong>{settings?.company_name || "EARIST"}</strong>
+              <p>Student Information System</p>
             </div>
           </div>
-        </Container>
 
-        {/* Snackbar */}
-        <Snackbar
-          open={snack.open}
-          autoHideDuration={4000}
-          onClose={handleClose}
-          anchorOrigin={{ vertical: "top", horizontal: "center" }}
-        >
-          <Alert severity={snack.severity} onClose={handleClose} sx={{ width: "100%" }}>
-            {snack.message}
-          </Alert>
-        </Snackbar>
-      </Box>
-    </>
+          {/* ✅ Body (same layout as LoginEnrollment) */}
+          <div className="Body">
+            <div className="TextField" style={{ position: "relative" }}>
+              <label htmlFor="loginType">Login As</label>
+              <select
+                id="loginType"
+                name="loginType"
+                value={loginType}
+                onChange={(e) => {
+                  setLoginType(e.target.value);
+                  if (e.target.value === "applicant") {
+                    navigate("/login_applicant");
+                  } else {
+                    navigate("/login");
+                  }
+                }}
+                style={{
+                  width: "100%",
+                  padding: "0.8rem 2.5rem 0.8rem 2.5rem",
+                  borderRadius: "6px",
+                  border: "2px solid maroon",
+                  fontSize: "1rem",
+                  backgroundColor: "white",
+                  outline: "none",
+                  appearance: "none",
+                  WebkitAppearance: "none",
+                  MozAppearance: "none",
+                  cursor: "pointer",
+                  
+                }}
+              >
+                <option value="user">Student / Faculty / Registrar</option>
+                <option value="applicant">Applicant</option>
+              </select>
+
+              <PersonIcon
+                style={{
+                  position: "absolute",
+                  top: "2.5rem",
+                  left: "0.7rem",
+                  color: "rgba(0,0,0,0.4)",
+                }}
+              />
+              <ArrowDropDownIcon
+                style={{
+                  position: "absolute",
+                  top: "2.5rem",
+                  right: "0.7rem",
+                  color: "rgba(0,0,0,0.4)",
+                  pointerEvents: "none",
+                }}
+              />
+            </div>
+
+            {/* Email */}
+            <div className="TextField" style={{ position: "relative" }}>
+              <label htmlFor="email">Email Address</label>
+              <input
+                type="text"
+                id="email"
+                name="email"
+                placeholder="Enter your email address"
+                className="border"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+                style={{ paddingLeft: "2.5rem", border: "2px solid maroon" }}
+              />
+              <EmailIcon
+                style={{
+                  position: "absolute",
+                  top: "2.5rem",
+                  left: "0.7rem",
+                  color: "rgba(0,0,0,0.4)",
+                }}
+              />
+            </div>
+
+            {/* Password */}
+            <div className="TextField" style={{ position: "relative" }}>
+              <label htmlFor="password">Password</label>
+              <input
+                type={showPassword ? "text" : "password"}
+                id="password"
+                name="password"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+                className="border"
+                style={{ paddingLeft: "2.5rem", border: "2px solid maroon" }}
+              />
+              <LockIcon
+                style={{
+                  position: "absolute",
+                  top: "2.5rem",
+                  left: "0.7rem",
+                  color: "rgba(0,0,0,0.4)",
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  color: "rgba(0,0,0,0.3)",
+                  outline: "none",
+                  position: "absolute",
+                  top: "2.5rem",
+                  right: "1rem",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                }}
+              >
+                {showPassword ? <Visibility /> : <VisibilityOff />}
+              </button>
+            </div>
+
+            {/* Login Button */}
+            <div className="Button" onClick={handleLogin}>
+              <span>Log In</span>
+            </div>
+
+            {/* Forgot Password */}
+            <div className="LinkContainer">
+              <span>
+                <Link to="/applicant_forgot_password">Forgot your password</Link>
+              </span>
+            </div>
+
+            {/* Register Link */}
+            <div
+              className="LinkContainer RegistrationLink"
+              style={{ margin: "0.1rem 0rem" }}
+            >
+              <p>Doesn't Have an Account?</p>
+              <span>
+                <Link to={"/register"}>Register Here</Link>
+              </span>
+            </div>
+          </div>
+
+          {/* ✅ Footer (aligned properly) */}
+          <div className="Footer">
+            <div className="FooterText">
+              &copy; {currentYear} {settings?.company_name || "EARIST"} Student Information
+              System. All rights reserved.
+            </div>
+          </div>
+        </div>
+      </Container>
+
+      {/* Snackbar */}
+      <Snackbar
+        open={snack.open}
+        autoHideDuration={4000}
+        onClose={handleClose}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert severity={snack.severity} onClose={handleClose} sx={{ width: "100%" }}>
+          {snack.message}
+        </Alert>
+      </Snackbar>
+    </Box>
   );
 };
 

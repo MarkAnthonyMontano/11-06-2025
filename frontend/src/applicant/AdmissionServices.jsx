@@ -212,6 +212,25 @@ const AdmissionServices = () => {
 
 
 
+    // 🔒 Disable right-click
+    document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+    // 🔒 Block DevTools shortcuts + Ctrl+P silently
+    document.addEventListener('keydown', (e) => {
+        const isBlockedKey =
+            e.key === 'F12' || // DevTools
+            e.key === 'F11' || // Fullscreen
+            (e.ctrlKey && e.shiftKey && (e.key.toLowerCase() === 'i' || e.key.toLowerCase() === 'j')) || // Ctrl+Shift+I/J
+            (e.ctrlKey && e.key.toLowerCase() === 'u') || // Ctrl+U (View Source)
+            (e.ctrlKey && e.key.toLowerCase() === 'p');   // Ctrl+P (Print)
+
+        if (isBlockedKey) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+    });
+
+
 
 
     return (
@@ -249,7 +268,7 @@ const AdmissionServices = () => {
 
             <Container className="mt-8">
 
-                <div ref={divToPrintRef}>
+                <div ref={divToPrintRef} style={{ marginBottom: "10%" }}>
                     <div>
                         <style>
                             {`
@@ -270,7 +289,7 @@ const AdmissionServices = () => {
                                     width: "8in", // matches table width assuming 8in for 40 columns
                                     maxWidth: "100%",
                                     margin: "0 auto", // center the content
-                                    fontFamily: "Times New Roman",
+
                                     boxSizing: "border-box",
                                     padding: "10px 0", // reduced horizontal padding
                                 }}>
@@ -322,7 +341,6 @@ const AdmissionServices = () => {
                                                 style={{
                                                     marginLeft: "-145px",
                                                     fontSize: "18px",
-                                                    fontFamily: "Times new roman",
                                                     letterSpacing: "2px",
                                                 }}
                                             >
@@ -334,7 +352,6 @@ const AdmissionServices = () => {
                                                     style={{
                                                         marginLeft: "-145px",
                                                         fontSize: "18px",
-                                                        fontFamily: "Times new roman",
                                                         letterSpacing: "2px",
                                                     }}
                                                 >
@@ -1566,7 +1583,7 @@ const AdmissionServices = () => {
                                     </tr>
 
                                     <tr>
-                                        <td colSpan={40} style={{ textAlign: "left", fontFamily: "Times New Roman", fontSize: "12px", paddingTop: "5px" }}>
+                                        <td colSpan={40} style={{ textAlign: "left", fontSize: "12px", paddingTop: "5px" }}>
                                             <span style={{ fontWeight: "bold", marginRight: "10px", paddingBottom: "20px" }}>Suggestion on how we can further improve our services (optional):</span>{" "}
 
                                             <br />
@@ -1578,7 +1595,7 @@ const AdmissionServices = () => {
 
 
                                     <tr>
-                                        <td colSpan={40} style={{ textAlign: "left", fontFamily: "Times New Roman", fontSize: "12px", paddingTop: "15px" }}>
+                                        <td colSpan={40} style={{ textAlign: "left", fontSize: "12px", paddingTop: "15px" }}>
                                             <span style={{ fontWeight: "bold", marginRight: "10px" }}>Email Address: (optional)</span>{" "}
 
                                             <span style={{ marginTop: "10px", display: "inline-block", borderBottom: "1px solid black", width: "50%", paddingLeft: "10px" }}>

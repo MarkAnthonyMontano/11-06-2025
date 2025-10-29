@@ -21,6 +21,7 @@ import PersonSearchIcon from "@mui/icons-material/PersonSearch";
 import PeopleIcon from "@mui/icons-material/People";
 import ExamPermit from "../applicant/ExamPermit";
 import FactCheckIcon from "@mui/icons-material/FactCheck";
+import Unauthorized from "../components/Unauthorized";
 
 
 
@@ -90,6 +91,50 @@ const AdminDashboard3 = () => {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const queryPersonId = queryParams.get("person_id");
+
+  const [hasAccess, setHasAccess] = useState(null);
+  const pageId = 3;
+
+  useEffect(() => {
+    
+    const storedUser = localStorage.getItem("email");
+    const storedRole = localStorage.getItem("role");
+    const storedID = localStorage.getItem("person_id");
+
+    if (storedUser && storedRole && storedID) {
+      setUser(storedUser);
+      setUserRole(storedRole);
+      setUserID(storedID);
+
+      if (storedRole === "registrar") {
+        checkAccess(storedID);
+      } else {
+        window.location.href = "/login";
+      }
+    } else {
+      window.location.href = "/login";
+    }
+  }, []);
+
+const checkAccess = async (userID) => {
+    try {
+        const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
+        if (response.data && response.data.page_privilege === 1) {
+          setHasAccess(true);
+        } else {
+          setHasAccess(false);
+        }
+    } catch (error) {
+        console.error('Error checking access:', error);
+        setHasAccess(false);
+        if (error.response && error.response.data.message) {
+          console.log(error.response.data.message);
+        } else {
+          console.log("An unexpected error occurred.");
+        }
+        setLoading(false);
+    }
+  };
 
 
   useEffect(() => {
@@ -342,6 +387,16 @@ const AdminDashboard3 = () => {
       });
   }, [userID]);
 
+
+  if (hasAccess === null) {
+   return "Loading...."
+}
+
+  if (!hasAccess) {
+    return (
+      <Unauthorized />
+    );
+  }
 
 
   return (

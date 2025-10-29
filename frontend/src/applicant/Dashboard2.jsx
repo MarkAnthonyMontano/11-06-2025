@@ -373,7 +373,23 @@ const Dashboard2 = (props) => {
 
 
 
+  // 🔒 Disable right-click
+  document.addEventListener('contextmenu', (e) => e.preventDefault());
 
+  // 🔒 Block DevTools shortcuts + Ctrl+P silently
+  document.addEventListener('keydown', (e) => {
+    const isBlockedKey =
+      e.key === 'F12' || // DevTools
+      e.key === 'F11' || // Fullscreen
+      (e.ctrlKey && e.shiftKey && (e.key.toLowerCase() === 'i' || e.key.toLowerCase() === 'j')) || // Ctrl+Shift+I/J
+      (e.ctrlKey && e.key.toLowerCase() === 'u') || // Ctrl+U (View Source)
+      (e.ctrlKey && e.key.toLowerCase() === 'p');   // Ctrl+P (Print)
+
+    if (isBlockedKey) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  });
 
 
   // dot not alter
@@ -384,6 +400,36 @@ const Dashboard2 = (props) => {
           <ExamPermit />
         </div>
       )}
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+
+
+          mb: 2,
+
+        }}
+      >
+        <Typography
+          variant="h4"
+          sx={{
+            fontWeight: 'bold',
+            color: 'maroon',
+            fontSize: '36px',
+          }}
+        >
+          FAMILY BACKGROUND
+        </Typography>
+
+
+
+
+      </Box>
+      <hr style={{ border: "1px solid #ccc", width: "100%" }} />
+
+      <br />
 
       <Box
         sx={{
@@ -782,7 +828,7 @@ const Dashboard2 = (props) => {
                         value={person.father_nickname || ""}
                         onChange={handleChange}
                         onBlur={() => handleUpdate(person)}
-                        error={errors.father_nickname } helperText={errors.father_nickname ? "This field is required." : ""}
+                        error={errors.father_nickname} helperText={errors.father_nickname ? "This field is required." : ""}
                       />
                     </Box>
                   </Box>

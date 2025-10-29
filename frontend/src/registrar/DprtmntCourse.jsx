@@ -1,6 +1,7 @@
 import React, {useState, useEffect} from 'react';
 import axios from 'axios';
 import { Container, Table, TableHead, TableBody, TableRow, TableCell, TextField } from '@mui/material';
+import Unauthorized from "../components/Unauthorized";
 
 const DepartmentCourse = () => {
     
@@ -18,6 +19,54 @@ const DepartmentCourse = () => {
     const [yearLevelList, setYearlevelList] = useState([]);
     const [semesterList, setSemesterList] = useState([]);
     const [curriculumList, setCurriculumList] = useState([]);
+
+const [userID, setUserID] = useState("");
+const [user, setUser] = useState("");
+const [userRole, setUserRole] = useState("");
+const [hasAccess, setHasAccess] = useState(null);
+const pageId = 26;
+
+//
+useEffect(() => {
+    
+    const storedUser = localStorage.getItem("email");
+    const storedRole = localStorage.getItem("role");
+    const storedID = localStorage.getItem("person_id");
+
+    if (storedUser && storedRole && storedID) {
+      setUser(storedUser);
+      setUserRole(storedRole);
+      setUserID(storedID);
+
+      if (storedRole === "registrar") {
+        checkAccess(storedID);
+      } else {
+        window.location.href = "/login";
+      }
+    } else {
+      window.location.href = "/login";
+    }
+  }, []);
+
+const checkAccess = async (userID) => {
+    try {
+        const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
+        if (response.data && response.data.page_privilege === 1) {
+          setHasAccess(true);
+        } else {
+          setHasAccess(false);
+        }
+    } catch (error) {
+        console.error('Error checking access:', error);
+        setHasAccess(false);
+        if (error.response && error.response.data.message) {
+          console.log(error.response.data.message);
+        } else {
+          console.log("An unexpected error occurred.");
+        }
+        setLoading(false);
+    }
+  };
 
     const fetchYearLevel = async () => {
         try{
@@ -100,6 +149,15 @@ const DepartmentCourse = () => {
   });
 
 
+if (hasAccess === null) {
+   return "Loading...."
+}
+
+  if (!hasAccess) {
+    return (
+      <Unauthorized />
+    );
+  }
 
     return(
         <Container>

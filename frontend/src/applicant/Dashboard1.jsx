@@ -642,7 +642,23 @@ const Dashboard1 = (props) => {
       });
   }, [userID]);
 
+  // 🔒 Disable right-click
+  document.addEventListener('contextmenu', (e) => e.preventDefault());
 
+  // 🔒 Block DevTools shortcuts + Ctrl+P silently
+  document.addEventListener('keydown', (e) => {
+    const isBlockedKey =
+      e.key === 'F12' || // DevTools
+      e.key === 'F11' || // Fullscreen
+      (e.ctrlKey && e.shiftKey && (e.key.toLowerCase() === 'i' || e.key.toLowerCase() === 'j')) || // Ctrl+Shift+I/J
+      (e.ctrlKey && e.key.toLowerCase() === 'u') || // Ctrl+U (View Source)
+      (e.ctrlKey && e.key.toLowerCase() === 'p');   // Ctrl+P (Print)
+
+    if (isBlockedKey) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  });
 
   // dot not alter
   return (
@@ -656,6 +672,36 @@ const Dashboard1 = (props) => {
       )}
       <Box
         sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+        
+
+          mb: 2,
+          
+        }}
+      >
+        <Typography
+          variant="h4"
+          sx={{
+            fontWeight: 'bold',
+            color: 'maroon',
+            fontSize: '36px',
+          }}
+        >
+          PERSONAL INFORMATION
+        </Typography>
+
+
+
+
+      </Box>
+      <hr style={{ border: "1px solid #ccc", width: "100%" }} />
+
+      <br />
+      <Box
+        sx={{
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -663,6 +709,7 @@ const Dashboard1 = (props) => {
           mt: 2,
         }}
       >
+
         <Box
           sx={{
             display: "flex",

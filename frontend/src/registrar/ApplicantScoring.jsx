@@ -35,6 +35,7 @@ import PersonSearchIcon from "@mui/icons-material/PersonSearch";
 import PeopleIcon from "@mui/icons-material/People";
 import FactCheckIcon from "@mui/icons-material/FactCheck";
 import _ from "lodash";
+import Unauthorized from "../components/Unauthorized";
 
 
 
@@ -91,6 +92,51 @@ const ApplicantScoring = () => {
         { label: "Proctor's Applicant List", to: "/proctor_applicant_list", icon: <PeopleIcon fontSize="large" /> },
         { label: "Entrance Examination Scores", to: "/applicant_scoring", icon: <FactCheckIcon fontSize="large" /> },
     ];
+
+    const [hasAccess, setHasAccess] = useState(null);
+    const pageId = 12;
+
+    //
+    useEffect(() => {
+        
+        const storedUser = localStorage.getItem("email");
+        const storedRole = localStorage.getItem("role");
+        const storedID = localStorage.getItem("person_id");
+    
+        if (storedUser && storedRole && storedID) {
+          setUser(storedUser);
+          setUserRole(storedRole);
+          setUserID(storedID);
+        
+          if (storedRole === "registrar") {
+            checkAccess(storedID);
+          } else {
+            window.location.href = "/login";
+          }
+        } else {
+          window.location.href = "/login";
+        }
+      }, []);
+    
+    const checkAccess = async (userID) => {
+        try {
+            const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
+            if (response.data && response.data.page_privilege === 1) {
+              setHasAccess(true);
+            } else {
+              setHasAccess(false);
+            }
+        } catch (error) {
+            console.error('Error checking access:', error);
+            setHasAccess(false);
+            if (error.response && error.response.data.message) {
+              console.log(error.response.data.message);
+            } else {
+              console.log("An unexpected error occurred.");
+            }
+            setLoading(false);
+        }
+      };
 
 
     const navigate = useNavigate();
@@ -754,6 +800,15 @@ th, td {
         }
     };
 
+    if (hasAccess === null) {
+   return "Loading...."
+}
+
+  if (!hasAccess) {
+    return (
+      <Unauthorized />
+    );
+  }
 
     return (
         <Box sx={{ height: 'calc(100vh - 150px)', overflowY: 'auto', pr: 1, p: 2 }}>

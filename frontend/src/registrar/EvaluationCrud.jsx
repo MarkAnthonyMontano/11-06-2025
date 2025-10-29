@@ -2,6 +2,7 @@ import React, {useState, useEffect} from "react";
 import axios  from "axios";
 import { Box, Typography, TextField, TableContainer, Table, Snackbar, Alert, TableHead, TableBody, TableRow, TableCell, Paper, Divider, Button, FormControl, Select, MenuItem, InputLabel, Dialog, DialogTitle, DialogContent, DialogActions, Stack } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import Unauthorized from "../components/Unauthorized";
 
 const EvaluationCRUD = () => {
     const [openSnackbar, setOpenSnackbar] = useState(false);
@@ -23,6 +24,54 @@ const EvaluationCRUD = () => {
         choice4: "",
         choice5: ""
     });
+
+const [userID, setUserID] = useState("");
+const [user, setUser] = useState("");
+const [userRole, setUserRole] = useState("");
+const [hasAccess, setHasAccess] = useState(null);
+const pageId = 30;
+
+//
+useEffect(() => {
+    
+    const storedUser = localStorage.getItem("email");
+    const storedRole = localStorage.getItem("role");
+    const storedID = localStorage.getItem("person_id");
+
+    if (storedUser && storedRole && storedID) {
+      setUser(storedUser);
+      setUserRole(storedRole);
+      setUserID(storedID);
+
+      if (storedRole === "registrar") {
+        checkAccess(storedID);
+      } else {
+        window.location.href = "/login";
+      }
+    } else {
+      window.location.href = "/login";
+    }
+  }, []);
+
+const checkAccess = async (userID) => {
+    try {
+        const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
+        if (response.data && response.data.page_privilege === 1) {
+          setHasAccess(true);
+        } else {
+          setHasAccess(false);
+        }
+    } catch (error) {
+        console.error('Error checking access:', error);
+        setHasAccess(false);
+        if (error.response && error.response.data.message) {
+          console.log(error.response.data.message);
+        } else {
+          console.log("An unexpected error occurred.");
+        }
+        setLoading(false);
+    }
+  };
 
     const fetchQuestions = async () => {
         try {
@@ -173,6 +222,17 @@ const EvaluationCRUD = () => {
         setEditMode(true);
         setOpenDialog(true);
     };
+
+if (hasAccess === null) {
+   return "Loading...."
+}
+
+  if (!hasAccess) {
+    return (
+      <Unauthorized />
+    );
+  }
+
 
     return(
         <Box sx={{ height: "calc(100vh - 150px)", overflowY: "auto", pr: 2 }}>

@@ -154,7 +154,7 @@ function Settings({ onUpdate }) {
                 <form onSubmit={handleSubmit}>
                     {/* ✅ Company Name */}
                     <Box mb={2}>
-                        <InputLabel>Company Name</InputLabel>
+                        <InputLabel>School Name</InputLabel>
                         <TextField
                             value={companyName}
                             onChange={(e) => setCompanyName(e.target.value)}

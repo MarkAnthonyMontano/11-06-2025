@@ -30,6 +30,7 @@ import HowToRegIcon from '@mui/icons-material/HowToReg';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import { motion } from "framer-motion";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
+import Unauthorized from "../components/Unauthorized";
 
 const DentalAssessment = () => {
     const [studentNumber, setStudentNumber] = useState("");
@@ -64,6 +65,53 @@ const DentalAssessment = () => {
 
     const [searchQuery, setSearchQuery] = useState("");
     const [searchError, setSearchError] = useState("");
+
+const [hasAccess, setHasAccess] = useState(null);
+const pageId = 24;
+
+//
+useEffect(() => {
+    
+    const storedUser = localStorage.getItem("email");
+    const storedRole = localStorage.getItem("role");
+    const storedID = localStorage.getItem("person_id");
+
+    if (storedUser && storedRole && storedID) {
+      setUser(storedUser);
+      setUserRole(storedRole);
+      setUserID(storedID);
+
+      if (storedRole === "registrar") {
+        checkAccess(storedID);
+      } else {
+        window.location.href = "/login";
+      }
+    } else {
+      window.location.href = "/login";
+    }
+  }, []);
+
+const checkAccess = async (userID) => {
+    try {
+        const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
+        if (response.data && response.data.page_privilege === 1) {
+          setHasAccess(true);
+        } else {
+          setHasAccess(false);
+        }
+    } catch (error) {
+        console.error('Error checking access:', error);
+        setHasAccess(false);
+        if (error.response && error.response.data.message) {
+          console.log(error.response.data.message);
+        } else {
+          console.log("An unexpected error occurred.");
+        }
+        setLoading(false);
+    }
+  };
+
+
     useEffect(() => {
         const delayDebounce = setTimeout(async () => {
             if (searchQuery.trim() === "") return;
@@ -438,6 +486,15 @@ const DentalAssessment = () => {
         );
     };
 
+    if (hasAccess === null) {
+   return "Loading...."
+}
+
+  if (!hasAccess) {
+    return (
+      <Unauthorized />
+    );
+  }
 
 
     return (

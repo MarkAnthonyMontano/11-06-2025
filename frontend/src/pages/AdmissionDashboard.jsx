@@ -43,7 +43,7 @@ const AdmissionDashboardPanel = () => {
 
     {
       title: "READMISSION",
-      link: "/readmission",
+      link: "/readmission_dashboard1",
       icon: <Replay className="text-maroon-500 text-2xl" />,
     },
     {

@@ -211,7 +211,7 @@ const FacultyMasterList = () => {
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
-          mt: 2,
+          mt: 4,
 
           mb: 2,
           px: 2,

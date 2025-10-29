@@ -1,4 +1,4 @@
-import { Box, Typography, TextField, Snackbar, Alert } from "@mui/material";
+import { Box, Typography, TextField, Snackbar, Alert, Button } from "@mui/material";
 import React, { useState, useEffect, useContext, useRef } from "react";
 import { SettingsContext } from "../App";
 import EaristLogo from "../assets/EaristLogo.png";
@@ -153,45 +153,76 @@ const ProgramEvaluation = () => {
 
     return (
         <Box className="body" sx={{ height: 'calc(100vh - 150px)', overflowY: 'auto', overflowX: 'hidden', pr: 1, p: 2 }}>
-            <Box sx={{ display: "flex", background: "white", alignItems: "center" }}>
+            <Box sx={{ background: "white", p: 2 }}>
+  {/* Header Row */}
+  <Box
+    sx={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      flexWrap: "wrap",
+    }}
+  >
+    {/* Title on the left */}
+    <Typography
+      variant="h4"
+      sx={{
+        fontWeight: "bold",
+        color: "maroon",
+        fontSize: "36px",
+      }}
+    >
+      Program Evaluation
+    </Typography>
 
-                <Typography
-                    variant="h4"
-                    sx={{
-                        fontWeight: "bold",
-                        color: "maroon",
-                        fontSize: "36px",
-                        position: "fixed",
-                        width: "75%",
-                        height: "60px",
-                        marginTop: "1.8rem",
-                        background: "white",
-                        display: "flex",
-                        alignItems: "center",
-                    }}
-                >
-                    Program Evaluation
-                </Typography>
+    {/* Right side: Search + Print */}
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: 2, // spacing between the search bar and button
+      }}
+    >
+      {/* Search Field */}
+      <TextField
+        variant="outlined"
+        placeholder="Enter Student Number"
+        size="small"
+        value={studentNumber}
+        onChange={(e) => {
+          setStudentNumber(e.target.value);
+          setSearchQuery(e.target.value);
+        }}
+        InputProps={{ startAdornment: <Search sx={{ mr: 1 }} /> }}
+        sx={{
+          width: { xs: "220px", sm: "350px" },
+          background: "white",
+        }}
+      />
 
-                <div className='w-[10rem] h-[3rem] text-[18px] mt-[2.5rem] right-[28.5rem] fixed text-white rounded'>
-                    <TextField
-                        variant="outlined"
-                        placeholder="Enter Student Number"
-                        size="small"
-                        value={studentNumber}
+      {/* Print Button */}
+      <Button
+        onClick={printDiv}
+        variant="contained"
+        sx={{
+          backgroundColor: "maroon",
+          color: "white",
+          height: "40px",
+          width: "120px",
+          fontSize: "16px",
+          textTransform: "none",
+          "&:hover": { backgroundColor: "#800000" },
+        }}
+      >
+        Print
+      </Button>
+    </Box>
+  </Box>
 
-                        onChange={(e) => {
-                            setStudentNumber(e.target.value);
-                            setSearchQuery(e.target.value);
-                        }}
-                        InputProps={{ startAdornment: <Search sx={{ mr: 1 }} /> }}
-                        sx={{ width: { xs: "100%", sm: "425px" }, mt: { xs: 2, sm: 0 }, background: "white" }}
-                    />
-                </div>
-                <button onClick={printDiv} className='bg-maroon-500 w-[10rem] h-[3rem] text-[18px] mt-[2rem] text-white rounded fixed right-[1rem]'>
-                    Print
-                </button>
-            </Box>
+  {/* Divider Line */}
+  <hr style={{ border: "1px solid #ccc", width: "100%", marginTop: "1rem" }} />
+</Box>
+
             <style>
                 {`
                 @media print {

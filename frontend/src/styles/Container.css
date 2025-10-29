@@ -1,21 +1,21 @@
 .Container {
-    transform: scale(0.8);
-    margin-top: -7.5%;
-    background-color: white;
-    height: fit-content;
-    max-width: 600px;
-    width: 100%;
-    border-radius: 10px;
-    box-shadow: 1px 1px 10px 1px rgba(0, 0, 0, 0.1);
-    border: 5px solid white;          /* white outline around whole box */
-    overflow: hidden;                 /* para walang gap sa header */
+  transform: scale(0.8);
+  margin-top: -7.5%;
+  background-color: white;
+  height: fit-content;
+  max-width: 600px;
+  width: 100%;
+  border-radius: 10px;
+  box-shadow: 1px 1px 10px 1px rgba(0, 0, 0, 0.1);
+  border: 5px solid white;
+  overflow: visible; /* ✅ allow footer to display fully */
 }
 
 .Header {
-    padding: 20px;
-    background-color: #6D2323;
-    border-radius: 5px 5px 0 0;
-    margin: -5px -5px 0 -5px;         /* connects header to white border flush */
+  padding: 20px;
+  background-color: #6D2323;
+  border-radius: 5px 5px 0 0;
+  border-bottom: 5px solid white;  /* ✅ creates clean white separation */
 }
 
 
@@ -140,19 +140,19 @@
 }
 
 .Footer {
-    padding: 18px 0;
-    margin: 0; /* reset all margins */
-    text-align: center;
-    font-size: 15px;
-    color: rgba(0, 0, 0, 0.6);
-    background-color: rgba(243, 219, 173, 0.531);
-
-    /* Make it sagad sa border like Header */
-    margin-left: -33px;  /* same as Body padding (30px + border space) */
-    margin-right: -33px;
-    margin-bottom: -5px;
-    border-radius: 0 0 10px 10px;
+  padding: 16px 12px;
+  text-align: center;
+  font-size: 15px;
+  color: rgba(0, 0, 0, 0.6);
+  background-color: rgba(243, 219, 173, 0.531);
+  border-radius: 0 0 10px 10px;
+  margin-top: 15px;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
+
 
 
 

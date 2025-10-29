@@ -57,6 +57,7 @@ import FacultySchedule from './faculty/FacultySchedule';
 import FacultyStudentList from './faculty/FacultyStudentList';
 import ProgramEvaluation from './faculty/ProgramEvaluation';
 import FacultyResetPassword from './faculty/FacultyResetPassword';
+import FacultyEvaluation from './faculty/FacultyEvaluation';
 
 
 // REGISTRAR FOLDER
@@ -135,7 +136,11 @@ import MedicalDashboard5 from './registrar/MedicalDashboard5';
 import MedicalRequirements from './registrar/MedicalRequirements';
 import MedicalCertificate from './registrar/MedicalCertificate';
 import HealthRecord from './registrar/HealthRecord';
-
+import ReadmissionDashboard1 from './registrar/ReadmissionDashboard1';
+import ReadmissionDashboard2 from './registrar/ReadmissionDashboard2';
+import ReadmissionDashboard3 from './registrar/ReadmissionDashboard3';
+import ReadmissionDashboard4 from './registrar/ReadmissionDashboard4';
+import ReadmissionDashboard5 from './registrar/ReadmissionDashboard5';
 
 // APPLICANT FOLDER
 import Dashboard1 from './applicant/Dashboard1';
@@ -238,7 +243,6 @@ function App() {
       fontFamily: "Poppins, sans-serif",
     },
   });
-  
 
   const keys = JSON.parse(localStorage.getItem("dashboardKeys") || "{}");
 
@@ -263,12 +267,14 @@ function App() {
 
               {/* Main area */}
               <div className="flex-1 flex flex-col">
-                {/* AppBar */}
+                {/* Navbar */}
                 <AppBar
                   position="fixed"
                   sx={{
                     zIndex: (theme) => theme.zIndex.drawer + 1,
                     bgcolor: settings?.header_color || "#1976d2",
+                
+
                   }}
                 >
                   <Toolbar>
@@ -289,7 +295,7 @@ function App() {
                       />
                     )}
                     <Typography
-                      style={{ fontFamily: "Times New Roman", fontWeight: "bold" }}
+                      style={{ fontWeight: "bold" }}
                       variant="h5"
                     >
                       {settings?.company_name || "SCHOOL NAME"}
@@ -298,7 +304,7 @@ function App() {
                 </AppBar>
 
                 {/* ✅ Main content area */}
-                <main className="flex-1 w-full mt-[64px] pb-[40px]">
+                <main className="flex-1 w-full mt-[64px] pb-[40px]" style={{marginTop: "5rem"}}>
                   {/* Add your routes here later */}
 
 
@@ -376,6 +382,7 @@ function App() {
 
                     <Route path="/grading_sheet" element={<ProtectedRoute><GradingSheet /></ProtectedRoute>} />
                     <Route path="/faculty_workload" element={<ProtectedRoute><FacultyWorkload /></ProtectedRoute>} />
+                    <Route path="/faculty_evaluation" element={<ProtectedRoute><FacultyEvaluation /></ProtectedRoute>} />
                     <Route path="/faculty_masterlist" element={<ProtectedRoute><FacultyMasterList /></ProtectedRoute>} />
                     <Route path="/subject_masterlist/:subject_id/:department_section_id/:school_year_id" element={<ProtectedRoute><FacultyStudentClassList /></ProtectedRoute>} />
                     <Route path="/faculty_schedule" element={<ProtectedRoute><FacultySchedule /></ProtectedRoute>} />
@@ -443,6 +450,14 @@ function App() {
                     <Route path="/medical_requirements_form" element={<ProtectedRoute><MedicalRequirementsForm /></ProtectedRoute>} />
                     <Route path="/dental_assessment" element={<ProtectedRoute><DentalAssessment /></ProtectedRoute>} />
                     <Route path="/physical_neuro_exam" element={<ProtectedRoute><PhysicalNeuroExam /></ProtectedRoute>} />
+
+                    <Route path="/readmission_dashboard1" element={<ProtectedRoute><ReadmissionDashboard1 /></ProtectedRoute>} />
+                    <Route path="/readmission_dashboard2" element={<ProtectedRoute><ReadmissionDashboard2 /></ProtectedRoute>} />
+                    <Route path="/readmission_dashboard3" element={<ProtectedRoute><ReadmissionDashboard3 /></ProtectedRoute>} />
+                    <Route path="/readmission_dashboard4" element={<ProtectedRoute><ReadmissionDashboard4 /></ProtectedRoute>} />
+                    <Route path="/readmission_dashboard5" element={<ProtectedRoute><ReadmissionDashboard5 /></ProtectedRoute>} />
+
+
 
                     <Route path="/super_admin_applicant_dashboard1" element={<ProtectedRoute><SuperAdminApplicantDashboard1 /></ProtectedRoute>} />
                     <Route path="/super_admin_applicant_dashboard2" element={<ProtectedRoute><SuperAdminApplicantDashboard2 /></ProtectedRoute>} />
@@ -528,15 +543,16 @@ function App() {
                 bgcolor: settings?.footer_color || "#ffffff",
                 color: "white",
                 textAlign: "center",
-                padding: "5px",
+                padding: "5px"
               }}
             >
               <Typography
-                style={{ fontFamily: "Times New Roman", fontSize: "20px" }}
+                style={{ fontSize: "20px" }}
               >
                 {settings?.footer_text || "EARIST MANILA"}
               </Typography>
             </Box>
+
           </div>
         </Router>
       </SettingsContext.Provider>

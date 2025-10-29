@@ -204,6 +204,7 @@ const FacultyWorkload = () => {
 
                     mb: 2,
                     px: 2,
+                    mt: 2,
                 }}
             >
                 <Typography

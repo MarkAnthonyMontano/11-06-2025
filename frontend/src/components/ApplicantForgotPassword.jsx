@@ -8,15 +8,15 @@ import {
   TextField,
   InputAdornment,
   Button,
-  Typography,
 } from "@mui/material";
 import { Link } from "react-router-dom";
 import { Email } from "@mui/icons-material";
 import ReCAPTCHA from "react-google-recaptcha";
 import { SettingsContext } from "../App";
 import Logo from "../assets/Logo.png";
+import "../styles/Container.css"; // ✅ same styling as registrar
 
-// Connect to backend
+// Connect socket
 const socket = io("http://localhost:5000");
 
 const ApplicantForgotPassword = () => {
@@ -24,10 +24,10 @@ const ApplicantForgotPassword = () => {
   const [capVal, setCapVal] = useState(null);
   const [email, setEmail] = useState("");
   const [snack, setSnack] = useState({ open: false, message: "", severity: "info" });
-  const [currentYear, setCurrentYear] = useState(""); // ✅ Manila time year
+  const [currentYear, setCurrentYear] = useState("");
 
   useEffect(() => {
-    // ✅ Get year based on Manila timezone
+    // ✅ Manila time year
     const now = new Date().toLocaleString("en-US", { timeZone: "Asia/Manila" });
     const year = new Date(now).getFullYear();
     setCurrentYear(year);
@@ -66,7 +66,7 @@ const ApplicantForgotPassword = () => {
     setSnack((prev) => ({ ...prev, open: false }));
   };
 
-  // ✅ Dynamic background + logo
+  // ✅ Dynamic background and logo (same as registrar)
   const backgroundImage = settings?.bg_image
     ? `url(http://localhost:5000${settings.bg_image})`
     : "url(/default-bg.jpg)";
@@ -75,18 +75,26 @@ const ApplicantForgotPassword = () => {
     : Logo;
 
   // 🔒 Disable right-click & DevTools
-  document.addEventListener("contextmenu", (e) => e.preventDefault());
-  document.addEventListener("keydown", (e) => {
-    const block =
-      e.key === "F12" ||
-      e.key === "F11" ||
-      (e.ctrlKey && e.shiftKey && ["i", "j"].includes(e.key.toLowerCase())) ||
-      (e.ctrlKey && ["u", "p"].includes(e.key.toLowerCase()));
-    if (block) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-  });
+  useEffect(() => {
+    const handleContextMenu = (e) => e.preventDefault();
+    const handleKeyDown = (e) => {
+      const blocked =
+        e.key === "F12" ||
+        e.key === "F11" ||
+        (e.ctrlKey && e.shiftKey && ["i", "j"].includes(e.key.toLowerCase())) ||
+        (e.ctrlKey && ["u", "p"].includes(e.key.toLowerCase()));
+      if (blocked) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+    document.addEventListener("contextmenu", handleContextMenu);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("contextmenu", handleContextMenu);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
 
   const isButtonDisabled = !email || !capVal;
 
@@ -104,60 +112,27 @@ const ApplicantForgotPassword = () => {
         justifyContent: "center",
       }}
     >
-      <Container maxWidth="sm">
-        <Box
-          sx={{
-            bgcolor: "white",
-            borderRadius: "10px",
-            boxShadow: "1px 1px 10px rgba(0,0,0,0.1)",
-            overflow: "hidden",
-            marginTop: "-100px",
-          }}
-        >
+      <Container
+        style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+        maxWidth={false}
+      >
+        <div style={{ border: "5px solid white" }} className="Container">
           {/* Header */}
-          <Box
-            sx={{
-              backgroundColor: "#6D2323",
-              borderRadius: "10px 10px 0 0",
-              py: 3,
-              textAlign: "center",
-              border: "5px solid white",
-              color: "white",
-            }}
-          >
-            <Box sx={{ display: "flex", justifyContent: "center", mb: 1 }}>
-              <Box
-                sx={{
-                  width: 105,
-                  height: 105,
-                  borderRadius: "50%",
-                  border: "5px solid white",
-                  overflow: "hidden",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  backgroundColor: "white",
-                }}
-              >
-                <img src={logoSrc} alt="Logo" style={{ width: "100%", height: "100%" }} />
-              </Box>
-            </Box>
-            <Typography variant="h6" sx={{ fontWeight: 600, letterSpacing: 0.5 }}>
-              {settings?.company_name}
-            </Typography>
-            <Typography variant="body2" sx={{ opacity: 0.9 }}>
-              Student Information System
-            </Typography>
-          </Box>
+          <div className="Header">
+            <div className="HeaderTitle">
+              <div className="CircleCon">
+                <img src={logoSrc} alt="Logo" />
+              </div>
+            </div>
+            <div className="HeaderBody">
+              <strong>{settings?.company_name || "EARIST"}</strong>
+              <p>Student Information System</p>
+            </div>
+          </div>
 
           {/* Body */}
-          <Box sx={{ px: 4, py: 3 }}>
-            <Typography
-              variant="subtitle2"
-              sx={{ fontWeight: 500, mb: 1, color: "rgba(0,0,0,0.6)" }}
-            >
-              Email Address
-            </Typography>
+          <div className="Body">
+            <label htmlFor="email">Email Address:</label>
             <TextField
               fullWidth
               type="email"
@@ -172,15 +147,18 @@ const ApplicantForgotPassword = () => {
                   </InputAdornment>
                 ),
                 sx: {
-                  borderRadius: 2,
                   height: "50px",
-                  "& input": { height: "50px", boxSizing: "border-box" },
+                  "& input": {
+                    height: "50px",
+                    padding: "0 10px",
+                    boxSizing: "border-box",
+                  },
                 },
               }}
             />
 
             {/* CAPTCHA */}
-            <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+            <Box sx={{ display: "flex", justifyContent: "center", marginTop: "20px" }}>
               <ReCAPTCHA
                 sitekey="6Lfem44rAAAAAEeAexdQxvN0Lpm1V4KPu1bBxaGy"
                 onChange={(val) => setCapVal(val)}
@@ -188,58 +166,45 @@ const ApplicantForgotPassword = () => {
             </Box>
 
             {/* Submit Button */}
-            <Button
-              fullWidth
-              variant="contained"
-              disabled={isButtonDisabled}
-              onClick={handleReset}
-              sx={{
-                mt: 4,
-                py: 1.4,
-                backgroundColor: "#6D2323",
-                fontWeight: 500,
-                fontSize: "15px",
-                "&:hover": { backgroundColor: "#6D2323" },
-              }}
-            >
-              Reset Password
-            </Button>
-
-            {/* Back to login */}
-            <Box sx={{ textAlign: "center", mt: 2, color: "#6D2323" }}>
-              <Typography variant="body2" sx={{ mb: 0.5 }}>
-                To go to login page,
-              </Typography>
-              <Link
-                to="/login_applicant"
-                style={{
-                  color: "#6D2323",
-                  textDecoration: "underline",
-                  fontWeight: 500,
+            <Box sx={{ mt: 4, display: "flex", justifyContent: "center" }}>
+              <Button
+                onClick={handleReset}
+                variant="contained"
+                disabled={isButtonDisabled}
+                sx={{
+                  width: "100%",
+                  py: 1.5,
+                  backgroundColor: "#6D2323",
+                  color: "white",
+                  "&:hover": { backgroundColor: "#6D2323" },
                 }}
               >
-                Click here
-              </Link>
+                Reset Password
+              </Button>
             </Box>
-          </Box>
+
+            {/* Back to login */}
+            <div className="LinkContainer" style={{ marginTop: "1rem" }}>
+              <p>To go to login page,</p>
+              <span>
+                <Link to="/login_applicant" style={{ textDecoration: "underline" }}>
+                  Click here
+                </Link>
+              </span>
+            </div>
+          </div>
 
           {/* Footer */}
-          <Box
-            sx={{
-              textAlign: "center",
-              bgcolor: "rgba(243, 219, 173, 0.531)",
-              color: "rgba(0,0,0,0.7)",
-              fontSize: "14px",
-              py: 1.5,
-              borderRadius: "0 0 10px 10px",
-            }}
-          >
-            © {currentYear} {settings?.company_name} Student Information System. All rights reserved.
-          </Box>
-        </Box>
+          <div className="Footer">
+            <div className="FooterText">
+              © {currentYear} {settings?.company_name || "EARIST"} Student Information System. All
+              rights reserved.
+            </div>
+          </div>
+        </div>
       </Container>
 
-      {/* Snackbar Notification */}
+      {/* Snackbar */}
       <Snackbar
         open={snack.open}
         autoHideDuration={5000}

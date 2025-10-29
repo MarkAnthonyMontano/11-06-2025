@@ -76,40 +76,40 @@ const Dashboard4 = (props) => {
 
 
   // Do not alter
-const handleUpdate = async (updatedPerson) => {
-  try {
-    // ✅ Step 1: Validate that updatedPerson is not empty or undefined
-    if (!updatedPerson || Object.keys(updatedPerson).length === 0) {
-      console.warn("⚠️ No data to update — skipping request.");
-      return;
+  const handleUpdate = async (updatedPerson) => {
+    try {
+      // ✅ Step 1: Validate that updatedPerson is not empty or undefined
+      if (!updatedPerson || Object.keys(updatedPerson).length === 0) {
+        console.warn("⚠️ No data to update — skipping request.");
+        return;
+      }
+
+      // ✅ Step 2: Clean data before sending (convert undefined to null)
+      const cleanedData = Object.fromEntries(
+        Object.entries(updatedPerson).map(([key, value]) => [
+          key,
+          value === undefined ? null : value,
+        ])
+      );
+
+      console.log("📤 Sending update to server:", cleanedData);
+
+      // ✅ Step 3: Send the PUT request to backend
+      const response = await axios.put(
+        `http://localhost:5000/api/person/${userID}`,
+        cleanedData
+      );
+
+      // ✅ Step 4: Log confirmation
+      console.log("✅ Auto-saved successfully:", response.data);
+    } catch (error) {
+      // ✅ Step 5: Detailed error logging
+      console.error(
+        "❌ Auto-save failed:",
+        error.response?.data || error.message
+      );
     }
-
-    // ✅ Step 2: Clean data before sending (convert undefined to null)
-    const cleanedData = Object.fromEntries(
-      Object.entries(updatedPerson).map(([key, value]) => [
-        key,
-        value === undefined ? null : value,
-      ])
-    );
-
-    console.log("📤 Sending update to server:", cleanedData);
-
-    // ✅ Step 3: Send the PUT request to backend
-    const response = await axios.put(
-      `http://localhost:5000/api/person/${userID}`,
-      cleanedData
-    );
-
-    // ✅ Step 4: Log confirmation
-    console.log("✅ Auto-saved successfully:", response.data);
-  } catch (error) {
-    // ✅ Step 5: Detailed error logging
-    console.error(
-      "❌ Auto-save failed:",
-      error.response?.data || error.message
-    );
-  }
-};
+  };
 
   // Real-time save on every character typed
   const handleChange = (e) => {
@@ -168,7 +168,7 @@ const handleUpdate = async (updatedPerson) => {
     color: "black",
   };
 
- const divToPrintRef = useRef();
+  const divToPrintRef = useRef();
   const [showPrintView, setShowPrintView] = useState(false);
 
   const printDiv = () => {
@@ -243,7 +243,7 @@ const handleUpdate = async (updatedPerson) => {
   };
 
 
-   const links = [
+  const links = [
     { to: "/ecat_application_form", label: "ECAT Application Form" },
     { to: "/admission_form_process", label: "Admission Form Process" },
     { to: "/personal_data_form", label: "Personal Data Form" },
@@ -266,18 +266,63 @@ const handleUpdate = async (updatedPerson) => {
   }, [userID]);
 
 
+  // 🔒 Disable right-click
+  document.addEventListener('contextmenu', (e) => e.preventDefault());
 
+  // 🔒 Block DevTools shortcuts + Ctrl+P silently
+  document.addEventListener('keydown', (e) => {
+    const isBlockedKey =
+      e.key === 'F12' || // DevTools
+      e.key === 'F11' || // Fullscreen
+      (e.ctrlKey && e.shiftKey && (e.key.toLowerCase() === 'i' || e.key.toLowerCase() === 'j')) || // Ctrl+Shift+I/J
+      (e.ctrlKey && e.key.toLowerCase() === 'u') || // Ctrl+U (View Source)
+      (e.ctrlKey && e.key.toLowerCase() === 'p');   // Ctrl+P (Print)
+
+    if (isBlockedKey) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  });
 
   // dot not alter
   return (
     <Box sx={{ height: "calc(100vh - 140px)", overflowY: "auto", paddingRight: 1, backgroundColor: "transparent" }}>
-  {showPrintView && (
+      {showPrintView && (
         <div ref={divToPrintRef} style={{ display: "block" }}>
           <ExamPermit />
         </div>
       )}
 
+<Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+        
 
+          mb: 2,
+          
+        }}
+      >
+        <Typography
+          variant="h4"
+          sx={{
+            fontWeight: 'bold',
+            color: 'maroon',
+            fontSize: '36px',
+          }}
+        >
+         HEALTH MEDICAL RECORDS
+        </Typography>
+
+
+
+
+      </Box>
+      <hr style={{ border: "1px solid #ccc", width: "100%" }} />
+
+      <br />
 
       <Box
         sx={{
@@ -333,82 +378,82 @@ const handleUpdate = async (updatedPerson) => {
         </Box>
       </Box>
 
-     {/* Cards Section */}
-<Box
-  sx={{
-    display: "flex",
-    flexWrap: "wrap",
-    gap: 2,
-    mt: 2,
-    pb: 1,
-    justifyContent: "center", // Centers all cards horizontally
-  }}
->
-  {links.map((lnk, i) => (
-    <motion.div
-      key={i}
-      style={{ flex: "0 0 calc(30% - 16px)" }}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: i * 0.1, duration: 0.4 }}
-    >
-      <Card
+      {/* Cards Section */}
+      <Box
         sx={{
-          minHeight: 60,
-          borderRadius: 2,
-          border: "2px solid #6D2323",
-          backgroundColor: "#fff",
           display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "center",
-          textAlign: "center",
-          p: 1.5,
-          cursor: "pointer",
-          transition: "all 0.3s ease-in-out",
-          "&:hover": {
-            transform: "scale(1.05)",
-            backgroundColor: "#6D2323", // ✅ background becomes maroon
-            "& .card-text": {
-              color: "#fff", // ✅ text becomes white
-            },
-            "& .card-icon": {
-              color: "#fff", // ✅ icon becomes white
-            },
-          },
-        }}
-        onClick={() => {
-          if (lnk.onClick) {
-            lnk.onClick(); // run handler
-          } else if (lnk.to) {
-            navigate(lnk.to); // navigate if it has a `to`
-          }
+          flexWrap: "wrap",
+          gap: 2,
+          mt: 2,
+          pb: 1,
+          justifyContent: "center", // Centers all cards horizontally
         }}
       >
-        {/* Icon */}
-        <PictureAsPdfIcon
-          className="card-icon"
-          sx={{ fontSize: 35, color: "#6D2323", mr: 1.5 }}
-        />
+        {links.map((lnk, i) => (
+          <motion.div
+            key={i}
+            style={{ flex: "0 0 calc(30% - 16px)" }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.1, duration: 0.4 }}
+          >
+            <Card
+              sx={{
+                minHeight: 60,
+                borderRadius: 2,
+                border: "2px solid #6D2323",
+                backgroundColor: "#fff",
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                textAlign: "center",
+                p: 1.5,
+                cursor: "pointer",
+                transition: "all 0.3s ease-in-out",
+                "&:hover": {
+                  transform: "scale(1.05)",
+                  backgroundColor: "#6D2323", // ✅ background becomes maroon
+                  "& .card-text": {
+                    color: "#fff", // ✅ text becomes white
+                  },
+                  "& .card-icon": {
+                    color: "#fff", // ✅ icon becomes white
+                  },
+                },
+              }}
+              onClick={() => {
+                if (lnk.onClick) {
+                  lnk.onClick(); // run handler
+                } else if (lnk.to) {
+                  navigate(lnk.to); // navigate if it has a `to`
+                }
+              }}
+            >
+              {/* Icon */}
+              <PictureAsPdfIcon
+                className="card-icon"
+                sx={{ fontSize: 35, color: "#6D2323", mr: 1.5 }}
+              />
 
-        {/* Label */}
-        <Typography
-          className="card-text"
-          sx={{
-            color: "#6D2323",
-            fontFamily: "Arial",
-            fontWeight: "bold",
-            fontSize: "0.85rem",
-          }}
-        >
-          {lnk.label}
-        </Typography>
-      </Card>
-    </motion.div>
-  ))}
-</Box>
+              {/* Label */}
+              <Typography
+                className="card-text"
+                sx={{
+                  color: "#6D2323",
+                  fontFamily: "Arial",
+                  fontWeight: "bold",
+                  fontSize: "0.85rem",
+                }}
+              >
+                {lnk.label}
+              </Typography>
+            </Card>
+          </motion.div>
+        ))}
+      </Box>
 
-  
+
       <Container>
 
         <Container>
@@ -518,7 +563,7 @@ const handleUpdate = async (updatedPerson) => {
                         setPerson(updatedPerson);
                         handleUpdate(updatedPerson);
                       }}
-                    onBlur={() => handleUpdate(person)}
+                      onBlur={() => handleUpdate(person)}
                     />
                   }
                   label={symptom.charAt(0).toUpperCase() + symptom.slice(1)}
@@ -596,7 +641,7 @@ const handleUpdate = async (updatedPerson) => {
                                       setPerson(updatedPerson);
                                       handleUpdate(updatedPerson);
                                     }}
-                                  onBlur={() => handleUpdate(person)}
+                                    onBlur={() => handleUpdate(person)}
                                   />
                                   <span style={{ fontSize: "15px", fontFamily: "Arial" }}>Yes</span>
                                 </div>
@@ -614,7 +659,7 @@ const handleUpdate = async (updatedPerson) => {
                                       setPerson(updatedPerson);
                                       handleUpdate(updatedPerson);
                                     }}
-                                  onBlur={() => handleUpdate(person)}
+                                    onBlur={() => handleUpdate(person)}
                                   />
                                   <span style={{ fontSize: "15px", fontFamily: "Arial" }}>No</span>
                                 </div>
@@ -654,7 +699,7 @@ const handleUpdate = async (updatedPerson) => {
                             setPerson(updatedPerson);
                             handleUpdate(updatedPerson);
                           }}
-                        onBlur={() => handleUpdate(person)}
+                          onBlur={() => handleUpdate(person)}
                         />
                       }
                       label="Yes"
@@ -674,7 +719,7 @@ const handleUpdate = async (updatedPerson) => {
                             setPerson(updatedPerson);
                             handleUpdate(updatedPerson);
                           }}
-                        onBlur={() => handleUpdate(person)}
+                          onBlur={() => handleUpdate(person)}
                         />
                       }
                       label="No"
@@ -709,7 +754,7 @@ const handleUpdate = async (updatedPerson) => {
                   setPerson(updatedPerson);
                   handleUpdate(updatedPerson);
                 }}
-              onBlur={() => handleUpdate(person)}
+                onBlur={() => handleUpdate(person)}
               />
             </Box>
 
@@ -739,7 +784,7 @@ const handleUpdate = async (updatedPerson) => {
                   setPerson(updatedPerson);
                   handleUpdate(updatedPerson);
                 }}
-              onBlur={() => handleUpdate(person)}
+                onBlur={() => handleUpdate(person)}
               />
             </Box>
 
@@ -787,7 +832,7 @@ const handleUpdate = async (updatedPerson) => {
                               setPerson(updatedPerson);
                               handleUpdate(updatedPerson);
                             }}
-                          onBlur={() => handleUpdate(person)}
+                            onBlur={() => handleUpdate(person)}
                           />
                           <span style={{ fontSize: "15px", fontFamily: "Arial" }}>YES</span>
                         </Box>
@@ -805,7 +850,7 @@ const handleUpdate = async (updatedPerson) => {
                               setPerson(updatedPerson);
                               handleUpdate(updatedPerson);
                             }}
-                          onBlur={() => handleUpdate(person)}
+                            onBlur={() => handleUpdate(person)}
                           />
                           <span style={{ fontSize: "15px", fontFamily: "Arial" }}>NO</span>
 
@@ -827,7 +872,7 @@ const handleUpdate = async (updatedPerson) => {
                           setPerson(updatedPerson);
                           handleUpdate(updatedPerson);
                         }}
-                      onBlur={() => handleUpdate(person)}
+                        onBlur={() => handleUpdate(person)}
                         style={{
                           width: "200px",
                           height: "50px",
@@ -889,7 +934,7 @@ const handleUpdate = async (updatedPerson) => {
                                   setPerson(updatedPerson);
                                   handleUpdate(updatedPerson);
                                 }}
-                              onBlur={() => handleUpdate(person)}
+                                onBlur={() => handleUpdate(person)}
                                 style={inputStyle}
                               />
                             </td>
@@ -914,7 +959,7 @@ const handleUpdate = async (updatedPerson) => {
                                   setPerson(updatedPerson);
                                   handleUpdate(updatedPerson);
                                 }}
-                              onBlur={() => handleUpdate(person)}
+                                onBlur={() => handleUpdate(person)}
                                 style={inputStyle}
                               />
                             </td>
@@ -952,7 +997,7 @@ const handleUpdate = async (updatedPerson) => {
                         setPerson(updatedPerson);
                         handleUpdate(updatedPerson);
                       }}
-                    onBlur={() => handleUpdate(person)}
+                      onBlur={() => handleUpdate(person)}
                       className="w-full border px-3 py-2 rounded"
                     />
                   </td>
@@ -972,7 +1017,7 @@ const handleUpdate = async (updatedPerson) => {
                         setPerson(updatedPerson);
                         handleUpdate(updatedPerson);
                       }}
-                    onBlur={() => handleUpdate(person)}
+                      onBlur={() => handleUpdate(person)}
                       className="w-full border px-3 py-2 rounded"
                     />
                   </td>
@@ -992,7 +1037,7 @@ const handleUpdate = async (updatedPerson) => {
                         setPerson(updatedPerson);
                         handleUpdate(updatedPerson);
                       }}
-                    onBlur={() => handleUpdate(person)}
+                      onBlur={() => handleUpdate(person)}
                       className="w-full border px-3 py-2 rounded"
                     />
                   </td>
@@ -1012,7 +1057,7 @@ const handleUpdate = async (updatedPerson) => {
                         setPerson(updatedPerson);
                         handleUpdate(updatedPerson);
                       }}
-                    onBlur={() => handleUpdate(person)}
+                      onBlur={() => handleUpdate(person)}
                       className="w-full border px-3 py-2 rounded"
                     />
                   </td>
@@ -1066,7 +1111,7 @@ const handleUpdate = async (updatedPerson) => {
                               setPerson(updatedPerson);
                               handleUpdate(updatedPerson);
                             }}
-                          onBlur={() => handleUpdate(person)}
+                            onBlur={() => handleUpdate(person)}
                           />
                           <span style={{ fontSize: "15px", fontFamily: "Arial" }}>Physically Fit</span>
                         </div>
@@ -1084,7 +1129,7 @@ const handleUpdate = async (updatedPerson) => {
                               setPerson(updatedPerson);
                               handleUpdate(updatedPerson);
                             }}
-                          onBlur={() => handleUpdate(person)}
+                            onBlur={() => handleUpdate(person)}
                           />
                           <span style={{ fontSize: "15px", fontFamily: "Arial" }}>For Compliance</span>
                         </div>
@@ -1127,7 +1172,7 @@ const handleUpdate = async (updatedPerson) => {
                           setPerson(updatedPerson);
                           handleUpdate(updatedPerson);
                         }}
-                      onBlur={() => handleUpdate(person)}
+                        onBlur={() => handleUpdate(person)}
                         sx={{
                           backgroundColor: "white",
                           borderRadius: "8px",
@@ -1145,44 +1190,44 @@ const handleUpdate = async (updatedPerson) => {
               </Table>
             </div>
 
-                  <Modal
-                          open={examPermitModalOpen}
-                          onClose={handleCloseExamPermitModal}
-                          aria-labelledby="exam-permit-error-title"
-                          aria-describedby="exam-permit-error-description"
-                        >
-                          <Box
-                            sx={{
-                              position: "absolute",
-                              top: "50%",
-                              left: "50%",
-                              transform: "translate(-50%, -50%)",
-                              width: 400,
-                              bgcolor: "background.paper",
-                              border: "2px solid #6D2323",
-                              boxShadow: 24,
-                              p: 4,
-                              borderRadius: 2,
-                              textAlign: "center",
-                            }}
-                          >
-                            <ErrorIcon sx={{ color: "#6D2323", fontSize: 50, mb: 2 }} />
-                            <Typography id="exam-permit-error-title" variant="h6" component="h2" color="maroon">
-                              Exam Permit Notice
-                            </Typography>
-                            <Typography id="exam-permit-error-description" sx={{ mt: 2 }}>
-                              {examPermitError}
-                            </Typography>
-                            <Button
-                              onClick={handleCloseExamPermitModal}
-                              variant="contained"
-                              sx={{ mt: 3, backgroundColor: "#6D2323", "&:hover": { backgroundColor: "#8B0000" } }}
-                            >
-                              Close
-                            </Button>
-                          </Box>
-                        </Modal>
-            
+            <Modal
+              open={examPermitModalOpen}
+              onClose={handleCloseExamPermitModal}
+              aria-labelledby="exam-permit-error-title"
+              aria-describedby="exam-permit-error-description"
+            >
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%, -50%)",
+                  width: 400,
+                  bgcolor: "background.paper",
+                  border: "2px solid #6D2323",
+                  boxShadow: 24,
+                  p: 4,
+                  borderRadius: 2,
+                  textAlign: "center",
+                }}
+              >
+                <ErrorIcon sx={{ color: "#6D2323", fontSize: 50, mb: 2 }} />
+                <Typography id="exam-permit-error-title" variant="h6" component="h2" color="maroon">
+                  Exam Permit Notice
+                </Typography>
+                <Typography id="exam-permit-error-description" sx={{ mt: 2 }}>
+                  {examPermitError}
+                </Typography>
+                <Button
+                  onClick={handleCloseExamPermitModal}
+                  variant="contained"
+                  sx={{ mt: 3, backgroundColor: "#6D2323", "&:hover": { backgroundColor: "#8B0000" } }}
+                >
+                  Close
+                </Button>
+              </Box>
+            </Modal>
+
 
 
 

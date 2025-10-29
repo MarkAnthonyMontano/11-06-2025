@@ -4,10 +4,56 @@ import axios from "axios";
 import { FcPrint } from "react-icons/fc";
 import { useLocation } from "react-router-dom";
 import { SettingsContext } from "../App";
+import Unauthorized from "../components/Unauthorized";
 
 const HealthRecord = () => {
     const settings = useContext(SettingsContext); // ✅ Access the global settings
     const [fetchedLogo, setFetchedLogo] = useState(null);
+
+    const [hasAccess, setHasAccess] = useState(null);
+    const pageId = 32;
+
+    //
+    useEffect(() => {
+
+        const storedUser = localStorage.getItem("email");
+        const storedRole = localStorage.getItem("role");
+        const storedID = localStorage.getItem("person_id");
+
+        if (storedUser && storedRole && storedID) {
+            setUser(storedUser);
+            setUserRole(storedRole);
+            setUserID(storedID);
+
+            if (storedRole === "registrar") {
+                checkAccess(storedID);
+            } else {
+                window.location.href = "/login";
+            }
+        } else {
+            window.location.href = "/login";
+        }
+    }, []);
+
+    const checkAccess = async (userID) => {
+        try {
+            const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
+            if (response.data && response.data.page_privilege === 1) {
+                setHasAccess(true);
+            } else {
+                setHasAccess(false);
+            }
+        } catch (error) {
+            console.error('Error checking access:', error);
+            setHasAccess(false);
+            if (error.response && error.response.data.message) {
+                console.log(error.response.data.message);
+            } else {
+                console.log("An unexpected error occurred.");
+            }
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
         // ✅ Dynamically set logo from settings
@@ -256,6 +302,16 @@ const HealthRecord = () => {
         return () => clearTimeout(delayDebounce);
     }, [searchQuery]);
 
+    if (hasAccess === null) {
+        return "Loading...."
+    }
+
+    if (!hasAccess) {
+        return (
+            <Unauthorized />
+        );
+    }
+
 
     return (
 
@@ -300,7 +356,7 @@ const HealthRecord = () => {
                             size="small"
                             placeholder="Search by Student Number or Name or Email..."
                             value={searchQuery}
-                            style={{width: "350px"}}
+                            style={{ width: "350px" }}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             onKeyDown={(e) => {
                                 if (e.key === "Enter") fetchPersonBySearch(searchQuery);

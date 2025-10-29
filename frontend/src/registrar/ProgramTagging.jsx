@@ -343,37 +343,39 @@ const ProgramTagging = () => {
 };
 
 // 💅 Styles
-// 💅 Styles
 const styles = {
   container: {
     display: "flex",
     justifyContent: "space-between",
-    gap: "40px",
-    maxWidth: "1200px",
+    alignItems: "flex-start",
+    gap: "30px",
+    width: "95%",
     margin: "30px auto",
-    flexWrap: "wrap",
+    maxHeight: "600px",
+    flexWrap: "nowrap", // 👈 prevent stacking
   },
 
   formSection: {
-    width: "48%",
+    flex: "1",
     background: "#f8f8f8",
     border: "2px solid maroon",
     padding: "25px",
     borderRadius: "10px",
     boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
     maxHeight: "600px",
-    flex: "1 1 48%",
+    minWidth: "48%", // 👈 slightly wider
   },
 
   displaySection: {
-    width: "48%",
+    flex: "1",
     background: "#f8f8f8",
     border: "2px solid maroon",
     padding: "25px",
     borderRadius: "10px",
     boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
     maxHeight: "600px",
-    flex: "1 1 48%",
+    minWidth: "48%", // 👈 slightly wider
+    overflowY: "auto",
   },
 
   formGroup: {
@@ -420,13 +422,9 @@ const styles = {
     borderBottom: "1px solid #ddd",
     fontSize: "14px",
     color: "#333",
-    position: "relative",
-    zIndex: 1,
-  },
-
-  tbody: {
-    width: "fit-content",
   },
 };
+
+
 
 export default ProgramTagging;

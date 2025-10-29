@@ -345,7 +345,6 @@ app.post(
 //----------------------------End Settings----------------------------//
 
 
-
 /*---------------------------------START---------------------------------------*/
 // ----------------- REGISTER -----------------
 app.post("/register", async (req, res) => {
@@ -358,9 +357,16 @@ app.post("/register", async (req, res) => {
   let person_id = null;
 
   try {
+    // ✅ 1️⃣ Fetch company name (to be used as default campus label)
+    const [[company]] = await db.query(
+      "SELECT company_name FROM company_settings WHERE id = 1"
+    );
+    const companyName = company?.company_name || "Main Campus";
+
+    // ✅ 2️⃣ Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 🚫 Check if email already exists
+    // 🚫 3️⃣ Check if email already exists
     const [existingUser] = await db.query(
       "SELECT * FROM user_accounts WHERE email = ?",
       [email.trim().toLowerCase()]
@@ -369,24 +375,26 @@ app.post("/register", async (req, res) => {
       return res.status(400).json({ message: "Email is already registered" });
     }
 
-    // ✅ Insert into person_table with campus
-    const campusValue = campus && campus.toUpperCase() === "EARIST CAVITE"
-      ? "EARIST CAVITE"
-      : "EARIST MANILA";
+    // ✅ 4️⃣ Determine campus value dynamically
+    // If no campus specified, fallback to companyName
+    const campusValue = campus?.trim()
+      ? campus.trim()
+      : `${companyName} - Main`;
 
+    // ✅ 5️⃣ Insert new person record
     const [personResult] = await db.query(
       "INSERT INTO person_table (campus) VALUES (?)",
       [campusValue]
     );
     person_id = personResult.insertId;
 
-    // ✅ Insert into user_accounts
+    // ✅ 6️⃣ Insert into user_accounts
     await db.query(
       "INSERT INTO user_accounts (person_id, email, password, role) VALUES (?, ?, ?, 'applicant')",
       [person_id, email.trim().toLowerCase(), hashedPassword]
     );
 
-    // ✅ Get active school year + semester
+    // ✅ 7️⃣ Get active school year + semester
     const [activeYearResult] = await db3.query(`
       SELECT yt.year_description, st.semester_code
       FROM active_school_year_table sy
@@ -403,17 +411,18 @@ app.post("/register", async (req, res) => {
     const year = String(activeYearResult[0].year_description).split("-")[0];
     const semCode = activeYearResult[0].semester_code;
 
+    // ✅ 8️⃣ Generate applicant number
     const [countRes] = await db.query("SELECT COUNT(*) AS count FROM applicant_numbering_table");
     const padded = String(countRes[0].count + 1).padStart(5, "0");
     const applicant_number = `${year}${semCode}${padded}`;
 
-    // ✅ Insert into applicant_numbering_table
+    // ✅ 9️⃣ Insert applicant number
     await db.query(
       "INSERT INTO applicant_numbering_table (applicant_number, person_id) VALUES (?, ?)",
       [applicant_number, person_id]
     );
 
-    // ✅ Generate QR code
+    // ✅ 🔟 Generate QR Codes
     const qrData = `http://localhost:5173/examination_profile/${applicant_number}`;
     const qrData2 = `http://localhost:5173/applicant_profile/${applicant_number}`;
     const qrFilename = `${applicant_number}_qrcode.png`;
@@ -423,38 +432,41 @@ app.post("/register", async (req, res) => {
 
     await QRCode.toFile(qrPath, qrData, {
       color: { dark: "#000", light: "#FFF" },
-      width: 300
+      width: 300,
     });
 
     await QRCode.toFile(qrPath2, qrData2, {
       color: { dark: "#000", light: "#FFF" },
-      width: 300
+      width: 300,
     });
 
-    // ✅ Save QR filename into applicant_numbering_table
+    // ✅ 11️⃣ Save QR filename
     await db.query(
       "UPDATE applicant_numbering_table SET qr_code = ? WHERE applicant_number = ?",
       [qrFilename, applicant_number]
     );
 
-    // ✅ Insert status + interview
+    // ✅ 12️⃣ Insert initial applicant statuses
     await db.query(
-      "INSERT INTO person_status_table (person_id, applicant_id, exam_status, requirements, residency, student_registration_status, exam_result, hs_ave, qualifying_result, interview_result) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      `INSERT INTO person_status_table 
+       (person_id, applicant_id, exam_status, requirements, residency, student_registration_status, exam_result, hs_ave, qualifying_result, interview_result)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [person_id, applicant_number, 0, 0, 0, 0, 0, 0, 0, 0]
     );
+
     await db.query(
       "INSERT INTO interview_applicants (schedule_id, applicant_id, email_sent, status) VALUES (?, ?, ?, ?)",
       [null, applicant_number, 0, "Waiting List"]
     );
 
+    // ✅ 13️⃣ Respond success
     res.status(201).json({
       message: "Registered Successfully",
       person_id,
       applicant_number,
       qr_code: qrFilename,
-      campus: campusValue
+      campus: campusValue,
     });
-
   } catch (error) {
     console.error("❌ Registration Error:", error);
     if (person_id) {
@@ -463,6 +475,7 @@ app.post("/register", async (req, res) => {
     res.status(500).json({ message: "Internal Server Error", error: error.message });
   }
 });
+
 
 app.post("/register_registrar", async (req, res) => {
   const { employee_id, last_name, middle_name, first_name, role, email, password, status, dprtmnt_id } = req.body;
@@ -4019,9 +4032,7 @@ async function sendResetEmail(to, tempPassword, accountType) {
           <p>Your new temporary password is:</p>
           <p style="font-size: 18px; font-weight: bold; color:#6D2323;">${tempPassword}</p>
           <p>Please log in using this password and change it immediately.</p>
-          <hr />
-          <p>© 2025 Eulogio "Amang" Rodriguez Institute of Science and Technology<br>
-          Student Information System</p>
+       
         </div>
       `,
     };
@@ -4381,6 +4392,7 @@ io.on("connection", (socket) => {
   // ---------------------- Forgot Password: Applicant ----------------------
   socket.on("forgot-password-applicant", async (email) => {
     try {
+      // ✅ 1️⃣ Check if applicant exists
       const [rows] = await db.query(
         `SELECT ua.email, p.campus
        FROM user_accounts ua
@@ -4396,12 +4408,22 @@ io.on("connection", (socket) => {
         });
       }
 
-      const campus = rows[0].campus || "EARIST MANILA";
+      // ✅ 2️⃣ Fetch company name dynamically from settings
+      const [[company]] = await db.query(
+        "SELECT company_name FROM company_settings WHERE id = 1"
+      );
+      const companyName = company?.company_name || "Admissions Office";
 
+      // ✅ 3️⃣ Generate new password
       const newPassword = Math.random().toString(36).slice(-8).toUpperCase();
       const hashed = await bcrypt.hash(newPassword, 10);
-      await db.query("UPDATE user_accounts SET password = ? WHERE email = ?", [hashed, email]);
 
+      await db.query("UPDATE user_accounts SET password = ? WHERE email = ?", [
+        hashed,
+        email,
+      ]);
+
+      // ✅ 4️⃣ Configure email sender dynamically
       const transporter = nodemailer.createTransport({
         service: "gmail",
         auth: {
@@ -4410,15 +4432,22 @@ io.on("connection", (socket) => {
         },
       });
 
+      // ✅ 5️⃣ Compose email dynamically with companyName
       const mailOptions = {
-        from: `"EARIST Enrollment Notice" <noreply-earistmis@gmail.com>`,
+        from: `"${companyName} Enrollment Notice" <${process.env.EMAIL_USER}>`,
         to: email,
         subject: "Your Password has been Reset!",
-        text: `Hi,\n\nPlease login with your new password: ${newPassword}\n\nYours Truly,\n${campus}`,
+        text: `Hi,
+
+Please log in with your new password: ${newPassword}
+
+Yours truly,
+${companyName}`,
       };
 
       await transporter.sendMail(mailOptions);
 
+      // ✅ 6️⃣ Notify frontend that email was sent successfully
       socket.emit("password-reset-result-applicant", {
         success: true,
         message: "New password sent to your email.",
@@ -4435,6 +4464,7 @@ io.on("connection", (socket) => {
   // ---------------------- Forgot Password: Registrar ----------------------
   socket.on("forgot-password-registrar", async (email) => {
     try {
+      // ✅ 1️⃣ Check if email exists
       const [rows] = await db3.query(
         `SELECT ua.email, p.campus
        FROM user_accounts ua
@@ -4450,12 +4480,21 @@ io.on("connection", (socket) => {
         });
       }
 
-      const campus = rows[0].campus || "EARIST MANILA";
+      // ✅ 2️⃣ Fetch company name dynamically
+      const [[company]] = await db.query(
+        "SELECT company_name FROM company_settings WHERE id = 1"
+      );
+      const companyName = company?.company_name || "Admissions Office";
 
+      // ✅ 3️⃣ Generate new password
       const newPassword = Math.random().toString(36).slice(-8).toUpperCase();
       const hashed = await bcrypt.hash(newPassword, 10);
-      await db3.query("UPDATE user_accounts SET password = ? WHERE email = ?", [hashed, email]);
+      await db3.query("UPDATE user_accounts SET password = ? WHERE email = ?", [
+        hashed,
+        email,
+      ]);
 
+      // ✅ 4️⃣ Configure email sender (no hardcoded address)
       const transporter = nodemailer.createTransport({
         service: "gmail",
         auth: {
@@ -4464,15 +4503,22 @@ io.on("connection", (socket) => {
         },
       });
 
+      // ✅ 5️⃣ Compose email dynamically using company name
       const mailOptions = {
-        from: `"EARIST Enrollment Notice" <noreply-earistmis@gmail.com>`,
+        from: `"${companyName} Enrollment Notice" <${process.env.EMAIL_USER}>`,
         to: email,
         subject: "Your Password has been Reset!",
-        text: `Hi,\n\nPlease login with your new password: ${newPassword}\n\nYours Truly,\n${campus}`,
+        text: `Hi,
+
+Please log in with your new password: ${newPassword}
+
+Yours truly,
+${companyName}`,
       };
 
       await transporter.sendMail(mailOptions);
 
+      // ✅ 6️⃣ Emit success response
       socket.emit("password-reset-result-registrar", {
         success: true,
         message: "New password sent to your email.",
@@ -4485,6 +4531,7 @@ io.on("connection", (socket) => {
       });
     }
   });
+
 
 
   // 🔹 Get exam scores for a person
@@ -4726,89 +4773,73 @@ WHERE proctor LIKE ?
     }
   });
 
-  // ✅ Unified Save or Update for Qualifying / Interview Scores (merged + complete)
-  // ✅ Unified Save or Update for Qualifying / Interview Scores (safe + no deadlocks)
-  // ✅ Unified Save or Update for Qualifying / Interview Scores (Final version with full actor info)
-  app.post("/api/interview/save", async (req, res) => {
-    try {
-      const { applicant_number, qualifying_exam_score, qualifying_interview_score, user_person_id } = req.body;
+// ✅ Unified Save or Update for Qualifying / Interview Scores (with duplicate-safe notifications)
+app.post("/api/interview/save", async (req, res) => {
+  try {
+    const { applicant_number, qualifying_exam_score, qualifying_interview_score, user_person_id } = req.body;
 
-      // 1️⃣ Find person_id of applicant
-      const [rows] = await db.query(
-        "SELECT person_id FROM applicant_numbering_table WHERE applicant_number = ?",
-        [applicant_number]
-      );
-      if (rows.length === 0) {
-        return res.status(400).json({ error: "Applicant number not found" });
-      }
-      const personId = rows[0].person_id;
+    // Find person_id
+    const [rows] = await db.query(
+      "SELECT person_id FROM applicant_numbering_table WHERE applicant_number = ?",
+      [applicant_number]
+    );
+    if (rows.length === 0) return res.status(400).json({ error: "Applicant number not found" });
+    const personId = rows[0].person_id;
 
-      // 2️⃣ Fetch old results
-      const [oldRows] = await db.query(
-        "SELECT qualifying_result, interview_result FROM person_status_table WHERE person_id = ?",
-        [personId]
-      );
-      const oldData = oldRows[0] || null;
+    // Fetch old results
+    const [oldRows] = await db.query(
+      "SELECT qualifying_result, interview_result, exam_result FROM person_status_table WHERE person_id = ?",
+      [personId]
+    );
+    const oldData = oldRows[0] || null;
 
-      // 3️⃣ Compute new scores
-      const qExam = Number(qualifying_exam_score) || 0;
-      const qInterview = Number(qualifying_interview_score) || 0;
-      const totalAve = (qExam + qInterview) / 2;
+    // Compute new scores
+    const qExam = Number(qualifying_exam_score) || 0;
+    const qInterview = Number(qualifying_interview_score) || 0;
+    const totalAve = (qExam + qInterview) / 2;
 
-      // 4️⃣ Insert or update (Upsert)
-      await db.query(
-        `INSERT INTO person_status_table (person_id, qualifying_result, interview_result, exam_result)
+    // Upsert
+    await db.query(
+      `INSERT INTO person_status_table (person_id, qualifying_result, interview_result, exam_result)
        VALUES (?, ?, ?, ?)
        ON DUPLICATE KEY UPDATE
          qualifying_result = VALUES(qualifying_result),
          interview_result = VALUES(interview_result),
          exam_result = VALUES(exam_result)`,
-        [personId, qExam, qInterview, totalAve]
+      [personId, qExam, qInterview, totalAve]
+    );
+
+    // Get actor info
+    let actorEmail = "earistmis@gmail.com";
+    let actorName = "SYSTEM";
+    if (user_person_id) {
+      const [actorRows] = await db3.query(
+        `SELECT email, role, employee_id, last_name, first_name, middle_name
+         FROM user_accounts WHERE person_id = ? LIMIT 1`,
+        [user_person_id]
       );
-
-      // 5️⃣ Get actor info using same format as exam/save
-      let actorEmail = "system@earist.edu.ph";
-      let actorName = "SYSTEM";
-
-      if (user_person_id) {
-        const [actorRows] = await db3.query(
-          `SELECT email, role, employee_id, last_name, first_name, middle_name
-         FROM user_accounts
-         WHERE person_id = ? LIMIT 1`,
-          [user_person_id]
-        );
-
-        if (actorRows.length > 0) {
-          const u = actorRows[0];
-          const role = u.role?.toUpperCase() || "UNKNOWN";
-          const empId = u.employee_id || "N/A";
-          const lname = u.last_name || "";
-          const fname = u.first_name || "";
-          const mname = u.middle_name || "";
-          const email = u.email || "";
-
-          actorEmail = email;
-          actorName = `${role} (${empId}) - ${lname}, ${fname} ${mname}`.trim();
-        }
+      if (actorRows.length > 0) {
+        const u = actorRows[0];
+        const role = u.role?.toUpperCase() || "UNKNOWN";
+        const empId = u.employee_id || "";
+        actorEmail = u.email || "earistmis@gmail.com";
+        actorName = `${role} (${empId}) - ${u.last_name}, ${u.first_name} ${u.middle_name}`.trim();
       }
+    }
 
-      // 6️⃣ Detect and log changes
-      const changes = [];
-      if (oldData) {
-        if (oldData.qualifying_result != qExam)
-          changes.push(`Qualifying Exam Result: ${oldData.qualifying_result ?? 0} → ${qExam}`);
-        if (oldData.interview_result != qInterview)
-          changes.push(`Interview Result: ${oldData.interview_result ?? 0} → ${qInterview}`);
-      } else {
-        changes.push(`New Qualifying and Interview scores added`);
-      }
+    // Detect changes
+    if (oldData && (oldData.qualifying_result != qExam || oldData.interview_result != qInterview)) {
+      const oldExam = oldData.qualifying_result ?? 0;
+      const oldInterview = oldData.interview_result ?? 0;
+      const oldFinal = oldData.exam_result ?? ((oldExam + oldInterview) / 2).toFixed(2);
+      const newFinal = totalAve.toFixed(2);
 
-      // 7️⃣ Create notification once (no duplicates or deadlocks)
-      if (changes.length > 0) {
-        const message = `📝 ${changes.join(" | ")} updated for Applicant #${applicant_number}`;
+      // Build message text showing both scores
+      const message = `📝 Qualifying Exam: ${oldExam} → ${qExam} | Interview: ${oldInterview} → ${qInterview} | Final Rating: ${oldFinal} → ${newFinal} for Applicant #${applicant_number}`;
 
-        await db.query(
-          `INSERT INTO notifications (type, message, applicant_number, actor_email, actor_name, timestamp)
+      // One single notification per applicant per day
+      await db.query(
+        `INSERT INTO notifications (type, message, applicant_number, actor_email, actor_name, timestamp)
          SELECT ?, ?, ?, ?, ?, NOW()
          FROM DUAL
          WHERE NOT EXISTS (
@@ -4816,27 +4847,28 @@ WHERE proctor LIKE ?
            WHERE applicant_number = ?
              AND message = ?
              AND DATE(timestamp) = CURDATE()
-         )
-         LIMIT 1`,
-          ["update", message, applicant_number, actorEmail, actorName, applicant_number, message]
-        );
+         )`,
+        ["update", message, applicant_number, actorEmail, actorName, applicant_number, message]
+      );
 
-        io.emit("notification", {
-          type: "update",
-          message,
-          applicant_number,
-          actor_email: actorEmail,
-          actor_name: actorName,
-          timestamp: new Date().toISOString(),
-        });
-      }
-
-      res.json({ success: true, message: "Qualifying/Interview results saved successfully!" });
-    } catch (err) {
-      console.error("❌ Error saving qualifying/interview results:", err);
-      res.status(500).json({ error: "Failed to save qualifying/interview results" });
+      io.emit("notification", {
+        type: "update",
+        message,
+        applicant_number,
+        actor_email: actorEmail,
+        actor_name: actorName,
+        timestamp: new Date().toISOString(),
+      });
     }
-  });
+
+    res.json({ success: true, message: "Qualifying/Interview results saved successfully!" });
+  } catch (err) {
+    console.error("Error saving qualifying/interview results:", err);
+    res.status(500).json({ error: "Failed to save qualifying/interview results" });
+  }
+});
+
+
 
 
   app.post("/exam/save", async (req, res) => {
@@ -4878,7 +4910,7 @@ WHERE proctor LIKE ?
       );
 
       // 4️⃣ Get actor info using person_id from user_accounts
-      let actorEmail = "system@earist.edu.ph";
+      let actorEmail = "earistmis@gmail.com";
       let actorName = "SYSTEM";
 
       if (user_person_id) {
@@ -5228,43 +5260,40 @@ WHERE proctor LIKE ?
       const { applicant_number, qualifying_exam_score, qualifying_interview_score } = req.body;
       console.log("📥 Payload:", req.body);
 
-      // Resolve person_id
-      const person_id = await getPersonIdByApplicantNumber(applicant_number);
-      if (!person_id) {
-        return res.status(404).json({ error: "Applicant not found" });
+      // 1️⃣ Find person_id of applicant
+      const [rows] = await db.query(
+        "SELECT person_id FROM applicant_numbering_table WHERE applicant_number = ?",
+        [applicant_number]
+      );
+      if (rows.length === 0) {
+        return res.status(400).json({ error: "Applicant number not found" });
       }
+      const person_id = rows[0].person_id;
 
-      // Compute scores
+      // 2️⃣ Compute new scores
       const qExam = Number(qualifying_exam_score) || 0;
       const qInterview = Number(qualifying_interview_score) || 0;
       const totalAve = (qExam + qInterview) / 2;
 
-      // Update → insert if none
-      const [updateResult] = await db.query(
-        `
-      UPDATE person_status_table
-      SET qualifying_result = ?, interview_result = ?, exam_result = ?
-      WHERE person_id = ?
-      `,
-        [qExam, qInterview, totalAve, person_id]
+      // 3️⃣ Insert or update (Upsert)
+      await db.query(
+        `INSERT INTO person_status_table (person_id, qualifying_result, interview_result, exam_result)
+       VALUES (?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE
+         qualifying_result = VALUES(qualifying_result),
+         interview_result = VALUES(interview_result),
+         exam_result = VALUES(exam_result)`,
+        [person_id, qExam, qInterview, totalAve]
       );
 
-      if (updateResult.affectedRows === 0) {
-        await db.query(
-          `
-        INSERT INTO person_status_table (person_id, qualifying_result, interview_result, exam_result)
-        VALUES (?, ?, ?, ?)
-        `,
-          [person_id, qExam, qInterview, totalAve]
-        );
-      }
-
-      res.json({ message: "Scores saved successfully" });
+      // 4️⃣ Return success (no notification here)
+      res.json({ success: true, message: "Interview and exam scores saved successfully!" });
     } catch (err) {
-      console.error("🔥 Error saving scores:", err);
-      res.status(500).json({ error: err.message });
+      console.error("🔥 Error saving interview/exam scores:", err);
+      res.status(500).json({ error: "Failed to save interview/exam scores" });
     }
   });
+
 
   // ---------------------------------------------------------
   // 3) Update by applicant_number (same mapping)
@@ -5290,95 +5319,10 @@ WHERE proctor LIKE ?
     );
   }
 
-  // ---------------------------------------------------------
-  // POST /api/interview  (create or save — now uses same logic)
-  app.post("/api/interview", async (req, res) => {
-    try {
-      const { applicant_number, qualifying_exam_score, qualifying_interview_score, user_person_id } = req.body;
-      const person_id = await getPersonIdByApplicantNumber(applicant_number);
-      if (!person_id) return res.status(404).json({ error: "Applicant not found" });
-
-      const qExam = Number(qualifying_exam_score) || 0;
-      const qInterview = Number(qualifying_interview_score) || 0;
-      const totalAve = (qExam + qInterview) / 2;
-
-      // fetch old data if any
-      const [oldRows] = await db.query(
-        "SELECT qualifying_result, interview_result FROM person_status_table WHERE person_id = ?",
-        [person_id]
-      );
-      const oldData = oldRows[0] || {};
-
-      // Upsert: update or insert
-      const [updateResult] = await db.query(
-        `UPDATE person_status_table
-       SET qualifying_result = ?, interview_result = ?, exam_result = ?
-       WHERE person_id = ?`,
-        [qExam, qInterview, totalAve, person_id]
-      );
-      if (updateResult.affectedRows === 0) {
-        await db.query(
-          `INSERT INTO person_status_table (person_id, qualifying_result, interview_result, exam_result)
-         VALUES (?, ?, ?, ?)`,
-          [person_id, qExam, qInterview, totalAve]
-        );
-      }
-
-      // Actor info (from enrollment DB)
-      const [actorRows] = await db3.query(
-        "SELECT email, role, last_name, first_name, middle_name FROM user_accounts WHERE person_id = ? LIMIT 1",
-        [user_person_id]
-      );
-      const actor = actorRows[0] || {};
-      const actorEmail = actor.email || "earistmis@gmail.com";
-      const actorName = actor.last_name
-        ? `${actor.role ? actor.role.toUpperCase() : ""} (${actor.employee_id || ""}) - ${actor.last_name}, ${actor.first_name || ""} ${actor.middle_name || ""}`.trim()
-        : (actor.role ? actor.role.toUpperCase() : "SYSTEM");
-
-      // Build per-field change list (no combined message)
-      const scoreChanges = [
-        { key: "Qualifying Exam Result", oldVal: (oldData.qualifying_result ?? 0), newVal: qExam },
-        { key: "Interview Result", oldVal: (oldData.interview_result ?? 0), newVal: qInterview },
-      ];
-
-      for (const s of scoreChanges) {
-        if (s.oldVal != s.newVal) {
-          const message = `📝 ${s.key} updated (${s.oldVal} → ${s.newVal}) for Applicant #${applicant_number}`;
-
-          // Insert guard prevents duplicates (short timeframe + daily)
-          await insertNotificationOnce({
-            type: "update",
-            message,
-            applicant_number,
-            actorEmail,
-            actorName,
-          });
-
-          io.emit("notification", {
-            type: "update",
-            message,
-            applicant_number,
-            actor_email: actorEmail,
-            actor_name: actorName,
-            timestamp: new Date().toISOString(),
-          });
-        }
-      }
-
-      return res.json({ message: "Scores saved successfully" });
-    } catch (err) {
-      console.error("🔥 Error saving scores:", err);
-      return res.status(500).json({ error: err.message });
-    }
-  });
-
-  // ---------------------------------------------------------
-  // PUT /api/interview/:applicant_number  (update)
-
-
   // ---------------------- Assign Student Number ----------------------
   socket.on("assign-student-number", async (person_id) => {
     try {
+      // ✅ Fetch person info
       const [rows] = await db.query(
         `SELECT * FROM person_table AS pt WHERE person_id = ?`,
         [person_id]
@@ -5396,6 +5340,7 @@ WHERE proctor LIKE ?
       const tempPassword = Math.random().toString(36).slice(-8).toUpperCase();
       const hashedPassword = await bcrypt.hash(tempPassword, 10);
 
+      // ✅ Get uploaded requirements
       const [requirements] = await db.query(
         `SELECT * FROM requirement_uploads WHERE person_id = ?`,
         [person_id]
@@ -5408,15 +5353,17 @@ WHERE proctor LIKE ?
       );
 
       await db3.query(
-        `INSERT INTO person_status_table (person_id, exam_status, requirements, residency, student_registration_status, exam_result, hs_ave) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO person_status_table (person_id, exam_status, requirements, residency, student_registration_status, exam_result, hs_ave)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
         [person_id, 0, 0, 0, 0, 0, 0]
       );
 
+      // ✅ Copy requirements to db3
       for (const req of requirements) {
         await db3.query(
           `INSERT INTO requirement_uploads 
-            (requirements_id, person_id, submitted_documents, file_path, original_name, remarks, status, document_status, registrar_status, created_at) 
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          (requirements_id, person_id, submitted_documents, file_path, original_name, remarks, status, document_status, registrar_status, created_at) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             req.requirements_id,
             req.person_id,
@@ -5426,28 +5373,30 @@ WHERE proctor LIKE ?
             req.remarks,
             req.status,
             req.document_status,
-            req.registar_status,
+            req.registrar_status,
             req.created_at,
           ]
         );
       }
 
       await db3.query(
-        `INSERT INTO student_status_table (student_number, active_curriculum, enrolled_status, year_level_id, active_school_year_id, control_status) VALUES (?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO student_status_table 
+         (student_number, active_curriculum, enrolled_status, year_level_id, active_school_year_id, control_status)
+       VALUES (?, ?, ?, ?, ?, ?)`,
         [student_number, 0, 1, 0, 0, 0]
       );
 
-      // ✅ Also update student_registration_status = 1
+      // ✅ Update registration status
       await db3.query(
         `UPDATE person_status_table SET student_registration_status = 1 WHERE person_id = ?`,
         [person_id]
       );
 
-      await db3.query(
-        `INSERT INTO person_table (last_name, first_name, middle_name, emailAddress, created_at) VALUES (?,?,?,?, CURDATE())`, [last_name, first_name, middle_name, emailAddress]
-      )
-      // ✅ Insert or update login credentials
-      const [existingUser] = await db3.query(`SELECT * FROM user_accounts WHERE person_id = ?`, [person_id]);
+      // ✅ Insert login credentials (or update if existing)
+      const [existingUser] = await db3.query(
+        `SELECT * FROM user_accounts WHERE person_id = ?`,
+        [person_id]
+      );
 
       if (existingUser.length === 0) {
         await db3.query(
@@ -5461,14 +5410,20 @@ WHERE proctor LIKE ?
         );
       }
 
-      // ✅ Emit success
+      // ✅ Emit success result
       socket.emit("assign-student-number-result", {
         success: true,
         student_number,
         message: "Student number assigned successfully.",
       });
 
-      // 📧 Send Email (optional but useful)
+      // ✅ Fetch company name dynamically
+      const [[company]] = await db.query(
+        "SELECT company_name FROM company_settings WHERE id = 1"
+      );
+      const companyName = company?.company_name || "Enrollment Office";
+
+      // ✅ Send welcome email
       const transporter = nodemailer.createTransport({
         service: "gmail",
         auth: {
@@ -5478,32 +5433,31 @@ WHERE proctor LIKE ?
       });
 
       const mailOptions = {
-        from: `"EARIST Enrollment Office" <noreply-earistmis@gmail.com>`,
+        from: `"${companyName} Enrollment Office" <${process.env.EMAIL_USER}>`,
         to: emailAddress,
-        subject: "🎓 Welcome to EARIST - Acceptance Confirmation",
+        subject: `🎓 Welcome to ${companyName} - Acceptance Confirmation`,
         text: `
-Hi, ${first_name} ${middle_name} ${last_name},
+Hi, ${first_name} ${middle_name || ""} ${last_name},
 
-🎉 Congratulations! You are now officially Accepted and Part of Eulogio 'Amang' 
-Rodriguez Institute of Science and Technology (EARIST) Community. 
+🎉 Congratulations! You are now officially accepted and part of the ${companyName} community.
 
-Please go to your specific colleges to tag your schedule to your account and to get your schedule.
+Please visit your respective college offices to tag your schedule to your account and obtain your class schedule.
 
 Your Student Number is: ${student_number}
 Your Email Address is: ${emailAddress}
 
 Your temporary password is: ${tempPassword}
 
-You may change your password and keep it secured.
+You may change your password and keep it secure.
 
-👉 Click the link below to log in to EARIST:
-
+👉 Click the link below to log in:
 http://localhost:5173/login
-  `.trim(),
+`.trim(),
       };
 
-      // Send email in background
+      // ✅ Send email (non-blocking)
       transporter.sendMail(mailOptions).catch(console.error);
+
     } catch (error) {
       console.error("Error in assign-student-number:", error);
       socket.emit("assign-student-number-result", {
@@ -5512,6 +5466,7 @@ http://localhost:5173/login
       });
     }
   });
+
 });
 
 
@@ -6323,7 +6278,7 @@ io.on("connection", (socket) => {
         [user_person_id]
       );
 
-      let actorEmail = "earistmis@gmail.com";
+      let actorEmail = "system@localhost";
       let actorName = "SYSTEM";
 
       if (actorRows.length > 0) {
@@ -6336,13 +6291,16 @@ io.on("connection", (socket) => {
         const email = u.email || "";
 
         actorEmail = email;
-
-        // 🟢 Final clean format — no HTML
-        // You’ll color employee ID on frontend
-        actorName = `${role} (${empId}) - ${lname}, ${fname} ${mname} `.trim();
+        actorName = `${role} (${empId}) - ${lname}, ${fname} ${mname}`.trim();
       }
 
-      // ✅ 2️⃣ Fetch applicants with schedule
+      // ✅ 2️⃣ Get company name from settings (no more hard-coded "Admission Office")
+      const [[company]] = await db.query(
+        "SELECT company_name FROM company_settings WHERE id = 1"
+      );
+      const companyName = company?.company_name || "Admission Office";
+
+      // ✅ 3️⃣ Fetch applicants (only those who haven’t been emailed yet)
       const [rows] = await db.query(
         `SELECT 
          ea.schedule_id,
@@ -6363,7 +6321,8 @@ io.on("connection", (socket) => {
          ON ea.applicant_id = an.applicant_number
        JOIN person_table p 
          ON an.person_id = p.person_id
-       WHERE ea.schedule_id = ?`,
+       WHERE ea.schedule_id = ? 
+         AND (ea.email_sent IS NULL OR ea.email_sent = 0)`,
         [schedule_id]
       );
 
@@ -6376,11 +6335,21 @@ io.on("connection", (socket) => {
 
       const batchSize = 5;
       const delayMs = 1000;
-
       const sent = [];
       const failed = [];
       const skipped = [];
 
+      // ✅ Helper function to format time
+      const formatTime = (timeStr) => {
+        if (!timeStr) return "";
+        const [hours, minutes] = timeStr.split(":");
+        let h = parseInt(hours, 10);
+        const ampm = h >= 12 ? "PM" : "AM";
+        h = h % 12 || 12;
+        return `${h}:${minutes} ${ampm}`;
+      };
+
+      // ✅ Helper function to send individual email
       const sendEmail = async (row) => {
         if (!row.emailAddress) {
           skipped.push(row.applicant_number);
@@ -6388,12 +6357,11 @@ io.on("connection", (socket) => {
           return;
         }
 
-        const campus = row.campus || "EARIST MANILA";
         const formattedStart = formatTime(row.start_time);
         const formattedEnd = formatTime(row.end_time);
 
         const mailOptions = {
-          from: `"${campus}" <${process.env.EMAIL_USER}>`,
+          from: `"${companyName}" <${process.env.EMAIL_USER}>`,
           to: row.emailAddress,
           subject: "Your Entrance Exam Schedule",
           text: `Hello ${row.first_name} ${row.last_name},
@@ -6415,13 +6383,13 @@ This printed permit must be presented to your proctor on the exam day to verify 
 
 Thank you and good luck!
 
-EARIST Admission Office,
-- ${campus}`,
+${companyName}`,
         };
 
         try {
           await transporter.sendMail(mailOptions);
 
+          // ✅ Update flags
           await db.query(
             `UPDATE exam_applicants 
            SET email_sent = 1 
@@ -6436,7 +6404,7 @@ EARIST Admission Office,
             [row.person_id]
           );
 
-          // ✅ Log per applicant into notifications
+          // ✅ Log notification
           const message = `📧 Exam schedule email sent for Applicant #${row.applicant_number} (Schedule #${row.schedule_id})`;
           await db.query(
             `INSERT INTO notifications (type, message, applicant_number, actor_email, actor_name, timestamp)
@@ -6452,17 +6420,16 @@ EARIST Admission Office,
         }
       };
 
-      // 🔹 3️⃣ Process in batches
+      // ✅ 4️⃣ Process in batches
       for (let i = 0; i < rows.length; i += batchSize) {
         const batch = rows.slice(i, i + batchSize);
         await Promise.all(batch.map(sendEmail));
-
         if (i + batchSize < rows.length) {
           await new Promise((resolve) => setTimeout(resolve, delayMs));
         }
       }
 
-      // 🔹 4️⃣ Notify sender (summary)
+      // ✅ 5️⃣ Send summary back to sender
       socket.emit("send_schedule_emails_result", {
         success: true,
         sent,
@@ -6471,7 +6438,7 @@ EARIST Admission Office,
         message: `Emails processed: Sent=${sent.length}, Failed=${failed.length}, Skipped=${skipped.length}`,
       });
 
-      // 🔹 5️⃣ Broadcast refresh
+      // ✅ 6️⃣ Notify other clients for refresh
       io.emit("schedule_updated", { schedule_id });
     } catch (err) {
       console.error("Error in send_schedule_emails:", err);
@@ -9804,29 +9771,40 @@ app.get("/get_active_school_years", async (req, res) => {
 
 // 09/06/2025 UPDATE
 /* Student Reset Password (Admin Side) */
+/* Student Reset Password (Admin Side) */
 app.post("/forgot-password-student", async (req, res) => {
   try {
     const { email } = req.body;
 
-    // ✅ Join to get campus of the user
-    const [rows] = await db3.query(`
-      SELECT ua.email, p.campus
-      FROM user_accounts ua
-      JOIN person_table p ON ua.person_id = p.person_id
-      WHERE ua.email = ?
-    `, [email]);
+    // ✅ Get user info
+    const [rows] = await db3.query(
+      `SELECT ua.email, p.campus
+       FROM user_accounts ua
+       JOIN person_table p ON ua.person_id = p.person_id
+       WHERE ua.email = ?`,
+      [email]
+    );
 
     if (rows.length === 0) {
       return res.status(404).json({ success: false, message: "Email not found." });
     }
 
-    const campus = rows[0].campus || "EARIST MANILA"; // default if null
+    // ✅ Fetch company name from settings
+    const [[company]] = await db.query(
+      "SELECT company_name FROM company_settings WHERE id = 1"
+    );
+    const companyName = company?.company_name || "Admission Office";
 
+    // ✅ Generate and hash new password
     const newPassword = Math.random().toString(36).slice(-8).toUpperCase();
     const hashed = await bcrypt.hash(newPassword, 10);
 
-    await db3.query("UPDATE user_accounts SET password = ? WHERE email = ?", [hashed, email]);
+    await db3.query("UPDATE user_accounts SET password = ? WHERE email = ?", [
+      hashed,
+      email,
+    ]);
 
+    // ✅ Create transporter
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -9835,11 +9813,17 @@ app.post("/forgot-password-student", async (req, res) => {
       },
     });
 
+    // ✅ Dynamic mail options
     const mailOptions = {
-      from: `"EARIST Enrollment Notice" <noreply-earistmis@gmail.com>`,
+      from: `"${companyName} Enrollment Notice" <${process.env.EMAIL_USER}>`,
       to: email,
       subject: "Your Password has been Reset!",
-      text: `Hi,\n\nPlease login with your new password: ${newPassword}\n\nYours Truly,\n${campus}`,
+      text: `Hi,
+
+Please login with your new password: ${newPassword}
+
+Yours truly,
+${companyName}`,
     };
 
     await transporter.sendMail(mailOptions);
@@ -9850,6 +9834,7 @@ app.post("/forgot-password-student", async (req, res) => {
     res.status(500).json({ success: false, message: "Internal server error." });
   }
 });
+
 
 /* Student Dashboard */
 //GET All Needed Student Personl Data
@@ -11933,22 +11918,22 @@ app.get("/api/document_status/:applicant_number", async (req, res) => {
     // 📝 Create notification message
     const message = `✏️ Document status for Applicant #${applicant_number} set to "${finalStatus}"`;
 
-    // 💾 Insert notification (only if there's evaluator info)
-    await db.query(
-      `INSERT INTO notifications (type, message, applicant_number, actor_email, actor_name)
-       VALUES (?, ?, ?, ?, ?)`,
-      ['update', message, applicant_number, actorEmail, actorName]
-    );
+    // // 💾 Insert notification (only if there's evaluator info)
+    // await db.query(
+    //   `INSERT INTO notifications (type, message, applicant_number, actor_email, actor_name)
+    //    VALUES (?, ?, ?, ?, ?)`,
+    //   ['update', message, applicant_number, actorEmail, actorName]
+    // );
 
-    // 📢 Emit notification via socket.io
-    io.emit('notification', {
-      type: 'update',
-      message,
-      applicant_number,
-      actor_email: actorEmail,
-      actor_name: actorName,
-      timestamp: new Date().toISOString()
-    });
+    // // 📢 Emit notification via socket.io
+    // io.emit('notification', {
+    //   type: 'update',
+    //   message,
+    //   applicant_number,
+    //   actor_email: actorEmail,
+    //   actor_name: actorName,
+    //   timestamp: new Date().toISOString()
+    // });
 
     return res.json({
       document_status: finalStatus,
@@ -12087,20 +12072,88 @@ app.delete("/api/pages/:id", async (req, res) => {
   }
 });
 
+// ✅ Get all access for one user
+app.get("/api/page_access/:userId", async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const [rows] = await db3.query(
+      "SELECT * FROM page_access WHERE user_id = ?",
+      [userId]
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error("Error fetching access:", err);
+    res.status(500).json({ error: "Database error" });
+  }
+});
 
-app.put("/api/page_access/:userId/:pageId", async (req, res) => {
+app.post("/api/page_access/:userId/:pageId", async (req, res) => {
   const { userId, pageId } = req.params;
-  const { page_privilege } = req.body;
+
+  try {
+    const [existing] = await db3.query(
+      "SELECT * FROM page_access WHERE user_id = ? AND page_id = ?",
+      [userId, pageId]
+    );
+
+    if (existing.length > 0) {
+      // If record already exists, don't insert again
+      return res.status(400).json({ success: false, message: "Access already exists" });
+    }
+
+    const [result] = await db3.query(
+      `INSERT INTO page_access (user_id, page_id, page_privilege)
+       VALUES (?, ?, 1)
+       ON DUPLICATE KEY UPDATE page_privilege = VALUES(page_privilege)`,
+      [userId, pageId]
+    );
+
+    // ✅ If query succeeded (affected rows > 0)
+    if (result.affectedRows > 0) {
+      res.json({ success: true, action: "added" });
+    } else {
+      res.json({ success: false, action: "no changes" });
+    }
+  } catch (err) {
+    console.error("Error inserting access:", err);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.delete("/api/page_access/:userId/:pageId", async (req, res) => {
+  const { userId, pageId } = req.params;
   try {
     await db3.query(
-      `INSERT INTO page_access (user_id, page_id, page_privilege)
-       VALUES (?, ?, ?)
-       ON DUPLICATE KEY UPDATE page_privilege = VALUES(page_privilege)`,
-      [userId, pageId, page_privilege]
+      "DELETE FROM page_access WHERE user_id = ? AND page_id = ?",
+      [userId, pageId]
     );
-    res.json({ success: true });
+    res.json({ success: true, action: "deleted" });
   } catch (err) {
-    console.error("Error updating access:", err);
+    console.error("Error deleting access:", err);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.get("/api/page_access/:userId/:pageId", async (req, res) => {
+  const { userId, pageId } = req.params;
+  try {
+    const [rows] = await db3.query(
+      "SELECT page_privilege FROM page_access WHERE user_id = ? AND page_id = ?",
+      [userId, pageId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "The user has not been given a privilege to access this page.",
+        hasAccess: false
+      });
+    }
+
+    res.json(rows[0]);
+    console.log(rows[0]);
+  } catch (err) {
+    console.error("Error checking access:", err);
     res.status(500).json({ error: "Database error" });
   }
 });
@@ -13006,6 +13059,74 @@ app.get("/api/person_status/:person_id", async (req, res) => {
     }
 
     res.json(rows[0]);
+  } catch (err) {
+    console.error("❌ Error fetching person_status:", err);
+    res.status(500).json({ message: "Database error" });
+  }
+});
+
+app.get("/get_prof_data/:id", async (req, res) => {
+  const id = req.params.id;
+
+  const query = `
+    SELECT pt.prof_id, pt.profile_image, pt.email, pt.fname, pt.mname, pt.lname FROM prof_table AS pt
+    WHERE pt.person_id = ?
+  `;
+
+  try {
+    const [rows] = await db3.query(query, [id]);
+    console.log(rows);
+    res.json(rows);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.get("/api/announcements/faculty", async (req, res) => {
+  try {
+    const [rows] = await db.execute(
+      "SELECT * FROM announcements WHERE target_role = 'faculty' AND expires_at > NOW() ORDER BY created_at DESC"
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error("Error fetching student announcements:", err);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+app.get("/api/faculty_evaluation", async (req, res) => {
+  const { prof_id, year_id, semester_id } = req.query;
+  try {
+    const [rows] = await db3.query(
+      `
+      SELECT 
+        pt.prof_id,
+        st.course_id,
+        ct.course_code,
+        sy.year_id, 
+        sy.semester_id,
+        SUM(CASE WHEN st.question_answer = 1 THEN 1 ELSE 0 END) AS answered_one_count,
+        SUM(CASE WHEN st.question_answer = 2 THEN 1 ELSE 0 END) AS answered_two_count,
+        SUM(CASE WHEN st.question_answer = 3 THEN 1 ELSE 0 END) AS answered_three_count,
+        SUM(CASE WHEN st.question_answer = 4 THEN 1 ELSE 0 END) AS answered_four_count,
+        SUM(CASE WHEN st.question_answer = 5 THEN 1 ELSE 0 END) AS answered_five_count
+      FROM student_evaluation_table AS st
+      INNER JOIN prof_table AS pt ON st.prof_id = pt.prof_id
+      INNER JOIN active_school_year_table AS sy ON st.school_year_id = sy.id
+      INNER JOIN question_table AS qt ON st.question_id = qt.id
+      INNER JOIN course_table AS ct ON st.course_id = ct.course_id
+      WHERE pt.prof_id = ? AND sy.year_id = ? AND sy.semester_id = ?
+      GROUP BY st.course_id, pt.prof_id;
+      `, [prof_id, year_id, semester_id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "No status record found for this person" });
+    }
+
+    res.json(rows);
+    console.log(rows);
   } catch (err) {
     console.error("❌ Error fetching person_status:", err);
     res.status(500).json({ message: "Database error" });

@@ -684,9 +684,6 @@ const ApplicantList = () => {
             width: 100%;
           }
           .print-header img {
-            position: absolute;
-            left: 0;
-            margin-left: 10px;
             width: 120px;
             height: 120px;
             border-radius: 50%;
@@ -740,18 +737,18 @@ th {
 
           <!-- ✅ HEADER -->
           <div class="print-header">
-            <img src="${logoSrc}" alt="School Logo" />
-            <div>
+            <img src="${logoSrc}" alt="School Logo" class="logo" style="width: 18%;"/>
+            <div style="width: 64%;">
               <div>Republic of the Philippines</div>
 
               <!-- ✅ Dynamic company name -->
               ${name
                 ? `
-                    <b style="letter-spacing: 1px; font-size: 20px; font-family: 'Times New Roman', serif;">
+                    <b style="letter-spacing: 1px; font-size: 20px;">
                       ${firstLine}
                     </b>
                     ${secondLine
-                    ? `<div style="letter-spacing: 1px; font-size: 20px; font-family: 'Times New Roman', serif;">
+                    ? `<div style="letter-spacing: 1px; font-size: 20px;">
                             <b>${secondLine}</b>
                           </div>`
                     : ""
@@ -762,12 +759,11 @@ th {
 
               <!-- ✅ Dynamic campus address -->
               <div style="font-size: 12px;">${campusAddress}</div>
-
-              <div style="margin-top: 30px;">
-                <b style="font-size: 24px; letter-spacing: 1px;">Applicant List</b>
-              </div>
             </div>
+            <div style="min-width: 18%;"></div>
           </div>
+        
+          <div style="font-size: 24px; letter-spacing: 1px; font-weight: bold;">Applicant List</div>
 
           <!-- ✅ TABLE -->
           <table>

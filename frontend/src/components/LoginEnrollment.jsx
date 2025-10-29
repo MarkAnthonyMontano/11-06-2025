@@ -242,14 +242,14 @@ const LoginEnrollment = ({ setIsAuthenticated }) => {
                     if (e.target.value === "applicant") {
                       navigate("/login_applicant");
                     } else {
-                      navigate("/login_enrollment");
+                      navigate("/login");
                     }
                   }}
                   style={{
                     width: "100%",
                     padding: "0.8rem 2.5rem 0.8rem 2.5rem",
                     borderRadius: "6px",
-                   border: "1px solid rgba(120, 90, 60, 0.5)", // warm brown-gray
+                   border: "2px solid maroon", // warm brown-gray
 
                     fontSize: "1rem",
                     backgroundColor: "white",
@@ -298,7 +298,7 @@ const LoginEnrollment = ({ setIsAuthenticated }) => {
                     className="border"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    style={{ paddingLeft: "2.5rem" }}
+                    style={{ paddingLeft: "2.5rem", border: "2px solid maroon"}}
                     autoFocus
                   />
                   <EmailIcon
@@ -321,7 +321,7 @@ const LoginEnrollment = ({ setIsAuthenticated }) => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="border"
-                    style={{ paddingLeft: "2.5rem" }}
+                    style={{ paddingLeft: "2.5rem", border: "2px solid maroon"}}
                   />
                   <LockIcon
                     style={{

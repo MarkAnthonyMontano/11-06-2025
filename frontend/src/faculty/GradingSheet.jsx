@@ -9,7 +9,7 @@ const GradingSheet = () => {
   const [user, setUser] = useState("");
   const [userRole, setUserRole] = useState("");
   const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState("No Student Found");
   const [students, setStudents] = useState([]);
   const [activeButton, setActiveButton] = useState(null);
   const [profData, setPerson] = useState({
@@ -349,6 +349,7 @@ const GradingSheet = () => {
 
           mb: 2,
           px: 2,
+          mt: 2,
         }}
       >
         <Typography

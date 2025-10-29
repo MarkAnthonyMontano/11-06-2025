@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext, useRef } from "react";
 import { SettingsContext } from "../App";
-import { Box, Container, } from "@mui/material";
+import { Box, Container, Typography } from "@mui/material";
 import EaristLogo from "../assets/EaristLogo.png";
 import axios from "axios";
 import { FcPrint } from "react-icons/fc";
@@ -250,9 +250,14 @@ const ECATApplicationForm = () => {
   }
 
 
+
+
+
+
   return (
 
-    <Box sx={{ height: 'calc(95vh - 80px)', overflowY: 'auto', paddingRight: 1, backgroundColor: 'transparent' }}>
+      <Box sx={{ height: "calc(100vh - 150px)", overflowY: "auto", paddingRight: 1, backgroundColor: "transparent" }}>
+       
       <div ref={divToPrintRef}>
         <div>
           <style>
@@ -267,9 +272,39 @@ const ECATApplicationForm = () => {
 
 
         </div>
+
         <Container>
-          <h1 style={{ fontSize: "40px", fontWeight: "bold", textAlign: "Left", color: "maroon", marginTop: "25px" }}> ECAT APPLICATION FORM</h1>
-          <hr style={{ border: "1px solid #ccc", width: "44%" }} />
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+
+
+              mb: 2,
+
+            }}
+          >
+            <Typography
+              variant="h4"
+              sx={{
+                fontWeight: 'bold',
+                color: 'maroon',
+                fontSize: '36px',
+              }}
+            >
+              UPLOAD REQUIREMENTS
+            </Typography>
+
+
+
+
+          </Box>
+          <hr style={{ border: "1px solid #ccc", width: "100%" }} />
+
+          <br />
+
           <button
             onClick={printDiv}
             style={{

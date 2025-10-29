@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import axios from 'axios';
 import { Box, Typography } from "@mui/material";
+import Unauthorized from "../components/Unauthorized";
+
 
 const CurriculumPanel = () => {
     const [curriculum, setCurriculum] = useState({ year_id: '', program_id: '' });
@@ -8,6 +10,54 @@ const CurriculumPanel = () => {
     const [programList, setProgramList] = useState([]);
     const [curriculumList, setCurriculumList] = useState([]);
     const [successMsg, setSuccessMsg] = useState('');
+
+const [userID, setUserID] = useState("");
+const [user, setUser] = useState("");
+const [userRole, setUserRole] = useState("");
+const [hasAccess, setHasAccess] = useState(null);
+const pageId = 23;
+
+//
+useEffect(() => {
+    
+    const storedUser = localStorage.getItem("email");
+    const storedRole = localStorage.getItem("role");
+    const storedID = localStorage.getItem("person_id");
+
+    if (storedUser && storedRole && storedID) {
+      setUser(storedUser);
+      setUserRole(storedRole);
+      setUserID(storedID);
+
+      if (storedRole === "registrar") {
+        checkAccess(storedID);
+      } else {
+        window.location.href = "/login";
+      }
+    } else {
+      window.location.href = "/login";
+    }
+  }, []);
+
+const checkAccess = async (userID) => {
+    try {
+        const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
+        if (response.data && response.data.page_privilege === 1) {
+          setHasAccess(true);
+        } else {
+          setHasAccess(false);
+        }
+    } catch (error) {
+        console.error('Error checking access:', error);
+        setHasAccess(false);
+        if (error.response && error.response.data.message) {
+          console.log(error.response.data.message);
+        } else {
+          console.log("An unexpected error occurred.");
+        }
+        setLoading(false);
+    }
+  };
 
     useEffect(() => {
         fetchYear();
@@ -80,25 +130,17 @@ const CurriculumPanel = () => {
     };
 
 
-    // 🔒 Disable right-click
-    document.addEventListener('contextmenu', (e) => e.preventDefault());
+  
 
-    // 🔒 Block DevTools shortcuts + Ctrl+P silently
-    document.addEventListener('keydown', (e) => {
-        const isBlockedKey =
-            e.key === 'F12' || // DevTools
-            e.key === 'F11' || // Fullscreen
-            (e.ctrlKey && e.shiftKey && (e.key.toLowerCase() === 'i' || e.key.toLowerCase() === 'j')) || // Ctrl+Shift+I/J
-            (e.ctrlKey && e.key.toLowerCase() === 'u') || // Ctrl+U (View Source)
-            (e.ctrlKey && e.key.toLowerCase() === 'p');   // Ctrl+P (Print)
+if (hasAccess === null) {
+   return "Loading...."
+}
 
-        if (isBlockedKey) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-    });
-
-
+  if (!hasAccess) {
+    return (
+      <Unauthorized />
+    );
+  }
 
     return (
         <Box sx={{ height: "calc(100vh - 150px)", overflowY: "auto", paddingRight: 1, backgroundColor: "transparent" }}>
@@ -138,7 +180,8 @@ const CurriculumPanel = () => {
             <div style={styles.container}>
                 {/* Left side: Form */}
                 <div style={styles.panel}>
-                    <h2 style={styles.header}>Add Curriculum</h2>
+                  <h2 style={{ ...styles.header, color: "maroon", fontWeight: "bold" }}>Add Curriculum</h2>
+
                     <div style={styles.inputGroup}>
                         <label style={styles.label}>Curriculum Year:</label>
                         <select name="year_id" value={curriculum.year_id} onChange={handleChange} style={styles.select}>
@@ -169,24 +212,25 @@ const CurriculumPanel = () => {
 
                 {/* Right side: Curriculum List */}
                 <div style={styles.listPanel}>
-                    <h3 style={styles.listHeader}>Curriculum List</h3>
+                    <h3 style={{ ...styles.listHeader, color: "maroon", fontWeight: "bold" }}>Curriculum List</h3>
+
                     <table style={styles.table}>
                         <thead>
                             <tr>
-                                <th>ID</th>
-                                <th>Year</th>
-                                <th>Program</th>
-                                <th>Status</th>
+                                <th style={{ border: "2px solid maroon" }}>ID</th>
+                                <th style={{ border: "2px solid maroon" }}>Year</th>
+                                <th style={{ border: "2px solid maroon" }}>Program</th>
+                                <th style={{ border: "2px solid maroon" }}>Status</th>
                             </tr>
                         </thead>
 
                         <tbody>
                             {curriculumList.map(item => (
                                 <tr key={item.curriculum_id}>
-                                    <td>{item.curriculum_id}</td>
-                                    <td>{item.year_description}</td>
-                                    <td>{item.program_description} ({item.program_code})</td>
-                                    <td>
+                                    <td style={{ border: "2px solid maroon", textAlign: "center", width: "50px" }}>{item.curriculum_id}</td>
+                                    <td style={{ border: "2px solid maroon", textAlign: "center", width: "50px" }}>{item.year_description}</td>
+                                    <td style={{ border: "2px solid maroon", textAlign: "left", width: "700px" }}>{item.program_description} ({item.program_code})</td>
+                                    <td style={{ border: "2px solid maroon", textAlign: "center", width: "50px" }}>
                                         <button
                                             onClick={() => handleUpdateStatus(item.curriculum_id, item.lock_status)}
                                             style={{
@@ -229,6 +273,7 @@ const styles = {
     panel: {
         flex: 1,
         padding: '20px',
+
         borderRadius: '8px',
         backgroundColor: '#fff',
         border: "2px solid maroon",
@@ -240,7 +285,8 @@ const styles = {
         borderRadius: '8px',
         border: "2px solid maroon",
         backgroundColor: '#f9f9f9',
-        boxShadow: '0 0 10px rgba(0,0,0,0.1)'
+        boxShadow: '0 0 10px rgba(0,0,0,0.1)',
+
     },
     header: {
         marginBottom: '20px',
@@ -257,6 +303,7 @@ const styles = {
     select: {
         width: '100%',
         padding: '8px',
+        border: "2px solid maroon",
         borderRadius: '4px',
         border: '1px solid #ccc'
     },
@@ -281,12 +328,14 @@ const styles = {
     table: {
         width: '100%',
         borderCollapse: 'collapse'
+
     },
     tableHeader: {
-        backgroundColor: '#eee'
+        backgroundColor: '#eee',
+
     },
     tableCell: {
-        border: '1px solid #ccc',
+        border: "2px solid maroon",
         padding: '8px',
         textAlign: 'left'
     }

@@ -3,6 +3,8 @@ import axios from 'axios';
 import {
   Container, Box, Button, Select, MenuItem, Typography, Paper, Grid
 } from "@mui/material";
+import Unauthorized from "../components/Unauthorized";
+
 
 const DepartmentRoom = () => {
 
@@ -15,6 +17,54 @@ const DepartmentRoom = () => {
   const [departmentList, setDepartmentList] = useState([]);
   const [roomList, setRoomList] = useState([]);
   const [assignedRooms, setAssignedRooms] = useState({});
+
+const [userID, setUserID] = useState("");
+const [user, setUser] = useState("");
+const [userRole, setUserRole] = useState("");
+const [hasAccess, setHasAccess] = useState(null);
+const pageId = 29;
+
+//
+useEffect(() => {
+    
+    const storedUser = localStorage.getItem("email");
+    const storedRole = localStorage.getItem("role");
+    const storedID = localStorage.getItem("person_id");
+
+    if (storedUser && storedRole && storedID) {
+      setUser(storedUser);
+      setUserRole(storedRole);
+      setUserID(storedID);
+
+      if (storedRole === "registrar") {
+        checkAccess(storedID);
+      } else {
+        window.location.href = "/login";
+      }
+    } else {
+      window.location.href = "/login";
+    }
+  }, []);
+
+const checkAccess = async (userID) => {
+    try {
+        const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
+        if (response.data && response.data.page_privilege === 1) {
+          setHasAccess(true);
+        } else {
+          setHasAccess(false);
+        }
+    } catch (error) {
+        console.error('Error checking access:', error);
+        setHasAccess(false);
+        if (error.response && error.response.data.message) {
+          console.log(error.response.data.message);
+        } else {
+          console.log("An unexpected error occurred.");
+        }
+        setLoading(false);
+    }
+  };
 
   // Fetch departments
   const fetchDepartment = async () => {
@@ -115,7 +165,15 @@ const DepartmentRoom = () => {
   });
 
 
+if (hasAccess === null) {
+   return "Loading...."
+}
 
+  if (!hasAccess) {
+    return (
+      <Unauthorized />
+    );
+  }
 
   return (
     <Box sx={{ height: "calc(100vh - 100px)", overflowY: "auto", paddingRight: 1, backgroundColor: "transparent" }}>

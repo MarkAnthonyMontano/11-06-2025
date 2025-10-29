@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+
 import axios from 'axios';
 import {
     Box,
@@ -30,6 +31,9 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import io from 'socket.io-client';
 import FactCheckIcon from '@mui/icons-material/FactCheck';
 import { Snackbar, Alert } from "@mui/material";
+import Unauthorized from "../components/Unauthorized";
+
+
 
 const vaccineDoc = { label: 'Copy of Vaccine Card (1st and 2nd Dose)', key: 'VaccineCard' };
 
@@ -135,6 +139,55 @@ const remarksOptions = [
 
 
 const MedicalClearance = () => {
+
+    
+const [userID, setUserID] = useState("");
+const [user, setUser] = useState("");
+const [userRole, setUserRole] = useState("");
+const [hasAccess, setHasAccess] = useState(null);
+const pageId = 36;
+
+//
+useEffect(() => {
+    
+    const storedUser = localStorage.getItem("email");
+    const storedRole = localStorage.getItem("role");
+    const storedID = localStorage.getItem("person_id");
+
+    if (storedUser && storedRole && storedID) {
+      setUser(storedUser);
+      setUserRole(storedRole);
+      setUserID(storedID);
+
+      if (storedRole === "registrar") {
+        checkAccess(storedID);
+      } else {
+        window.location.href = "/login";
+      }
+    } else {
+      window.location.href = "/login";
+    }
+  }, []);
+
+const checkAccess = async (userID) => {
+    try {
+        const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
+        if (response.data && response.data.page_privilege === 1) {
+          setHasAccess(true);
+        } else {
+          setHasAccess(false);
+        }
+    } catch (error) {
+        console.error('Error checking access:', error);
+        setHasAccess(false);
+        if (error.response && error.response.data.message) {
+          console.log(error.response.data.message);
+        } else {
+          console.log("An unexpected error occurred.");
+        }
+        setLoading(false);
+    }
+  };
     const location = useLocation();
     const navigate = useNavigate();
     const [activeStep, setActiveStep] = useState(5);
@@ -193,9 +246,6 @@ const MedicalClearance = () => {
     const [selectedFiles, setSelectedFiles] = useState({});
     const [selectedPerson, setSelectedPerson] = useState(null);
     const [remarksMap, setRemarksMap] = useState({});
-    const [userID, setUserID] = useState("");
-    const [user, setUser] = useState("");
-    const [userRole, setUserRole] = useState("");
     const [person, setPerson] = useState({
         profile_img: "",
         document_status: "",
@@ -545,6 +595,16 @@ const MedicalClearance = () => {
 
         // local save handler (rename to avoid shadowing top-level handler)
         // ✅ REMARKS SAVE inside renderRow
+
+if (hasAccess === null) {
+   return "Loading...."
+}
+
+  if (!hasAccess) {
+    return (
+      <Unauthorized />
+    );
+  }w
 
 
         return (

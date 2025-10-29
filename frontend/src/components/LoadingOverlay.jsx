@@ -1,8 +1,31 @@
-import React from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { Box, CircularProgress, Typography } from "@mui/material";
-import EaristLogo from '../assets/EaristLogo.png';
+import { SettingsContext } from "../App";
+import DefaultLogo from "../assets/EaristLogo.png";
 
 const LoadingOverlay = ({ open, message }) => {
+  const settings = useContext(SettingsContext);
+  const [fetchedLogo, setFetchedLogo] = useState(DefaultLogo);
+  const [companyName, setCompanyName] = useState("Loading...");
+
+  useEffect(() => {
+    if (settings) {
+      // ✅ Load dynamic logo from settings context
+      if (settings.logo_url) {
+        setFetchedLogo(`http://localhost:5000${settings.logo_url}`);
+      } else {
+        setFetchedLogo(DefaultLogo);
+      }
+
+      // ✅ Load company name
+      if (settings.company_name) {
+        setCompanyName(settings.company_name);
+      } else {
+        setCompanyName("Your Institution");
+      }
+    }
+  }, [settings]);
+
   if (!open) return null;
 
   return (
@@ -21,8 +44,8 @@ const LoadingOverlay = ({ open, message }) => {
         flexDirection: "column",
       }}
     >
+      {/* Circular border animation */}
       <Box sx={{ position: "relative", display: "inline-flex" }}>
-        {/* Circular Progress as border */}
         <CircularProgress
           size={120}
           thickness={3}
@@ -32,11 +55,11 @@ const LoadingOverlay = ({ open, message }) => {
           }}
         />
 
-        {/* Heart-beating Logo */}
+        {/* Dynamic Logo */}
         <Box
           component="img"
-          src={EaristLogo}
-          alt="E.A.R.I.S.T Logo"
+          src={fetchedLogo}
+          alt={`${companyName} Logo`}
           sx={{
             position: "absolute",
             top: "50%",
@@ -53,6 +76,7 @@ const LoadingOverlay = ({ open, message }) => {
         />
       </Box>
 
+      {/* Message */}
       <Typography
         variant="h6"
         sx={{
@@ -62,7 +86,7 @@ const LoadingOverlay = ({ open, message }) => {
           animation: "pulse 1.5s infinite",
         }}
       >
-        {message}
+        {message || `${companyName} is loading...`}
       </Typography>
 
       {/* Keyframes */}

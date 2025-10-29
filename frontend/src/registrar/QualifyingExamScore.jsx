@@ -1107,18 +1107,21 @@ th, td {
     const [emailMessage, setEmailMessage] = useState("");
 
     const handleOpenDialog = (applicant = null) => {
-        const today = new Date();
-        const validUntil = new Date(today);
-        validUntil.setDate(today.getDate() + 7);
+  const today = new Date();
+  const validUntil = new Date(today);
+  validUntil.setDate(today.getDate() + 7);
 
-        const formattedValidUntil = validUntil.toLocaleDateString("en-US", {
-            month: "long",
-            day: "numeric",
-            year: "numeric",
-        });
+  const formattedValidUntil = validUntil.toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
 
-        const defaultMessage =
-            `Dear ${applicant?.first_name || "Applicant"} ${applicant?.last_name || ""},
+  // ✅ Use dynamic company name from settings
+  const companyName = settings?.company_name || "Your Institution";
+
+  const defaultMessage = `
+Dear ${applicant?.first_name || "Applicant"} ${applicant?.last_name || ""},
 
 Congratulations on passing the Interview/Qualifying Exam!  
 
@@ -1132,15 +1135,13 @@ Failure to comply within 7 days may result in the slot being given to another ap
 This email is valid until ${formattedValidUntil}.  
 
 Thank you,  
-EARIST Registrar's Office
-`;
+${companyName} Registrar's Office
+`.trim();
 
-
-        setSelectedApplicant(applicant?.applicant_number || null);
-        setEmailMessage(defaultMessage);
-        setConfirmOpen(true);
-    };
-
+  setSelectedApplicant(applicant?.applicant_number || null);
+  setEmailMessage(defaultMessage);
+  setConfirmOpen(true);
+};
 
     const confirmSendEmails = async () => {
         setLoading(true)

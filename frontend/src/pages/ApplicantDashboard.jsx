@@ -506,7 +506,16 @@ const ApplicantDashboard = (props) => {
     fetchAnnouncements();
   }, []);
 
-
+  const formatDate = (dateString) => {
+    if (!dateString) return "TBA";
+    const date = new Date(dateString);
+    if (isNaN(date)) return dateString; // In case it's not a valid date
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
 
 
   return (
@@ -1129,11 +1138,31 @@ const ApplicantDashboard = (props) => {
                   {/* Step 1: Document Submitted */}
                   {index === 0 && (
                     <>
-                      {person?.document_status === "Documents Verified & ECAT"
-                        ? "✅ Your documents have been verified. ECAT Permit issued."
-                        : "⏳ Status: Pending"}
+                      {person?.document_status === "Documents Verified & ECAT" ? (
+                        <div>
+                          ✅ Your submitted documents have been successfully verified.
+                          <br />
+                          <Divider
+                            sx={{
+                              backgroundColor: "gray",
+                              height: "0.5px",
+                              my: 2,
+                              borderRadius: 1,
+                            }}
+                          />
+
+                          <strong>Next Step:</strong>
+                          <br />
+                          Go to <strong>Applicant Form</strong> → <strong>Examination Permit</strong>
+                          <br />
+                          and <strong>print your permit</strong>.
+                        </div>
+                      ) : (
+                        "⏳ Status: Pending"
+                      )}
                     </>
                   )}
+
 
                   {/* Step 2: Entrance Exam */}
                   {index === 1 && (
@@ -1142,21 +1171,19 @@ const ApplicantDashboard = (props) => {
 
                       {hasSchedule && (
                         <>
-                    
-                          📅 Date: {proctor?.day_description || "TBA"} <br />
+                          📅 Date: {formatDate(proctor?.day_description)} <br />
                           🏢 Building: {proctor?.building_description || "TBA"} <br />
                           🚪 Room: {proctor?.room_description || "TBA"} <br />
-                          ⏰ Time: {formatTime(proctor?.start_time)} –{" "}
-                          {formatTime(proctor?.end_time)}
+                          ⏰ Time: {formatTime(proctor?.start_time)} – {formatTime(proctor?.end_time)}
                         </>
                       )}
                       <br />
                       <Divider
                         sx={{
                           backgroundColor: "gray",
-                          height: "0.5px",   // thickness
-                          my: 2,           // margin top & bottom
-                          borderRadius: 1, // rounded edges
+                          height: "0.5px",
+                          my: 2,
+                          borderRadius: 1,
                         }}
                       />
 
@@ -1174,34 +1201,29 @@ const ApplicantDashboard = (props) => {
                   )}
 
                   {/* Step 3: Interview */}
-                  {/* Step 3: Interview */}
                   {index === 2 && (
                     <>
-                      {/* Pending */}
                       {!interviewSchedule && !hasInterviewScores && "⏳ Status: Pending"}
 
-                      {/* Interview Schedule */}
                       {interviewSchedule && (
                         <>
                           👤 Interviewer: {interviewSchedule.interviewer || "TBA"} <br />
-                          📅 Date: {interviewSchedule.day_description || "TBA"} <br />
+                          📅 Date: {formatDate(interviewSchedule?.day_description)} <br />
                           🏫 Building: {interviewSchedule.building_description || "TBA"} <br />
                           🏷️ Room: {interviewSchedule.room_description || "TBA"} <br />
-                          ⏰ Time: {formatTime(interviewSchedule.start_time)} –{" "}
-                          {formatTime(interviewSchedule.end_time)}
+                          ⏰ Time: {formatTime(interviewSchedule.start_time)} – {formatTime(interviewSchedule.end_time)}
                         </>
                       )}
                       <br />
                       <Divider
                         sx={{
                           backgroundColor: "gray",
-                          height: "0.5px",   // thickness
-                          my: 2,           // margin top & bottom
-                          borderRadius: 1, // rounded edges
+                          height: "0.5px",
+                          my: 2,
+                          borderRadius: 1,
                         }}
                       />
 
-                      {/* Interview Scores */}
                       {hasInterviewScores && (
                         <>
                           🗣 Interview Score: {qualifyingInterviewScore ?? "N/A"} <br />
@@ -1218,7 +1240,7 @@ const ApplicantDashboard = (props) => {
                   )}
 
 
-                  {/* Step 4: College Approval */}
+
                   {/* Step 4: College Approval */}
                   {index === 3 && (
                     <>
@@ -1244,7 +1266,7 @@ const ApplicantDashboard = (props) => {
                               : doc.status === 2
                                 ? "❌ Rejected"
                                 : "⏳ On Process"}
-                          
+
                           </div>
                         ))}
                     </>

@@ -10,36 +10,59 @@ const CourseTagging = () => {
   const [data, setdata] = useState([]);
   const [currentDate, setCurrentDate] = useState("");
   const [personID, setPersonID] = useState('');
+  //////////
   const [hasAccess, setHasAccess] = useState(null);
+
   const [snack, setSnack] = useState({ open: false, message: "", severity: "info" });
 
   const [userID, setUserID] = useState("");
   const [user, setUser] = useState("");
   const [userRole, setUserRole] = useState("");
-  const pageId = 3;
+  ///////////
+  const pageId = 22;
 
   // do not alter
   useEffect(() => {
-    
-    const storedUser = localStorage.getItem("email");
-    const storedRole = localStorage.getItem("role");
-    const storedID = localStorage.getItem("person_id");
-
-    if (storedUser && storedRole && storedID) {
-      setUser(storedUser);
-      setUserRole(storedRole);
-      setUserID(storedID);
-
-      if (storedRole === "registrar") {
-        console.log("Admin")
+      
+      const storedUser = localStorage.getItem("email");
+      const storedRole = localStorage.getItem("role");
+      const storedID = localStorage.getItem("person_id");
+  
+      if (storedUser && storedRole && storedID) {
+        setUser(storedUser);
+        setUserRole(storedRole);
+        setUserID(storedID);
+  
+        if (storedRole === "registrar") {
+          checkAccess(storedID);
+        } else {
+          window.location.href = "/login";
+        }
       } else {
         window.location.href = "/login";
       }
-    } else {
-      window.location.href = "/login";
-    }
-  }, []);
+    }, []);
 
+  //////
+  const checkAccess = async (userID) => {
+    try {
+        const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
+        if (response.data && response.data.page_privilege === 1) {
+          setHasAccess(true);
+        } else {
+          setHasAccess(false);
+        }
+    } catch (error) {
+        console.error('Error checking access:', error);
+        setHasAccess(false);
+        if (error.response && error.response.data.message) {
+          console.log(error.response.data.message);
+        } else {
+          console.log("An unexpected error occurred.");
+        }
+        setLoading(false);
+    }
+  };
   useEffect(() => {
     const updateDate = () => {
       const now = new Date();
@@ -386,10 +409,10 @@ const CourseTagging = () => {
     }
   };
 
-  // 🔒 Disable right-click
+  //🔒 Disable right-click
   document.addEventListener('contextmenu', (e) => e.preventDefault());
 
-  // 🔒 Block DevTools shortcuts + Ctrl+P silently
+  //🔒 Block DevTools shortcuts + Ctrl+P silently
   document.addEventListener('keydown', (e) => {
     const isBlockedKey =
       e.key === 'F12' || // DevTools
@@ -403,6 +426,19 @@ const CourseTagging = () => {
       e.stopPropagation();
     }
   });
+
+
+  ////////
+  if (hasAccess === null) {
+   return "Loading...."
+}
+
+  if (!hasAccess) {
+    return (
+      <Unauthorized />
+    );
+  }
+
 
   return (
     <Box sx={{ height: "calc(100vh - 150px)", overflowY: "auto", paddingRight: 1, backgroundColor: "transparent" }}>

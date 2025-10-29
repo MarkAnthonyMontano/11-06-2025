@@ -5,6 +5,7 @@ import ExamPermit from "../applicant/ExamPermit";
 import { TextField, Button, Box, Typography } from "@mui/material";
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
 import QRScanner from "../components/QRScanner"; // make sure path is correct
+import Unauthorized from "../components/Unauthorized";
 
 const ExaminationProfile = () => {
     const { applicantNumber } = useParams();
@@ -13,7 +14,54 @@ const ExaminationProfile = () => {
     const [personId, setPersonId] = useState(null);
     const [searchQuery, setSearchQuery] = useState(applicantNumber || "");
     const [scannerOpen, setScannerOpen] = useState(false);
-    
+
+    const [userID, setUserID] = useState("");
+    const [user, setUser] = useState("");
+    const [userRole, setUserRole] = useState("");
+    const [hasAccess, setHasAccess] = useState(null);
+    const pageId = 31;
+
+    //
+    useEffect(() => {
+
+        const storedUser = localStorage.getItem("email");
+        const storedRole = localStorage.getItem("role");
+        const storedID = localStorage.getItem("person_id");
+
+        if (storedUser && storedRole && storedID) {
+            setUser(storedUser);
+            setUserRole(storedRole);
+            setUserID(storedID);
+
+            if (storedRole === "registrar") {
+                checkAccess(storedID);
+            } else {
+                window.location.href = "/login";
+            }
+        } else {
+            window.location.href = "/login";
+        }
+    }, []);
+
+    const checkAccess = async (userID) => {
+        try {
+            const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
+            if (response.data && response.data.page_privilege === 1) {
+                setHasAccess(true);
+            } else {
+                setHasAccess(false);
+            }
+        } catch (error) {
+            console.error('Error checking access:', error);
+            setHasAccess(false);
+            if (error.response && error.response.data.message) {
+                console.log(error.response.data.message);
+            } else {
+                console.log("An unexpected error occurred.");
+            }
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
         if (!searchQuery) return;
@@ -61,6 +109,16 @@ const ExaminationProfile = () => {
             navigate(`/examination_profile/${searchQuery.trim()}`);
         }
     };
+
+    if (hasAccess === null) {
+        return "Loading...."
+    }
+
+    if (!hasAccess) {
+        return (
+            <Unauthorized />
+        );
+    }
 
     return (
         <Box sx={{ p: 2 }}>

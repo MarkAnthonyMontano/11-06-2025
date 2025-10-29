@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import {
     Box,
     Button,
@@ -9,212 +8,313 @@ import {
     TextField,
     Typography,
     Paper,
-    List,
-    ListItem,
-    ListItemText,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
     IconButton,
-    Divider,
-} from '@mui/material';
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Slide,
+    Tooltip,
+    Snackbar,
+    Alert,
+} from "@mui/material";
+import { IoMdAddCircle } from "react-icons/io";
 import { FaRegEdit } from "react-icons/fa";
 import { MdDelete } from "react-icons/md";
-import { IoMdAddCircle } from "react-icons/io";
+
+const Transition = React.forwardRef(function Transition(props, ref) {
+    return <Slide direction="up" ref={ref} {...props} />;
+});
 
 const PageCRUD = () => {
-    const containerStyle = {
-        width: '100%',
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        height: '100vh',
-        maxHeight: '100vh',
-        backgroundColor: '#f8f9fa',
-        display: 'flex',
-        alignItems: 'flex-start',
-        justifyContent: 'center',
-        padding: '75px',
-        boxSizing: 'border-box',
-        overflowY: 'auto',
-        overflowX: 'hidden',
-    };
-
-    const formStyle = {
-        width: '100%',
-        maxWidth: '600px',
-        padding: '20px',
-        borderRadius: '8px',
-        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-        backgroundColor: '#ffffff',
-        border: '4px solid #800000',
-    };
-
     const [pages, setPages] = useState([]);
+    const [open, setOpen] = useState(false);
     const [currentPageId, setCurrentPageId] = useState(null);
-    const [pageDescription, setPageDescription] = useState('');
-    const [pageGroup, setPageGroup] = useState('');
-    const [hasAccess, setHasAccess] = useState(null);
+    const [pageDescription, setPageDescription] = useState("");
+    const [pageGroup, setPageGroup] = useState("");
+    const [snackbar, setSnackbar] = useState({ open: false, message: "", type: "success" });
 
-    const navigate = useNavigate();
+    const mainColor = "#7E0000";
 
     useEffect(() => {
-        const userId = localStorage.getItem('person_id');
-        const pageId = 0;
-
         fetchPages();
-
-        if (!userId) {
-            setHasAccess(false);
-            return;
-        }
-
-        const checkAccess = async () => {
-            try {
-                const response = await axios.get(`http://localhost:5000/api/page_access/${userId}/${pageId}`);
-                setHasAccess(response.data?.hasAccess || false);
-            } catch (error) {
-                console.error('Error checking access:', error);
-                setHasAccess(false);
-            }
-        };
-
-        checkAccess();
     }, []);
 
     const fetchPages = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/pages');
+            const response = await axios.get("http://localhost:5000/api/pages");
             setPages(response.data);
         } catch (error) {
-            console.error('Error fetching pages:', error);
+            console.error("Error fetching pages:", error);
         }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
-        const pageData = {
-            page_description: pageDescription,
-            page_group: pageGroup,
-        };
+        const data = { page_description: pageDescription, page_group: pageGroup };
 
         try {
             if (currentPageId) {
-                await axios.put(`http://localhost:5000/api/pages/${currentPageId}`, pageData);
+                await axios.put(`http://localhost:5000/api/pages/${currentPageId}`, data);
+                setSnackbar({ open: true, message: "Page updated successfully!", type: "success" });
             } else {
-                await axios.post('http://localhost:5000/api/pages', pageData);
+                await axios.post("http://localhost:5000/api/pages", data);
+                setSnackbar({ open: true, message: "Page added successfully!", type: "success" });
             }
-
             fetchPages();
-            resetForm();
+            handleClose();
         } catch (error) {
-            console.error('Error saving page:', error);
+            console.error("Error saving page:", error);
+            setSnackbar({ open: true, message: "Error saving page", type: "error" });
         }
-    };
-
-    const resetForm = () => {
-        setCurrentPageId(null);
-        setPageDescription('');
-        setPageGroup('');
     };
 
     const handleEdit = (page) => {
         setCurrentPageId(page.id);
         setPageDescription(page.page_description);
         setPageGroup(page.page_group);
+        setOpen(true);
     };
 
     const handleDelete = async (id) => {
-        try {
-            await axios.delete(`http://localhost:5000/api/pages/${id}`);
-            fetchPages();
-        } catch (error) {
-            console.error('Error deleting page:', error);
+        if (window.confirm("Are you sure you want to delete this page?")) {
+            try {
+                await axios.delete(`http://localhost:5000/api/pages/${id}`);
+                fetchPages();
+                setSnackbar({ open: true, message: "Page deleted successfully!", type: "success" });
+            } catch (error) {
+                console.error("Error deleting page:", error);
+                setSnackbar({ open: true, message: "Error deleting page", type: "error" });
+            }
         }
     };
 
-    const mainColor = '#7E0000';
+    const handleOpen = () => {
+        resetForm();
+        setOpen(true);
+    };
+
+    const handleClose = () => {
+        setOpen(false);
+        resetForm();
+    };
+
+    const resetForm = () => {
+        setCurrentPageId(null);
+        setPageDescription("");
+        setPageGroup("");
+    };
+
+    useEffect(() => {
+        document.addEventListener("contextmenu", (e) => e.preventDefault());
+        document.addEventListener("keydown", (e) => {
+            const blocked =
+                e.key === "F12" ||
+                e.key === "F11" ||
+                (e.ctrlKey && e.shiftKey && ["i", "j"].includes(e.key.toLowerCase())) ||
+                (e.ctrlKey && ["u", "p"].includes(e.key.toLowerCase()));
+            if (blocked) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        });
+    }, []);
 
     return (
-        <div style={containerStyle}>
-            <div style={formStyle}>
-                <Container maxWidth="md" sx={{ my: 5 }}>
-                    <CssBaseline />
-                    <Paper elevation={3} sx={{ p: 4, backgroundColor: '#fefefe', borderRadius: 2, border: '4px solid black' }}>
-                        <Typography variant="h4" fontWeight="bold" align="center" color="black" gutterBottom>
-                            Page CRUD Management
-                        </Typography>
-                        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                            <TextField
-                                label="Page Description"
-                                variant="outlined"
-                                fullWidth
-                                value={pageDescription}
-                                onChange={(e) => setPageDescription(e.target.value)}
-                                required
-                            />
-                            <TextField
-                                label="Page Group"
-                                variant="outlined"
-                                fullWidth
-                                value={pageGroup}
-                                onChange={(e) => setPageGroup(e.target.value)}
-                                required
-                            />
-                            <Box display="flex" justifyContent="space-between">
-                            <Button 
-                                type="submit" 
-                                variant="contained" 
-                                sx={{ 
-                                    bgcolor: mainColor, 
-                                    color: '#fff', 
-                                    display: 'flex', 
-                                    alignItems: 'center',
-                                    gap: '8px', 
-                                    '&:hover': { bgcolor: `${mainColor}CC` } 
-                                }}
-                                aria-label={currentPageId ? 'Update Record' : 'Create Record'}
-                            >
-                                <IoMdAddCircle size={20} />
-                                {currentPageId ? 'Update' : 'Create'}
-                            </Button>
-                            <Button variant="contained" color="secondary" onClick={resetForm}>
-                                Reset
-                            </Button>
-                            </Box>
-                        </form>
-                    </Paper>
+        <Box sx={{ height: "calc(100vh - 150px)", overflowY: "auto", paddingRight: 1, backgroundColor: "transparent" }}>
+            <Box
+                sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    mt: 2,
+                    mb: 2,
+                    px: 2,
+                }}
+            >
+                <Typography
+                    variant="h4"
+                    sx={{
+                        fontWeight: "bold",
+                        color: "maroon",
+                        fontSize: "36px",
+                    }}
+                >
+                    PAGE MANAGEMENT
+                </Typography>
+            </Box>
+            <hr style={{ border: "1px solid #ccc", width: "100%" }} />
+            <br />
 
-                    <Paper elevation={3} sx={{ p: 3, mt: 4, backgroundColor: '#fafafa', borderRadius: 2, border: '4px solid black' }}>
-                        <Typography variant="h4" fontWeight="bold" align="center" color="black" gutterBottom>
-                            Pages List
-                        </Typography>
-                        <List>
-                            {pages.map((page) => (
-                                <React.Fragment key={page.id}>
-                                    <ListItem
-                                        secondaryAction={
-                                            <Box>
-                                                <IconButton edge="end" aria-label="edit" onClick={() => handleEdit(page)} sx={{ color: '#006400' }}>
-                                                    <FaRegEdit />
-                                                </IconButton>
-                                                <IconButton edge="end" aria-label="delete" onClick={() => handleDelete(page.id)} color="error">
-                                                    <MdDelete />
-                                                </IconButton>
-                                            </Box>
-                                        }
-                                    >
-                                        <ListItemText
-                                            primary={page.page_description}
-                                            secondary={`Group: ${page.page_group}`}
-                                        />
-                                    </ListItem>
-                                    <Divider />
-                                </React.Fragment>
-                            ))}
-                        </List>
-                    </Paper>
-                </Container>
-            </div>
-        </div>
+            <Button
+                variant="contained"
+                startIcon={<IoMdAddCircle size={20} />}
+                onClick={handleOpen}
+                sx={{
+                    bgcolor: mainColor,
+                    "&:hover": { bgcolor: `${mainColor}CC` },
+                    borderRadius: "10px",
+                    textTransform: "none",
+                    px: 3,
+                    py: 1,
+                    fontSize: "16px",
+                }}
+            >
+                Add New Page
+            </Button>
+
+            <div style={{ height: "30px" }}></div>
+
+            {/* Pages Table */}
+            <Paper
+                elevation={4}
+                sx={{
+                    border: "2px solid maroon",
+                    overflow: "hidden",
+                    backgroundColor: "#ffffff",
+                }}
+            >
+                <TableContainer>
+                    <Table>
+                        <TableHead sx={{ bgcolor: mainColor }}>
+                            <TableRow>
+                                <TableCell sx={{ color: "white", fontWeight: "bold", border: "2px solid maroon" }}>#</TableCell>
+                                <TableCell sx={{ color: "white", fontWeight: "bold", border: "2px solid maroon" }}>Page Description</TableCell>
+                                <TableCell sx={{ color: "white", fontWeight: "bold", border: "2px solid maroon" }}>Page Group</TableCell>
+                                <TableCell align="center" sx={{ color: "white", fontWeight: "bold", border: "2px solid maroon" }}>
+                                    Actions
+                                </TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {pages.length > 0 ? (
+                                pages.map((page, index) => (
+                                    <TableRow key={page.id} hover>
+                                        <TableCell style={{  border: "2px solid maroon"}}>{index + 1}</TableCell>
+                                        <TableCell style={{  border: "2px solid maroon"}}>{page.page_description}</TableCell>
+                                        <TableCell style={{  border: "2px solid maroon"}}>{page.page_group}</TableCell>
+                                        <TableCell style={{  border: "2px solid maroon"}} align="center">
+                                            <Button
+                                                variant="contained"
+                                                size="small"
+                                                sx={{
+                                                    backgroundColor: "#4CAF50",
+                                                    color: "white",
+                                                    marginRight: 1,
+                                                    "&:hover": { backgroundColor: "#45A049" },
+                                                }}
+                                                onClick={() => handleEdit(page)}
+                                            >
+                                                Edit
+                                            </Button>
+
+                                            <Button
+                                                variant="contained"
+                                                size="small"
+                                                sx={{
+                                                    backgroundColor: "#B22222",
+                                                    color: "white",
+                                                    "&:hover": { backgroundColor: "#8B0000" },
+                                                }}
+                                                onClick={() => handleDelete(page.id)}
+                                            >
+                                                Delete
+                                            </Button>
+                                        </TableCell>
+
+                                    </TableRow>
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
+                                        <Typography color="text.secondary">No pages found.</Typography>
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            </Paper>
+
+            {/* Add/Edit Dialog */}
+            <Dialog
+                open={open}
+                onClose={handleClose}
+                TransitionComponent={Transition}
+                keepMounted
+                fullWidth
+                maxWidth="sm"
+            >
+                <DialogTitle
+                    sx={{
+                        bgcolor: mainColor,
+                        color: "white",
+                        fontWeight: "bold",
+                        textAlign: "center",
+                    }}
+                >
+                    {currentPageId ? "Edit Page" : "Add New Page"}
+                </DialogTitle>
+                <DialogContent dividers sx={{ py: 4 }}>
+                    <form onSubmit={handleSubmit}>
+                        <TextField
+                            fullWidth
+                            label="Page Description"
+                            variant="outlined"
+                            margin="normal"
+                            value={pageDescription}
+                            onChange={(e) => setPageDescription(e.target.value)}
+                            required
+                        />
+                        <TextField
+                            fullWidth
+                            label="Page Group"
+                            variant="outlined"
+                            margin="normal"
+                            value={pageGroup}
+                            onChange={(e) => setPageGroup(e.target.value)}
+                            required
+                        />
+                    </form>
+                </DialogContent>
+                <DialogActions sx={{ justifyContent: "space-between", px: 3, pb: 2 }}>
+                    <Button onClick={handleClose} variant="outlined" color="secondary">
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={handleSubmit}
+                        variant="contained"
+                        sx={{ bgcolor: mainColor, "&:hover": { bgcolor: `${mainColor}CC` } }}
+                    >
+                        {currentPageId ? "Update Page" : "Add Page"}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Snackbar Notification */}
+            <Snackbar
+                open={snackbar.open}
+                autoHideDuration={3000}
+                onClose={() => setSnackbar({ ...snackbar, open: false })}
+                anchorOrigin={{ vertical: "top", horizontal: "center" }}
+            >
+                <Alert
+                    onClose={() => setSnackbar({ ...snackbar, open: false })}
+                    severity={snackbar.type}
+                    variant="filled"
+                    sx={{ width: "100%" }}
+                >
+                    {snackbar.message}
+                </Alert>
+            </Snackbar>
+        </Box>
     );
 };
 

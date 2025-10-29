@@ -296,6 +296,36 @@ const RequirementUploader = () => {
           {snack.message}
         </Alert>
       </Snackbar>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+         
+
+          mb: 2,
+        
+        }}
+      >
+        <Typography
+          variant="h4"
+          sx={{
+            fontWeight: 'bold',
+            color: 'maroon',
+            fontSize: '36px',
+          }}
+        >
+        UPLOAD REQUIREMENTS
+        </Typography>
+
+
+
+
+      </Box>
+      <hr style={{ border: "1px solid #ccc", width: "100%" }} />
+
+      <br />
 
       <Box
         sx={{
@@ -306,6 +336,7 @@ const RequirementUploader = () => {
           mt: 2,
         }}
       >
+
         <Box
           sx={{
             display: "flex",
