@@ -118,11 +118,11 @@ function Announcement() {
     return (
         <>
             {/* Header */}
-            <Box px={2} py={2}>
+            <Box >
                 <Box display="flex" alignItems="center">
                     <CampaignIcon color="primary" sx={{ fontSize: 40, mr: 2 }} />
                     <Typography variant="h4" fontWeight="bold" color="maroon">
-                        ANNOUNCEMENT
+                 ANNOUNCEMENT
                     </Typography>
                 </Box>
                 <br />

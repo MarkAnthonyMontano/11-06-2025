@@ -125,8 +125,8 @@ const LoginEnrollment = ({ setIsAuthenticated }) => {
         tempLoginData.role === "registrar"
           ? "/registrar_dashboard"
           : tempLoginData.role === "faculty"
-          ? "/faculty_dashboard"
-          : "/student_dashboard"
+            ? "/faculty_dashboard"
+            : "/student_dashboard"
       );
     } catch (err) {
       setSnack({
@@ -179,20 +179,24 @@ const LoginEnrollment = ({ setIsAuthenticated }) => {
     if (showOtpModal) otpInputRef.current?.focus();
   }, [showOtpModal]);
 
-  // 🔒 Disable right-click & DevTools
-  document.addEventListener("contextmenu", (e) => e.preventDefault());
-  document.addEventListener("keydown", (e) => {
+  // 🔒 Disable right-click
+  document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+  // 🔒 Block DevTools shortcuts + Ctrl+P silently
+  document.addEventListener('keydown', (e) => {
     const isBlockedKey =
-      e.key === "F12" ||
-      e.key === "F11" ||
-      (e.ctrlKey && e.shiftKey && ["i", "j"].includes(e.key.toLowerCase())) ||
-      (e.ctrlKey && ["u", "p"].includes(e.key.toLowerCase()));
+      e.key === 'F12' || // DevTools
+      e.key === 'F11' || // Fullscreen
+      (e.ctrlKey && e.shiftKey && (e.key.toLowerCase() === 'i' || e.key.toLowerCase() === 'j')) || // Ctrl+Shift+I/J
+      (e.ctrlKey && e.key.toLowerCase() === 'u') || // Ctrl+U (View Source)
+      (e.ctrlKey && e.key.toLowerCase() === 'p');   // Ctrl+P (Print)
+
     if (isBlockedKey) {
       e.preventDefault();
       e.stopPropagation();
     }
   });
-
+  
   return (
     <>
       <Box
@@ -216,7 +220,7 @@ const LoginEnrollment = ({ setIsAuthenticated }) => {
           }}
           maxWidth={false}
         >
-          <div style={{ border: "5px solid white" }} className="Container">
+          <div style={{ border: "5px solid black" }} className="Container">
             <div className="Header">
               <div className="HeaderTitle">
                 <div className="CircleCon">
@@ -249,7 +253,7 @@ const LoginEnrollment = ({ setIsAuthenticated }) => {
                     width: "100%",
                     padding: "0.8rem 2.5rem 0.8rem 2.5rem",
                     borderRadius: "6px",
-                   border: "2px solid maroon", // warm brown-gray
+                    border: "2px solid maroon", // warm brown-gray
 
                     fontSize: "1rem",
                     backgroundColor: "white",
@@ -298,7 +302,7 @@ const LoginEnrollment = ({ setIsAuthenticated }) => {
                     className="border"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    style={{ paddingLeft: "2.5rem", border: "2px solid maroon"}}
+                    style={{ paddingLeft: "2.5rem", border: "2px solid maroon" }}
                     autoFocus
                   />
                   <EmailIcon
@@ -321,7 +325,7 @@ const LoginEnrollment = ({ setIsAuthenticated }) => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="border"
-                    style={{ paddingLeft: "2.5rem", border: "2px solid maroon"}}
+                    style={{ paddingLeft: "2.5rem", border: "2px solid maroon" }}
                   />
                   <LockIcon
                     style={{
@@ -367,8 +371,8 @@ const LoginEnrollment = ({ setIsAuthenticated }) => {
                     {lockout
                       ? `Locked (${lockoutTimer}s)`
                       : isLoggingIn
-                      ? "Logging in..."
-                      : "Log In"}
+                        ? "Logging in..."
+                        : "Log In"}
                   </button>
                 </div>
               </form>

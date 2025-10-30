@@ -20,6 +20,7 @@ import {
 import { FcPrint } from "react-icons/fc";
 import EaristLogo from "../assets/EaristLogo.png";
 import Unauthorized from "../components/Unauthorized";
+import LoadingOverlay from "../components/LoadingOverlay";
 
 const ClassRoster = () => {
   const settings = useContext(SettingsContext);
@@ -70,11 +71,13 @@ const ClassRoster = () => {
     4: "Drop"
   };
 
-const [hasAccess, setHasAccess] = useState(null);
-const pageId = 20;
+  const [hasAccess, setHasAccess] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const pageId = 18;
 
+  //Put this After putting the code of the past code
   useEffect(() => {
-    
+
     const storedUser = localStorage.getItem("email");
     const storedRole = localStorage.getItem("role");
     const storedID = localStorage.getItem("person_id");
@@ -94,25 +97,28 @@ const pageId = 20;
     }
   }, []);
 
-const checkAccess = async (userID) => {
+  const checkAccess = async (userID) => {
     try {
-        const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
-        if (response.data && response.data.page_privilege === 1) {
-          setHasAccess(true);
-        } else {
-          setHasAccess(false);
-        }
-    } catch (error) {
-        console.error('Error checking access:', error);
+      const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
+      if (response.data && response.data.page_privilege === 1) {
+        setHasAccess(true);
+      } else {
         setHasAccess(false);
-        if (error.response && error.response.data.message) {
-          console.log(error.response.data.message);
-        } else {
-          console.log("An unexpected error occurred.");
-        }
-        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Error checking access:', error);
+      setHasAccess(false);
+      if (error.response && error.response.data.message) {
+        console.log(error.response.data.message);
+      } else {
+        console.log("An unexpected error occurred.");
+      }
+      setLoading(false);
     }
   };
+
+
+
 
   useEffect(() => {
     const storedUser = localStorage.getItem("email");
@@ -182,30 +188,28 @@ const checkAccess = async (userID) => {
   }, []);
 
   useEffect(() => {
-    if (!adminData.dprtmnt_id) return;
     const fetchDepartments = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/api/departments/${adminData.dprtmnt_id}`);
+        const response = await axios.get(`http://localhost:5000/api/departments`);
         setDepartment(response.data);
       } catch (error) {
         console.error("Error fetching departments:", error);
       }
     };
     fetchDepartments();
-  }, [adminData.dprtmnt_id]);
+  }, []);
 
   useEffect(() => {
-    if (!adminData.dprtmnt_id) return;
     const fetchCurriculums = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/api/applied_program/${adminData.dprtmnt_id}`);
+        const response = await axios.get(`http://localhost:5000/api/applied_program`);
         setCurriculumOptions(response.data);
       } catch (error) {
         console.error("Error fetching curriculum options:", error);
       }
     };
     fetchCurriculums();
-  }, [adminData.dprtmnt_id]);
+  }, []);
 
   useEffect(() => {
     axios.get("http://localhost:5000/api/applied_program")
@@ -475,9 +479,14 @@ const checkAccess = async (userID) => {
     }
   });
 
-  if (hasAccess === null) {
-   return "Loading...."
-}
+
+
+
+
+  // Put this at the very bottom before the return 
+  if (loading || hasAccess === null) {
+    return <LoadingOverlay open={loading} message="Check Access" />;
+  }
 
   if (!hasAccess) {
     return (
@@ -486,7 +495,7 @@ const checkAccess = async (userID) => {
   }
 
   return (
-    <Box sx={{ height: 'calc(100vh - 150px)', overflowY: 'auto', pr: 1, p: 2 }}>
+    <Box sx={{ height: 'calc(100vh - 150px)', overflowY: 'auto', pr: 1, }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
         <Typography variant="h4" fontWeight="bold" color="maroon">
           CLASS LIST

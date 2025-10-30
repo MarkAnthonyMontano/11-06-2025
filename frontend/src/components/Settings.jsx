@@ -102,6 +102,8 @@ function Settings({ onUpdate }) {
         }
     };
 
+    
+
     return (
         <Box
             sx={{

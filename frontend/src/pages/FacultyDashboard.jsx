@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from "react";
+import React, { useState, useEffect, useRef } from "react";
 import '../styles/TempStyles.css';
 import axios from 'axios';
 import {
@@ -8,18 +8,15 @@ import {
   CardContent,
   Typography,
   Divider,
-  Stack,
   Avatar,
   IconButton,
-  Stepper,
-  Step,
-  StepLabel,
   Button,
 } from "@mui/material";
 import { Dialog } from "@mui/material";
 import KeyboardBackspaceIcon from '@mui/icons-material/KeyboardBackspace';
 import PersonIcon from "@mui/icons-material/Person";
-import {Link} from "react-router-dom";
+import { Link } from "react-router-dom";
+import AddIcon from "@mui/icons-material/Add";
 import { ArrowBackIos, ArrowForwardIos } from "@mui/icons-material";
 
 const FacultyDashboard = () => {
@@ -56,8 +53,8 @@ const FacultyDashboard = () => {
       window.location.href = "/login";
     }
   }, []);
-  
-const fetchPersonData = async (id) => {
+
+  const fetchPersonData = async (id) => {
     try {
       const res = await axios.get(`http://localhost:5000/get_prof_data/${id}`)
       const first = res.data[0];
@@ -70,12 +67,13 @@ const fetchPersonData = async (id) => {
       };
       setPerson(profInfo);
     } catch (err) {
-        setMessage("Error Fetching Professor Personal Data");
+      setMessage("Error Fetching Professor Personal Data");
     }
   }
 
-
-const [announcements, setAnnouncements] = useState([]);
+  const [announcements, setAnnouncements] = useState([]);
+  const [hovered, setHovered] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     const fetchAnnouncements = async () => {
@@ -101,54 +99,54 @@ const [announcements, setAnnouncements] = useState([]);
     }
   }, [announcements]);
 
-    const [date, setDate] = useState(new Date());
-  
-    const days = ["Sun", "Mon", "Tue", "Wed", "Thur", "Fri", "Sat"];
-  
-    const year = date.getFullYear();
-    const month = date.getMonth();
-  
-    // Get today's date in Manila timezone (UTC+8)
-    const now = new Date();
-    const manilaDate = new Date(
-      now.toLocaleString("en-US", { timeZone: "Asia/Manila" })
-    );
-    const today = manilaDate.getDate();
-    const thisMonth = manilaDate.getMonth();
-    const thisYear = manilaDate.getFullYear();
-  
-    // First day of the month
-    const firstDay = new Date(year, month, 1).getDay();
-    // Total days in the month
-    const totalDays = new Date(year, month + 1, 0).getDate();
-  
-    // Build weeks array
-    const weeks = [];
-    let currentDay = 1 - firstDay;
-  
-    while (currentDay <= totalDays) {
-      const week = [];
-      for (let i = 0; i < 7; i++) {
-        if (currentDay > 0 && currentDay <= totalDays) {
-          week.push(currentDay);
-        } else {
-          week.push(null);
-        }
-        currentDay++;
-      }
-      weeks.push(week);
-    }
-  
-    // Handle month navigation
-    const handlePrevMonth = () => {
-      setDate(new Date(year, month - 1, 1));
-    };
-  
-    const handleNextMonth = () => {
-      setDate(new Date(year, month + 1, 1));
-    };
+  const [date, setDate] = useState(new Date());
 
-    const [holidays, setHolidays] = useState({});
+  const days = ["Sun", "Mon", "Tue", "Wed", "Thur", "Fri", "Sat"];
+
+  const year = date.getFullYear();
+  const month = date.getMonth();
+
+  // Get today's date in Manila timezone (UTC+8)
+  const now = new Date();
+  const manilaDate = new Date(
+    now.toLocaleString("en-US", { timeZone: "Asia/Manila" })
+  );
+  const today = manilaDate.getDate();
+  const thisMonth = manilaDate.getMonth();
+  const thisYear = manilaDate.getFullYear();
+
+  // First day of the month
+  const firstDay = new Date(year, month, 1).getDay();
+  // Total days in the month
+  const totalDays = new Date(year, month + 1, 0).getDate();
+
+  // Build weeks array
+  const weeks = [];
+  let currentDay = 1 - firstDay;
+
+  while (currentDay <= totalDays) {
+    const week = [];
+    for (let i = 0; i < 7; i++) {
+      if (currentDay > 0 && currentDay <= totalDays) {
+        week.push(currentDay);
+      } else {
+        week.push(null);
+      }
+      currentDay++;
+    }
+    weeks.push(week);
+  }
+
+  // Handle month navigation
+  const handlePrevMonth = () => {
+    setDate(new Date(year, month - 1, 1));
+  };
+
+  const handleNextMonth = () => {
+    setDate(new Date(year, month + 1, 1));
+  };
+
+  const [holidays, setHolidays] = useState({});
 
   useEffect(() => {
     const fetchHolidays = async () => {
@@ -175,60 +173,145 @@ const [announcements, setAnnouncements] = useState([]);
     year: "numeric",
   });
 
+  const handleFileChange = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("profileImage", file);
+
+    try {
+      await axios.put(
+        `http://localhost:5000/api/update_profile_image/${personData.person_id}`,
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } }
+      );
+      // Refresh data after update
+      const role = localStorage.getItem("role");
+      const res = await axios.get(
+        `http://localhost:5000/api/person_data/${personData.person_id}/${role}`
+      );
+      setPerson(res.data);
+    } catch (err) {
+      console.error("Upload failed:", err);
+    }
+  };
+
   return (
-    <Box sx={{ p: 4, marginLeft: "-2rem", paddingRight: 8, height: "calc(100vh - 150px)", overflowY: "auto" }}>
-      <Grid item xs={12}>
+    <Box
+      sx={{
+        p: 4,
+        marginLeft: "-2rem",
+        paddingRight: 8,
+        height: "calc(100vh - 150px)",
+        overflowY: "auto",
+      }}
+    >
+      <Grid container spacing={3}>
+        <Grid item xs={12}>
           <Card sx={{
-            borderRadius: 1, boxShadow: 3, p: 1, border: "2px solid maroon", height: "130px", transition: "transform 0.3s ease, box-shadow 0.3s ease",
+            borderRadius: 1,
+            boxShadow: 3,
+            p: 2,
+            border: "2px solid maroon",
+            height: "130px",
+            transition: "transform 0.3s ease, box-shadow 0.3s ease",
             "&:hover": {
-              transform: "scale(1.05)",
+              transform: "scale(1.01)",
               boxShadow: 6,
 
             },
             marginLeft: "10px"
           }}>
             <CardContent>
-              {/* Header Row */}
-              <Stack
-                direction="row"
-                alignItems="center"
+              <Box display="flex" justifyContent="space-between" alignItems="center">
 
-                justifyContent="space-between" // Pushes date to right
-                mb={2}
-              >
-                {/* Left side: Avatar + Name */}
-                <Stack direction="row" alignItems="center" spacing={2}>
-                  {!personData?.profile_image ? (
-                    <PersonIcon sx={{ color: "maroon" }} fontSize="large" />
-                  ) : (
+                {/* 👤 Left Section - Avatar + Welcome */}
+                <Box display="flex" alignItems="center">
+
+                  {/* Avatar */}
+                  <Box
+                    position="relative"
+                    display="inline-block"
+                    mr={2}
+                    onMouseEnter={() => setHovered(true)}
+                    onMouseLeave={() => setHovered(false)}
+                  >
                     <Avatar
-                      src={`http://localhost:5000/uploads/${personData.profile_image}`}
-                      sx={{ width: 80, height: 80, border: "2px solid maroon" }}
+                      src={
+                        personData?.profile_image
+                          ? `http://localhost:5000/uploads/${personData.profile_image}`
+                          : undefined
+                      }
+                      alt={personData?.fname}
+                      sx={{
+                        width: 90,
+                        height: 90,
+                        border: "2px solid maroon",
+                        cursor: "pointer",
+                        mt: -1.5,
+                      }}
+                      onClick={() => fileInputRef.current.click()}
+                    >
+                      {personData?.fname?.[0]}
+                    </Avatar>
+
+                    {/* Hover upload button */}
+                    {hovered && (
+                      <IconButton
+                        size="small"
+                        sx={{
+                          position: "absolute",
+                          bottom: 0,
+                          right: 0,
+                          bgcolor: "maroon",
+                          color: "white",
+                          "&:hover": { bgcolor: "#6D2323" },
+                        }}
+                        onClick={() => fileInputRef.current.click()}
+                      >
+                        <AddIcon fontSize="small" />
+                      </IconButton>
+                    )}
+
+                    {/* Hidden file input */}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      ref={fileInputRef}
+                      style={{ display: "none" }}
+                      onChange={handleFileChange}
                     />
-                  )}
-                  <Box>
-                    <Typography variant="h4" fontWeight="bold" color="maroon">
-                      Welcome back! {personData.lname}, {personData.fname} {personData.mname}
+                  </Box>
+
+                  {/* Welcome text and Employee info */}
+                  <Box sx={{ color: "maroon" }}>
+                    <Typography variant="h4" fontWeight="bold" mt={-1}>
+                      Welcome back!  {personData
+                        ? `${personData.lname}, ${personData.fname} ${personData.mname || ""}`
+                        : ""}
                     </Typography>
-                    <Typography variant="body1" color="text.secondary">
-                      Employee ID. : 
+
+                    <Typography variant="body1" color="black" fontSize={20}>
+                      <b>Employee ID:</b> {personData?.employee_id || "N/A"}
                     </Typography>
                   </Box>
-                </Stack>
+                </Box>
 
-                {/* Right side: Date */}
-                <Typography
-                  variant="body3"
-                  color="#000000"
-                  sx={{ fontWeight: 500, marginTop: "-10px" }}
-                >
-                  Date: {formattedDate}
-                </Typography>
-              </Stack>
+                {/* 📅 Right Section - Date */}
+                <Box textAlign="right" sx={{ color: "black" }}>
+                  <Typography variant="body1" fontSize="20px">
+                    {formattedDate}
+                  </Typography>
+                </Box>
+
+              </Box>
             </CardContent>
           </Card>
         </Grid>
-      <Box style={{display: "flex", gap: "1rem" ,marginTop: "1rem"}}>
+      </Grid>
+
+      <Box style={{ display: "flex", gap: "1rem", marginTop: "1rem" }}>
         <Grid item xs="auto">
           <Card
             sx={{
@@ -236,8 +319,9 @@ const [announcements, setAnnouncements] = useState([]);
               marginLeft: "10px",
               boxShadow: 3,
               p: 2,
-              width: "71.2rem",
-              height: "615px",
+              width: "100%",
+              minWidth: "58.2rem",
+              height: "480px",
               border: "2px solid #800000",
               transition: "transform 0.3s ease, box-shadow 0.3s ease",
               "&:hover": {
@@ -247,7 +331,7 @@ const [announcements, setAnnouncements] = useState([]);
             }}
           >
             <CardContent>
-              <Typography sx={{ textAlign: "center", marginTop: "-1rem"}} variant="h6" gutterBottom>
+              <Typography sx={{ textAlign: "center", marginTop: "-1rem" }} variant="h6" gutterBottom>
                 Announcements
               </Typography>
               <Divider sx={{ mb: 2 }} />
@@ -255,173 +339,173 @@ const [announcements, setAnnouncements] = useState([]);
                 <Typography variant="body2" color="text.secondary" align="center">
                   No active announcements.
                 </Typography>
-                ) : (
-                  <Box sx={{ position: "relative", height: "31rem", overflow: "hidden" }}>
-                    {/* Display current announcement */}
-                    {announcements.length > 0 && (
-                      <Box
-                        key={announcements[currentIndex].id}
+              ) : (
+                <Box sx={{ position: "relative", height: "31rem", overflow: "hidden" }}>
+                  {/* Display current announcement */}
+                  {announcements.length > 0 && (
+                    <Box
+                      key={announcements[currentIndex].id}
+                      sx={{
+                        transition: "opacity 0.6s ease",
+                        opacity: 1,
+                        position: "absolute",
+                        width: "100%",
+                      }}
+                    >
+                      <Typography
+                        variant="subtitle2"
+                        sx={{ color: "maroon", fontWeight: "bold" }}
+                      >
+                        {announcements[currentIndex].title}
+                      </Typography>
+
+                      <Typography variant="body2" sx={{ mb: 1 }}>
+                        {announcements[currentIndex].content}
+                      </Typography>
+
+                      {announcements[currentIndex].file_path && (
+                        <>
+                          <img
+                            src={`http://localhost:5000/uploads/${announcements[currentIndex].file_path}`}
+                            alt={announcements[currentIndex].title}
+                            style={{
+                              width: "100%",
+                              maxHeight: "19rem",
+                              objectFit: "cover",
+                              borderRadius: "6px",
+                              marginBottom: "6px",
+                              cursor: "pointer",
+                            }}
+                            onClick={() =>
+                              setOpenImage(
+                                `http://localhost:5000/uploads/${announcements[currentIndex].file_path}`
+                              )
+                            }
+                          />
+                        </>
+                      )}
+
+                      <Typography variant="caption" color="text.secondary">
+                        Expires:{" "}
+                        {new Date(
+                          announcements[currentIndex].expires_at
+                        ).toLocaleDateString("en-US")}
+                      </Typography>
+                    </Box>
+                  )}
+
+                  {/* Navigation Buttons */}
+                  {announcements.length > 1 && (
+                    <>
+                      <IconButton
+                        onClick={() =>
+                          setCurrentIndex(
+                            (prev) => (prev - 1 + announcements.length) % announcements.length
+                          )
+                        }
                         sx={{
-                          transition: "opacity 0.6s ease",
-                          opacity: 1,
                           position: "absolute",
-                          width: "100%",
+                          top: "50%",
+                          left: 10,
+                          transform: "translateY(-50%)",
+                          backgroundColor: "rgba(255,255,255,0.8)",
+                          "&:hover": { backgroundColor: "#fff" },
                         }}
                       >
-                        <Typography
-                          variant="subtitle2"
-                          sx={{ color: "maroon", fontWeight: "bold" }}
-                        >
-                          {announcements[currentIndex].title}
-                        </Typography>
+                        <KeyboardBackspaceIcon sx={{ color: "maroon", fontSize: 28 }} />
+                      </IconButton>
 
-                        <Typography variant="body2" sx={{ mb: 1 }}>
-                          {announcements[currentIndex].content}
-                        </Typography>
-
-                        {announcements[currentIndex].file_path && (
-                          <>
-                            <img
-                              src={`http://localhost:5000/uploads/${announcements[currentIndex].file_path}`}
-                              alt={announcements[currentIndex].title}
-                              style={{
-                                width: "100%",
-                                maxHeight: "25rem",
-                                objectFit: "cover",
-                                borderRadius: "6px",
-                                marginBottom: "6px",
-                                cursor: "pointer",
-                              }}
-                              onClick={() =>
-                                setOpenImage(
-                                  `http://localhost:5000/uploads/${announcements[currentIndex].file_path}`
-                                )
-                              }
-                            />
-                            <Dialog
-                            open={Boolean(openImage)}
-                            onClose={() => setOpenImage(null)}
-                            fullScreen
-                            PaperProps={{
-                              style: {
-                                backgroundColor: "transparent", // fully transparent background
-                                display: "flex",
-                                justifyContent: "center",
-                                alignItems: "center",
-                                position: "relative",
-                                boxShadow: "none",
-                                cursor: "pointer", // indicate clickable outside
-                              },
-                            }}
-                          >
-                            {/* Clicking outside image closes dialog */}
-                            <Box
-                              onClick={() => setOpenImage(null)}
-                              sx={{
-                                position: "absolute",
-                                top: 0,
-                                left: 0,
-                                width: "100%",
-                                height: "100%",
-                                zIndex: 1,
-                              }}
-                            />
-                            {/* 🔙 Back Button on Top-Left */}
-                            <IconButton
-                              onClick={() => setOpenImage(null)}
-                              sx={{
-                                position: "absolute",
-                                top: 20,
-                                left: 20,
-                                backgroundColor: "white",
-                                width: 55,
-                                height: 55,
-                                padding: "5px",
-                                display: "flex",
-                                justifyContent: "center",
-                                alignItems: "center",
-                                zIndex: 2, // above clickable backdrop
-                                "&:hover": { backgroundColor: "#f5f5f5" },
-                              }}
-                            >
-                              <KeyboardBackspaceIcon sx={{ fontSize: 40, color: "black" }} />
-                            </IconButton>
-                            {/* Fullscreen Image */}
-                            <Box
-                              onClick={(e) => e.stopPropagation()} // prevent closing when clicking the image
-                              sx={{
-                                position: "relative",
-                                zIndex: 2,
-                                display: "flex",  
-                                justifyContent: "center",
-                                alignItems: "center",
-                                maxWidth: "100%",
-                                maxHeight: "100%",
-                              }}
-                            >
-                              <img
-                                src={openImage}
-                                alt="Preview"
-                                style={{
-                                  maxWidth: "100%",
-                                  maxHeight: "90%",
-                                  objectFit: "contain",
-                                }}
-                              />
-                            </Box>
-                          </Dialog>
-                          </>
-                        )}
-
-                        <Typography variant="caption" color="text.secondary">
-                          Expires:{" "}
-                          {new Date(
-                            announcements[currentIndex].expires_at
-                          ).toLocaleDateString("en-US")}
-                        </Typography>
-                      </Box>
-                    )}
-
-                    {/* Navigation Buttons */}
-                    {announcements.length > 1 && (
-                      <>
-                        <IconButton
-                          onClick={() =>
-                            setCurrentIndex(
-                              (prev) => (prev - 1 + announcements.length) % announcements.length
-                            )
-                          }
-                          sx={{
-                            position: "absolute",
-                            top: "50%",
-                            left: 10,
-                            transform: "translateY(-50%)",
-                            backgroundColor: "rgba(255,255,255,0.8)",
-                            "&:hover": { backgroundColor: "#fff" },
-                          }}
-                        >
-                          <KeyboardBackspaceIcon sx={{ color: "maroon", fontSize: 28 }} />
-                        </IconButton>
-
-                        <IconButton
-                          onClick={() =>
-                            setCurrentIndex((prev) => (prev + 1) % announcements.length)
-                          }
-                          sx={{
-                            position: "absolute",
-                            top: "50%",
-                            right: 10,
-                            transform: "translateY(-50%) rotate(180deg)",
-                            backgroundColor: "rgba(255,255,255,0.8)",
-                            "&:hover": { backgroundColor: "#fff" },
-                          }}
-                        >
-                          <KeyboardBackspaceIcon sx={{ color: "maroon", fontSize: 28 }} />
-                        </IconButton>
-                      </>
-                    )}
-                  </Box>
+                      <IconButton
+                        onClick={() =>
+                          setCurrentIndex((prev) => (prev + 1) % announcements.length)
+                        }
+                        sx={{
+                          position: "absolute",
+                          top: "50%",
+                          right: 10,
+                          transform: "translateY(-50%) rotate(180deg)",
+                          backgroundColor: "rgba(255,255,255,0.8)",
+                          "&:hover": { backgroundColor: "#fff" },
+                        }}
+                      >
+                        <KeyboardBackspaceIcon sx={{ color: "maroon", fontSize: 28 }} />
+                      </IconButton>
+                    </>
+                  )}
+                </Box>
               )}
+              <Dialog
+                open={Boolean(openImage)}
+                onClose={() => setOpenImage(null)}
+                fullScreen
+                PaperProps={{
+                  style: {
+                    backgroundColor: "transparent", // fully transparent background
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    position: "relative",
+                    boxShadow: "none",
+                    cursor: "pointer", // indicate clickable outside
+                  },
+                }}
+              >
+                {/* Clicking outside image closes dialog */}
+                <Box
+                  onClick={() => setOpenImage(null)}
+                  sx={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    height: "100%",
+                    zIndex: 1,
+                  }}
+                />
+                {/* 🔙 Back Button on Top-Left */}
+                <IconButton
+                  onClick={() => setOpenImage(null)}
+                  sx={{
+                    position: "absolute",
+                    top: 20,
+                    left: 20,
+                    backgroundColor: "white",
+                    width: 55,
+                    height: 55,
+                    padding: "5px",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    zIndex: 2, // above clickable backdrop
+                    "&:hover": { backgroundColor: "#f5f5f5" },
+                  }}
+                >
+                  <KeyboardBackspaceIcon sx={{ fontSize: 40, color: "black" }} />
+                </IconButton>
+                {/* Fullscreen Image */}
+                <Box
+                  onClick={(e) => e.stopPropagation()} // prevent closing when clicking the image
+                  sx={{
+                    position: "relative",
+                    zIndex: 2,
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    maxWidth: "100%",
+                    maxHeight: "100%",
+                  }}
+                >
+                  <img
+                    src={openImage}
+                    alt="Preview"
+                    style={{
+                      maxWidth: "100%",
+                      maxHeight: "90%",
+                      objectFit: "contain",
+                    }}
+                  />
+                </Box>
+              </Dialog>
             </CardContent>
           </Card>
         </Grid>
@@ -539,7 +623,7 @@ const [announcements, setAnnouncements] = useState([]);
                 boxShadow: 3,
                 p: 2,
                 width: "425px",
-                height: "260px",
+                height: "130px",
                 marginTop: "1rem",
                 transition: "transform 0.2s ease",
                 boxShadow: 3,
@@ -550,7 +634,7 @@ const [announcements, setAnnouncements] = useState([]);
                 alignItems: "center",
               }}
             >
-              <CardContent sx={{ p: 0, width: "100%", height: "100%"}}>
+              <CardContent sx={{ p: 0, width: "100%", height: "100%" }}>
                 <Box
                   sx={{
                     textAlign: "center",
@@ -562,9 +646,9 @@ const [announcements, setAnnouncements] = useState([]);
                   }}>
                   Workload
                 </Box>
-                <Box sx={{display: "flex", alignItems: "center", justifyContent: "center", height: "100%"}}>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
                   <Link to={"/faculty_workload"}>
-                    <Button style={{background: "maroon", color: "white", padding: "15px 20px"}}>
+                    <Button style={{ background: "maroon", color: "white", padding: "15px 20px" }}>
                       Open My Workload
                     </Button>
                   </Link>

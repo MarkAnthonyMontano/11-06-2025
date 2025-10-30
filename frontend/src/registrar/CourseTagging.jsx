@@ -5,6 +5,7 @@ import LinearWithValueLabel from "../components/LinearWithValueLabel";
 import { Snackbar, Alert } from "@mui/material";
 import { FaFileExcel } from "react-icons/fa";
 import Unauthorized from "../components/Unauthorized";
+import LoadingOverlay from "../components/LoadingOverlay";
 
 const CourseTagging = () => {
   const [data, setdata] = useState([]);
@@ -18,49 +19,50 @@ const CourseTagging = () => {
   const [userID, setUserID] = useState("");
   const [user, setUser] = useState("");
   const [userRole, setUserRole] = useState("");
+  
   ///////////
-  const pageId = 22;
+  const pageId = 20;
 
   // do not alter
   useEffect(() => {
-      
-      const storedUser = localStorage.getItem("email");
-      const storedRole = localStorage.getItem("role");
-      const storedID = localStorage.getItem("person_id");
-  
-      if (storedUser && storedRole && storedID) {
-        setUser(storedUser);
-        setUserRole(storedRole);
-        setUserID(storedID);
-  
-        if (storedRole === "registrar") {
-          checkAccess(storedID);
-        } else {
-          window.location.href = "/login";
-        }
+
+    const storedUser = localStorage.getItem("email");
+    const storedRole = localStorage.getItem("role");
+    const storedID = localStorage.getItem("person_id");
+
+    if (storedUser && storedRole && storedID) {
+      setUser(storedUser);
+      setUserRole(storedRole);
+      setUserID(storedID);
+
+      if (storedRole === "registrar") {
+        checkAccess(storedID);
       } else {
         window.location.href = "/login";
       }
-    }, []);
+    } else {
+      window.location.href = "/login";
+    }
+  }, []);
 
   //////
   const checkAccess = async (userID) => {
     try {
-        const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
-        if (response.data && response.data.page_privilege === 1) {
-          setHasAccess(true);
-        } else {
-          setHasAccess(false);
-        }
-    } catch (error) {
-        console.error('Error checking access:', error);
+      const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
+      if (response.data && response.data.page_privilege === 1) {
+        setHasAccess(true);
+      } else {
         setHasAccess(false);
-        if (error.response && error.response.data.message) {
-          console.log(error.response.data.message);
-        } else {
-          console.log("An unexpected error occurred.");
-        }
-        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Error checking access:', error);
+      setHasAccess(false);
+      if (error.response && error.response.data.message) {
+        console.log(error.response.data.message);
+      } else {
+        console.log("An unexpected error occurred.");
+      }
+      setLoading(false);
     }
   };
   useEffect(() => {
@@ -428,9 +430,9 @@ const CourseTagging = () => {
   });
 
 
-  ////////
-  if (hasAccess === null) {
-   return "Loading...."
+// Put this at the very bottom before the return 
+if (loading || hasAccess === null) {
+   return <LoadingOverlay open={loading} message="Check Access"/>;
 }
 
   if (!hasAccess) {
@@ -449,9 +451,9 @@ const CourseTagging = () => {
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
-          mt: 2,
+
           mb: 2,
-          px: 2,
+          px: 1,
         }}
       >
         <Typography
@@ -510,7 +512,7 @@ const CourseTagging = () => {
             <Button
               variant="contained"
               fullWidth
-               sx={{ backgroundColor: "maroon", color: "white", height: "50px", width: "200px", }}
+              sx={{ backgroundColor: "maroon", color: "white", height: "50px", width: "200px", }}
               onClick={handleImport}
             >
               Upload
@@ -625,21 +627,21 @@ const CourseTagging = () => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell style={{border: "2px solid maroon", textAlign: "center"}}>Course Code</TableCell>
-                <TableCell style={{border: "2px solid maroon", textAlign: "center"}}>Subject ID</TableCell>
-                <TableCell style={{border: "2px solid maroon", textAlign: "center"}}>Enrolled Students</TableCell>
-                <TableCell style={{border: "2px solid maroon", textAlign: "center"}}>Action</TableCell>
+                <TableCell style={{ border: "2px solid maroon", textAlign: "center" }}>Course Code</TableCell>
+                <TableCell style={{ border: "2px solid maroon", textAlign: "center" }}>Subject ID</TableCell>
+                <TableCell style={{ border: "2px solid maroon", textAlign: "center" }}>Enrolled Students</TableCell>
+                <TableCell style={{ border: "2px solid maroon", textAlign: "center" }}>Action</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {courses.map((c) => (
                 <TableRow key={c.course_id}>
-                  <TableCell style={{border: "2px solid maroon",}}>{c.course_code}</TableCell>
-                  <TableCell style={{border: "2px solid maroon", }}>{c.course_description}</TableCell>
-                  <TableCell style={{border: "2px solid maroon", textAlign: "center"}}>
+                  <TableCell style={{ border: "2px solid maroon", }}>{c.course_code}</TableCell>
+                  <TableCell style={{ border: "2px solid maroon", }}>{c.course_description}</TableCell>
+                  <TableCell style={{ border: "2px solid maroon", textAlign: "center" }}>
                     {subjectCounts[c.course_id] || 0}
                   </TableCell>
-                  <TableCell style={{border: "2px solid maroon", }}>
+                  <TableCell style={{ border: "2px solid maroon", }}>
                     {!isEnrolled(c.course_id) ? (
                       <Button variant="contained" size="small" onClick={() => addToCart(c)} disabled={!userId}>
                         Enroll
@@ -707,9 +709,9 @@ const CourseTagging = () => {
                 <TableCell style={{ textAlign: "center", border: "2px solid maroon" }}>SECTION</TableCell>
                 <TableCell style={{ textAlign: "center", border: "2px solid maroon" }}>DAY</TableCell>
                 <TableCell style={{ textAlign: "center", border: "2px solid maroon" }}>TIME</TableCell>
-                <TableCell style={{ textAlign: "center", border: "2px solid maroon"}}>ROOM</TableCell>
+                <TableCell style={{ textAlign: "center", border: "2px solid maroon" }}>ROOM</TableCell>
                 <TableCell style={{ textAlign: "center", border: "2px solid maroon" }}>FACULTY</TableCell>
-                <TableCell style={{ textAlign: "center", border: "2px solid maroon"}}>ENROLLED STUDENTS</TableCell>
+                <TableCell style={{ textAlign: "center", border: "2px solid maroon" }}>ENROLLED STUDENTS</TableCell>
                 <TableCell style={{ textAlign: "center", border: "2px solid maroon" }}>Action</TableCell>
               </TableRow>
             </TableHead>
@@ -731,11 +733,11 @@ const CourseTagging = () => {
                   </TableCell>
                   <TableCell style={{ textAlign: "center", border: "2px solid maroon" }}>{e.day_description}</TableCell>
                   <TableCell style={{ textAlign: "center", border: "2px solid maroon" }}>{e.school_time_start}-{e.school_time_end}</TableCell>
-                  <TableCell style={{ textAlign: "center" , border: "2px solid maroon"}}>{e.room_description}</TableCell>
+                  <TableCell style={{ textAlign: "center", border: "2px solid maroon" }}>{e.room_description}</TableCell>
                   <TableCell style={{ textAlign: "center", border: "2px solid maroon" }}>Prof. {e.lname}</TableCell>
-                  <TableCell style={{ textAlign: "center" , border: "2px solid maroon"}}> ({e.number_of_enrolled})</TableCell>
+                  <TableCell style={{ textAlign: "center", border: "2px solid maroon" }}> ({e.number_of_enrolled})</TableCell>
                   <TableCell style={{ textAlign: "center", border: "2px solid maroon" }}>
-                    <Button style={{ textAlign: "center",  }} variant="contained" color="error" size="small" onClick={() => deleteFromCart(e.id)}>
+                    <Button style={{ textAlign: "center", }} variant="contained" color="error" size="small" onClick={() => deleteFromCart(e.id)}>
                       Unenroll
                     </Button>
                   </TableCell>

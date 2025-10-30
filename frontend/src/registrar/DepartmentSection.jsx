@@ -10,6 +10,7 @@ import {
   FormControl
 } from '@mui/material';
 import Unauthorized from "../components/Unauthorized";
+import LoadingOverlay from "../components/LoadingOverlay";
 
 const DepartmentSection = () => {
   const [dprtmntSection, setDprtmntSection] = useState({
@@ -21,15 +22,16 @@ const DepartmentSection = () => {
   const [sectionsList, setSectionsList] = useState([]);
   const [departmentSections, setDepartmentSections] = useState([]);
 
-const [userID, setUserID] = useState("");
-const [user, setUser] = useState("");
-const [userRole, setUserRole] = useState("");
-const [hasAccess, setHasAccess] = useState(null);
-const pageId = 25;
+  const [userID, setUserID] = useState("");
+  const [user, setUser] = useState("");
+  const [userRole, setUserRole] = useState("");
+  const [hasAccess, setHasAccess] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const pageId = 23;
 
-//
-useEffect(() => {
-    
+  //
+  useEffect(() => {
+
     const storedUser = localStorage.getItem("email");
     const storedRole = localStorage.getItem("role");
     const storedID = localStorage.getItem("person_id");
@@ -49,23 +51,23 @@ useEffect(() => {
     }
   }, []);
 
-const checkAccess = async (userID) => {
+  const checkAccess = async (userID) => {
     try {
-        const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
-        if (response.data && response.data.page_privilege === 1) {
-          setHasAccess(true);
-        } else {
-          setHasAccess(false);
-        }
-    } catch (error) {
-        console.error('Error checking access:', error);
+      const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
+      if (response.data && response.data.page_privilege === 1) {
+        setHasAccess(true);
+      } else {
         setHasAccess(false);
-        if (error.response && error.response.data.message) {
-          console.log(error.response.data.message);
-        } else {
-          console.log("An unexpected error occurred.");
-        }
-        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Error checking access:', error);
+      setHasAccess(false);
+      if (error.response && error.response.data.message) {
+        console.log(error.response.data.message);
+      } else {
+        console.log("An unexpected error occurred.");
+      }
+      setLoading(false);
     }
   };
 
@@ -144,8 +146,9 @@ const checkAccess = async (userID) => {
     }
   });
 
-if (hasAccess === null) {
-   return "Loading...."
+ // Put this at the very bottom before the return 
+if (loading || hasAccess === null) {
+   return <LoadingOverlay open={loading} message="Check Access"/>;
 }
 
   if (!hasAccess) {
@@ -163,10 +166,8 @@ if (hasAccess === null) {
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
-          mt: 2,
-
           mb: 2,
-          px: 2,
+
         }}
       >
         <Typography
@@ -177,7 +178,7 @@ if (hasAccess === null) {
             fontSize: '36px',
           }}
         >
-          Department Section Panel
+          DEPARTMENT SECTION PANEL
         </Typography>
 
 
@@ -194,7 +195,7 @@ if (hasAccess === null) {
           flexDirection: { xs: 'column', md: 'row' },
           gap: 4,
           ml: 7,
-            width: "1400px",
+          width: "1400px",
           mt: 4,
 
         }}
@@ -205,14 +206,14 @@ if (hasAccess === null) {
             flex: 1,
             p: 3,
             borderRadius: 2,
-         
+
             boxShadow: 2,
             border: "2px solid maroon",
             bgcolor: 'white',
 
           }}
         >
-          <Typography variant="h6" gutterBottom textAlign="center" style={{color: "maroon"}} >
+          <Typography variant="h6" gutterBottom textAlign="center" style={{ color: "maroon", fontWeight: "bold" }} >
             Department Section Assignment
           </Typography>
           <label style={{ fontWeight: 'bold', marginBottom: 4 }} htmlFor="curriculum_id">
@@ -280,33 +281,87 @@ if (hasAccess === null) {
             maxHeight: 500,
           }}
         >
-          <Typography variant="h6" gutterBottom textAlign="center" style={{color: "maroon"}}>
+          <Typography variant="h6" gutterBottom textAlign="center" style={{ color: "maroon", fontWeight: "bold" }}>
             Department Sections
           </Typography>
 
           <Box sx={{ overflowY: 'auto', maxHeight: 400 }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead style={{ backgroundColor: '#f5f5f5' }}>
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                border: "2px solid maroon", // outer border
+              }}
+            >
+              <thead style={{ backgroundColor: "#f5f5f5" }}>
                 <tr>
-                  <th style={styles.tableCell}>Curriculum Name</th>
-                  <th style={styles.tableCell}>Section Description</th>
-                  <th style={styles.tableCell}>Status</th>
+                  <th
+                    style={{
+                      border: "2px solid maroon",
+                      padding: "8px",
+                      textAlign: "center",
+                      color: "maroon",
+                    }}
+                  >
+                    Curriculum Name
+                  </th>
+                  <th
+                    style={{
+                      border: "2px solid maroon",
+                      padding: "8px",
+                      textAlign: "center",
+                      color: "maroon",
+                    }}
+                  >
+                    Section Description
+                  </th>
+                  <th
+                    style={{
+                      border: "2px solid maroon",
+                      padding: "8px",
+                      textAlign: "center",
+                      color: "maroon",
+                    }}
+                  >
+                    Status
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {departmentSections.map((section, index) => (
                   <tr key={`dept-${section.ds_id || section.id || index}`}>
-                    <td style={styles.tableCell}>
+                    <td
+                      style={{
+                        border: "2px solid maroon",
+                        padding: "8px",
+                        textAlign: "center",
+                      }}
+                    >
                       {section.program_code}-{section.year_description}
                     </td>
-                    <td style={styles.tableCell}>{section.section_description}</td>
-                    <td style={styles.tableCell}>
-                      {section.dsstat === 0 ? 'Inactive' : 'Active'}
+                    <td
+                      style={{
+                        border: "2px solid maroon",
+                        padding: "8px",
+                        textAlign: "center",
+                      }}
+                    >
+                      {section.section_description}
+                    </td>
+                    <td
+                      style={{
+                        border: "2px solid maroon",
+                        padding: "8px",
+                        textAlign: "center",
+                      }}
+                    >
+                      {section.dsstat === 0 ? "Inactive" : "Active"}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+
           </Box>
         </Box>
       </Box>

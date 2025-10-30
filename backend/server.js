@@ -7815,37 +7815,6 @@ app.get("/get_subject_info/:subject_id/:department_section_id/:active_school_yea
   }
 });
 
-// UPDATE ENROLLED STUDENT'S GRADES (UPDATED!) 09/06/2025
-app.put("/add_grades", async (req, res) => {
-  const { midterm, finals, final_grade, en_remarks, student_number, subject_id } = req.body;
-  console.log("Received data:", { midterm, finals, final_grade, en_remarks, student_number, subject_id });
-
-  try {
-    const checkSql = `SELECT period_status FROM grading_periods WHERE id = 3`; // adjust table/column names
-    const [rows] = await db3.execute(checkSql);
-
-    if (!rows.length || rows[0].period_status !== 1) {
-      return res.status(400).json({ message: "The Uploading of Grades is still not open." });
-    }
-
-    const updateSql = `
-      UPDATE enrolled_subject 
-      SET midterm = ?, finals = ?, final_grade = ?, en_remarks = ?
-      WHERE student_number = ? AND course_id = ?
-    `;
-    const [result] = await db3.execute(updateSql, [midterm, finals, final_grade, en_remarks, student_number, subject_id]);
-
-    if (result.affectedRows > 0) {
-      return res.status(200).json({ message: "Grades updated successfully!" });
-    } else {
-      return res.status(404).json({ message: "No matching record found to update." });
-    }
-  } catch (err) {
-    console.error("Failed to update grades:", err);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
-
 app.get('/get_class_details/:selectedActiveSchoolYear/:profID', async (req, res) => {
   const { selectedActiveSchoolYear, profID } = req.params;
   try {
@@ -10830,7 +10799,7 @@ app.post("/api/grades/import", upload.single("file"), async (req, res) => {
     const { course_id, active_school_year_id, department_section_id } = req.body;
 
     if (!course_id || !active_school_year_id || !department_section_id) {
-      return res.status(400).json({ error: "Missing required identifiers" });
+      return res.status(400).json({ error: "Please Select a class to upload the file on" });
     }
 
     const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
@@ -10839,8 +10808,8 @@ app.post("/api/grades/import", upload.single("file"), async (req, res) => {
     const rows = XLSX.utils.sheet_to_json(sheet);
     console.log("📄 Parsed Excel rows:", rows);
     const studentNumbers = rows
-      .map(r => r["Student Number"] || r["student_number"])
-      .filter(n => n);
+    .map(r => String(r["Student Number"] || r["student_number"]))
+    .filter(n => n);
 
     if (studentNumbers.length === 0) {
       return res.status(400).json({ error: "No valid student numbers" });
@@ -10871,8 +10840,9 @@ app.post("/api/grades/import", upload.single("file"), async (req, res) => {
     const existingStudentNumbers = existingStudents.map(s => s.student_number);
     let skippedCount = 0;
 
+    console.log("🧠 existingStudentNumbers:", existingStudentNumbers);
     for (const row of rows) {
-      const studentNumber = row["Student Number"] || row["student_number"];
+      const studentNumber = String(row["Student Number"] || row["student_number"]);
 
       // Skip if student doesn't exist in DB
       if (!existingStudentNumbers.includes(studentNumber)) {
@@ -10880,18 +10850,46 @@ app.post("/api/grades/import", upload.single("file"), async (req, res) => {
         continue;
       }
 
-      const midterm = Number(row["midterm"] || 0);
-      const finals = Number(row["finals"] || 0);
-      const finalGrade = row["final_grade"]
-        ? Number(row["final_grade"]).toFixed(2)
-        : ((midterm + finals) / 2).toFixed(2);
+      let midterm = row["midterm"];
+      let finals = row["finals"];
+      let en_remarks = 0;
 
-      let remarks = 0;
-      if (parseFloat(finalGrade) >= 75.00) remarks = 1;   // PASSED
-      else if (parseFloat(finalGrade) >= 60.00) remarks = 2; // FAILED
-      else remarks = 3;
+      if (
+        String(midterm).toLowerCase() === "inc" ||
+        String(finals).toLowerCase() === "inc"
+      ) {
+        en_remarks = 3;
+        await db3.query(
+          `UPDATE enrolled_subject
+           SET midterm = ?, finals = ?, final_grade = "0.00", grades_status = "INC"
+           WHERE student_number = ? 
+             AND course_id = ? 
+             AND active_school_year_id = ? 
+             AND department_section_id = ?`,
+          [midterm, finals, studentNumber, course_id, active_school_year_id, department_section_id]
+        );
+        continue;
+      }
 
-      // Update existing student
+      midterm = parseFloat(midterm);
+      finals = parseFloat(finals);
+      if (!isNaN(midterm)) midterm = parseFloat(midterm.toFixed(2));
+      if (!isNaN(finals)) finals = parseFloat(finals.toFixed(2));
+
+      const finalGrade = ((midterm + finals) / 2).toFixed(2);
+
+      if (midterm === 5.0 || finals === 5.0) {
+        en_remarks = 2; 
+      } else if (finalGrade == 0.0 || finals < 1.0 || midterm < 1.0 || isNaN(midterm) || isNaN(finals)) {
+        en_remarks = 0; 
+      } else if (finalGrade >= 1.0 && finalGrade <= 3.0) {
+        en_remarks = 1;
+      } else if (finalGrade >= 3.25) {
+        en_remarks = 2; 
+      } else {
+        en_remarks = 0; 
+      }
+
       await db3.query(
         `UPDATE enrolled_subject
          SET midterm = ?, finals = ?, final_grade = ?, en_remarks = ?
@@ -10903,7 +10901,7 @@ app.post("/api/grades/import", upload.single("file"), async (req, res) => {
           midterm,
           finals,
           finalGrade,
-          remarks,
+          en_remarks,
           studentNumber,
           course_id,
           active_school_year_id,
@@ -10957,25 +10955,41 @@ app.put("/add_grades", async (req, res) => {
   console.log("Received data:", { midterm, finals, final_grade, en_remarks, student_number, subject_id });
 
   try {
-    const checkSql = `SELECT id, description, status FROM period_status WHERE id = 3`;
-    const [rows] = await db3.execute(checkSql);
-
+    const [rows] = await db3.execute(`SELECT id, description, status FROM period_status WHERE id = 3`);
     if (!rows.length || rows[0].status !== 1) {
-      return res.status(400).json({ message: "The Uploading of Grades is still not open." });
+      return res.status(400).json({ message: "The uploading of grades is still not open." });
     }
 
-    const updateSql = `
-      UPDATE enrolled_subject 
-      SET midterm = ?, finals = ?, final_grade = ?, en_remarks = ?
-      WHERE student_number = ? AND course_id = ?
-    `;
-    const [result] = await db3.execute(updateSql, [midterm, finals, final_grade, en_remarks, student_number, subject_id]);
+    const isIncomplete = 
+      String(midterm).toLowerCase() === "inc" || 
+      String(midterm).toLowerCase() === "incomplete" || 
+      String(finals).toLowerCase() === "inc" || 
+      String(finals).toLowerCase() === "incomplete";
 
-    if (result.affectedRows > 0) {
-      return res.status(200).json({ message: "Grades updated successfully!" });
-    } else {
-      return res.status(404).json({ message: "No matching record found to update." });
+    if (isIncomplete) {
+      const [result] = await db3.execute(
+        `UPDATE enrolled_subject 
+        SET midterm = ?, finals = ? , final_grade= "0.00", grades_status = 'INC', en_remarks = 3
+        WHERE student_number = ? AND course_id = ?`,
+        [midterm, finals, student_number, subject_id]
+      );
+      
+      return result.affectedRows > 0
+        ? res.status(200).json({ message: "Grades marked as INC successfully!" })
+        : res.status(404).json({ message: "No matching record found to update." });
     }
+
+    const [result] = await db3.execute(
+      `UPDATE enrolled_subject 
+      SET midterm = ?, finals = ?, final_grade = ?, grades_status = ?, en_remarks = ?
+      WHERE student_number = ? AND course_id = ?`,
+      [midterm, finals, final_grade, final_grade, en_remarks, student_number, subject_id]
+    );
+
+    return result.affectedRows > 0
+      ? res.status(200).json({ message: "Grades updated successfully!" })
+      : res.status(404).json({ message: "No matching record found to update." });
+
   } catch (err) {
     console.error("Failed to update grades:", err);
     return res.status(500).json({ message: "Server error" });
@@ -13096,7 +13110,7 @@ app.get("/api/announcements/faculty", async (req, res) => {
 });
 
 app.get("/api/faculty_evaluation", async (req, res) => {
-  const { prof_id, year_id, semester_id } = req.query;
+  const {prof_id, year_id, semester_id} = req.query;
   try {
     const [rows] = await db3.query(
       `
@@ -13122,7 +13136,7 @@ app.get("/api/faculty_evaluation", async (req, res) => {
     );
 
     if (rows.length === 0) {
-      return res.status(404).json({ message: "No status record found for this person" });
+      return res.json([]);
     }
 
     res.json(rows);
@@ -13133,6 +13147,37 @@ app.get("/api/faculty_evaluation", async (req, res) => {
   }
 });
 
+app.post("/insert-logs/faculty/:prof_id", async (req, res) => {
+  const { prof_id } = req.params;
+  const { message, type } = req.body; 
+
+  try {
+
+    const [professorData] = await db3.query(
+      "SELECT * FROM prof_table WHERE prof_id = ?", [prof_id]
+    );
+
+    if (professorData === 0) {
+      res.status(400).send({message: "No Data found"})
+    }
+
+    const prof = professorData[0];
+    const profID = prof.prof_id
+    const fullName = `${prof.lname}, ${prof.fname} ${prof.mname}`;
+    const email = prof.email
+
+     await db.query(
+      `INSERT INTO notifications (type, message, applicant_number, actor_email, actor_name, timestamp)
+       VALUES (?, ?, ?, ?, ?, NOW())`,
+      [type, message, profID, email, fullName]
+    );
+
+    res.json({ success: true, message: "Log inserted"});
+  } catch (err) {
+    console.error("Error fetching notifications:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
 
 http.listen(5000, () => {
   console.log("Server with Socket.IO running on port 5000");

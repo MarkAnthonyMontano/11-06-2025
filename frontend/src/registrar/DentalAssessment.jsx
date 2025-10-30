@@ -66,50 +66,51 @@ const DentalAssessment = () => {
     const [searchQuery, setSearchQuery] = useState("");
     const [searchError, setSearchError] = useState("");
 
-const [hasAccess, setHasAccess] = useState(null);
-const pageId = 24;
+    const [hasAccess, setHasAccess] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const pageId = 22;
 
-//
-useEffect(() => {
-    
-    const storedUser = localStorage.getItem("email");
-    const storedRole = localStorage.getItem("role");
-    const storedID = localStorage.getItem("person_id");
+    //
+    useEffect(() => {
 
-    if (storedUser && storedRole && storedID) {
-      setUser(storedUser);
-      setUserRole(storedRole);
-      setUserID(storedID);
+        const storedUser = localStorage.getItem("email");
+        const storedRole = localStorage.getItem("role");
+        const storedID = localStorage.getItem("person_id");
 
-      if (storedRole === "registrar") {
-        checkAccess(storedID);
-      } else {
-        window.location.href = "/login";
-      }
-    } else {
-      window.location.href = "/login";
-    }
-  }, []);
+        if (storedUser && storedRole && storedID) {
+            setUser(storedUser);
+            setUserRole(storedRole);
+            setUserID(storedID);
 
-const checkAccess = async (userID) => {
-    try {
-        const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
-        if (response.data && response.data.page_privilege === 1) {
-          setHasAccess(true);
+            if (storedRole === "registrar") {
+                checkAccess(storedID);
+            } else {
+                window.location.href = "/login";
+            }
         } else {
-          setHasAccess(false);
+            window.location.href = "/login";
         }
-    } catch (error) {
-        console.error('Error checking access:', error);
-        setHasAccess(false);
-        if (error.response && error.response.data.message) {
-          console.log(error.response.data.message);
-        } else {
-          console.log("An unexpected error occurred.");
+    }, []);
+
+    const checkAccess = async (userID) => {
+        try {
+            const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
+            if (response.data && response.data.page_privilege === 1) {
+                setHasAccess(true);
+            } else {
+                setHasAccess(false);
+            }
+        } catch (error) {
+            console.error('Error checking access:', error);
+            setHasAccess(false);
+            if (error.response && error.response.data.message) {
+                console.log(error.response.data.message);
+            } else {
+                console.log("An unexpected error occurred.");
+            }
+            setLoading(false);
         }
-        setLoading(false);
-    }
-  };
+    };
 
 
     useEffect(() => {
@@ -216,43 +217,6 @@ const checkAccess = async (userID) => {
     const queryPersonId = queryParams.get("person_id")?.trim() || "";
     const [explicitSelection, setExplicitSelection] = useState(false);
 
-    // Fetch person by student number or name
-    const fetchByStudentNumber = async (number) => {
-        if (!number.trim()) return;
-
-        try {
-            console.log("🔍 Searching for:", number);
-            const res = await axios.get("http://localhost:5000/api/search-person-student", {
-                params: { query: number },
-            });
-
-            console.log("✅ API response:", res.data);
-
-            if (res.data && res.data.student_number) {
-                setPerson(res.data); // ✅ directly set the object
-                fetchMedicalData(res.data.student_number);
-            } else {
-                alert("⚠️ No matching student found.");
-                setPerson(null);
-            }
-        } catch (err) {
-            console.error("❌ Error fetching student:", err.response?.data || err.message);
-            alert("Student not found or error fetching data.");
-            setPerson(null);
-        }
-    };
-
-    // Handle Enter key
-    const handleSearch = async (e) => {
-        if (e.key === "Enter") {
-            await fetchByStudentNumber(studentNumber);
-        }
-    };
-
-    // Handle button click
-    const handleSearchClick = async () => {
-        await fetchByStudentNumber(studentNumber);
-    };
 
     const fetchMedicalData = async (number) => {
         try {
@@ -383,6 +347,38 @@ const checkAccess = async (userID) => {
         navigate(path);
     };
 
+    // 🔍 Auto search when studentNumber changes
+    useEffect(() => {
+        const delayDebounce = setTimeout(async () => {
+            if (!studentNumber.trim()) {
+                setPerson(null);
+                return;
+            }
+
+            try {
+                console.log("🔍 Auto-searching:", studentNumber);
+                const res = await axios.get("http://localhost:5000/api/search-person-student", {
+                    params: { query: studentNumber },
+                });
+
+                if (res.data && res.data.student_number) {
+                    setPerson(res.data);
+                    fetchMedicalData(res.data.student_number);
+                    console.log("✅ Auto-search success:", res.data);
+                } else {
+                    console.warn("⚠️ No student found.");
+                    setPerson(null);
+                }
+            } catch (err) {
+                console.error("❌ Auto-search failed:", err);
+                setPerson(null);
+            }
+        }, 500); // ⏱️ 0.5 second debounce
+
+        return () => clearTimeout(delayDebounce);
+    }, [studentNumber]);
+
+
     const renderToothRow = (title, quadrant) => {
         // 🧩 Always ensure we have an array
         let teethArray = form[quadrant];
@@ -395,6 +391,25 @@ const checkAccess = async (userID) => {
         } else if (!Array.isArray(teethArray)) {
             teethArray = Array(8).fill("");
         }
+
+        //🔒 Disable right-click
+        document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+        //🔒 Block DevTools shortcuts + Ctrl+P silently
+        document.addEventListener('keydown', (e) => {
+            const isBlockedKey =
+                e.key === 'F12' || // DevTools
+                e.key === 'F11' || // Fullscreen
+                (e.ctrlKey && e.shiftKey && (e.key.toLowerCase() === 'i' || e.key.toLowerCase() === 'j')) || // Ctrl+Shift+I/J
+                (e.ctrlKey && e.key.toLowerCase() === 'u') || // Ctrl+U (View Source)
+                (e.ctrlKey && e.key.toLowerCase() === 'p');   // Ctrl+P (Print)
+
+            if (isBlockedKey) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        });
+
 
         return (
             <Box
@@ -486,19 +501,20 @@ const checkAccess = async (userID) => {
         );
     };
 
-    if (hasAccess === null) {
-   return "Loading...."
-}
+    // Put this at the very bottom before the return 
+    if (loading || hasAccess === null) {
+        return <LoadingOverlay open={loading} message="Check Access" />;
+    }
 
-  if (!hasAccess) {
+    if (!hasAccess) {
+        return (
+            <Unauthorized />
+        );
+    }
+
+
     return (
-      <Unauthorized />
-    );
-  }
-
-
-    return (
-        <Box sx={{ height: "calc(100vh - 150px)", overflowY: "auto", p: 2 }}>
+        <Box sx={{ height: "calc(100vh - 150px)", overflowY: "auto", }}>
             {/* 🟥 HEADER SECTION */}
             <Box
                 sx={{
@@ -515,7 +531,7 @@ const checkAccess = async (userID) => {
                     fontWeight="bold"
                     sx={{
                         color: "#6D2323",
-                        fontFamily: "Arial Black",
+
                         letterSpacing: 1,
                         marginTop: "-10px",
                     }}
@@ -534,13 +550,12 @@ const checkAccess = async (userID) => {
                 >
                     <TextField
                         variant="outlined"
-                        placeholder="Search Student Number..."
+                        placeholder="Search Student Name / Email / Applicant ID "
                         size="small"
                         value={studentNumber}
                         onChange={(e) => setStudentNumber(e.target.value)}
-                        onKeyDown={handleSearch}
                         sx={{
-                            width: 350,
+                            width: 450,
                             backgroundColor: "#fff",
                             borderRadius: 1,
                             "& .MuiOutlinedInput-root": {
@@ -552,25 +567,8 @@ const checkAccess = async (userID) => {
                         }}
                     />
 
-                    <Button
-                        variant="contained"
-                        startIcon={<SearchIcon />}
-                        sx={{
-                            bgcolor: "#6D2323",
-                            px: 3,
-                            py: 0.8,
-                            borderRadius: "10px",
-                            fontWeight: "bold",
-                            textTransform: "none",
-                            fontFamily: "Arial",
-                            "&:hover": {
-                                bgcolor: "#8B2C2C",
-                            },
-                        }}
-                        onClick={handleSearchClick}
-                    >
-                        Search
-                    </Button>
+
+
                 </Box>
             </Box>
 

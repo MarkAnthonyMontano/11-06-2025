@@ -141,9 +141,9 @@ export default function EmailTemplateManager() {
           justifyContent: "space-between",
           alignItems: "center",
           flexWrap: "wrap",
-          mt: 2,
+       
           mb: 2,
-          px: 2,
+     
         }}
       >
         <Typography

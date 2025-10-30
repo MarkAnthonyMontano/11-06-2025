@@ -39,6 +39,7 @@ import ListAltIcon from "@mui/icons-material/ListAlt";
 import SchoolIcon from '@mui/icons-material/School';        // For Entrance Examination Scores
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import Unauthorized from "../components/Unauthorized";
+import LoadingOverlay from "../components/LoadingOverlay";
 
 const socket = io("http://localhost:5000");
 
@@ -93,50 +94,51 @@ const MedicalApplicantList = () => {
     };
 
 
-const [hasAccess, setHasAccess] = useState(null);
-const pageId = 34;
+    const [hasAccess, setHasAccess] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const pageId = 30;
 
-//
-useEffect(() => {
-    
-    const storedUser = localStorage.getItem("email");
-    const storedRole = localStorage.getItem("role");
-    const storedID = localStorage.getItem("person_id");
+    //
+    useEffect(() => {
 
-    if (storedUser && storedRole && storedID) {
-      setUser(storedUser);
-      setUserRole(storedRole);
-      setUserID(storedID);
+        const storedUser = localStorage.getItem("email");
+        const storedRole = localStorage.getItem("role");
+        const storedID = localStorage.getItem("person_id");
 
-      if (storedRole === "registrar") {
-        checkAccess(storedID);
-      } else {
-        window.location.href = "/login";
-      }
-    } else {
-      window.location.href = "/login";
-    }
-  }, []);
+        if (storedUser && storedRole && storedID) {
+            setUser(storedUser);
+            setUserRole(storedRole);
+            setUserID(storedID);
 
-const checkAccess = async (userID) => {
-    try {
-        const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
-        if (response.data && response.data.page_privilege === 1) {
-          setHasAccess(true);
+            if (storedRole === "registrar") {
+                checkAccess(storedID);
+            } else {
+                window.location.href = "/login";
+            }
         } else {
-          setHasAccess(false);
+            window.location.href = "/login";
         }
-    } catch (error) {
-        console.error('Error checking access:', error);
-        setHasAccess(false);
-        if (error.response && error.response.data.message) {
-          console.log(error.response.data.message);
-        } else {
-          console.log("An unexpected error occurred.");
+    }, []);
+
+    const checkAccess = async (userID) => {
+        try {
+            const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
+            if (response.data && response.data.page_privilege === 1) {
+                setHasAccess(true);
+            } else {
+                setHasAccess(false);
+            }
+        } catch (error) {
+            console.error('Error checking access:', error);
+            setHasAccess(false);
+            if (error.response && error.response.data.message) {
+                console.log(error.response.data.message);
+            } else {
+                console.log("An unexpected error occurred.");
+            }
+            setLoading(false);
         }
-        setLoading(false);
-    }
-  };
+    };
 
     useEffect(() => {
         if (location.search.includes("person_id")) {
@@ -721,15 +723,35 @@ const checkAccess = async (userID) => {
         newWin.document.close();
     };
 
-if (hasAccess === null) {
-   return "Loading...."
-}
+    // 🔒 Disable right-click
+    document.addEventListener('contextmenu', (e) => e.preventDefault());
 
-  if (!hasAccess) {
-    return (
-      <Unauthorized />
-    );
-  }
+    // 🔒 Block DevTools shortcuts + Ctrl+P silently
+    document.addEventListener('keydown', (e) => {
+        const isBlockedKey =
+            e.key === 'F12' || // DevTools
+            e.key === 'F11' || // Fullscreen
+            (e.ctrlKey && e.shiftKey && (e.key.toLowerCase() === 'i' || e.key.toLowerCase() === 'j')) || // Ctrl+Shift+I/J
+            (e.ctrlKey && e.key.toLowerCase() === 'u') || // Ctrl+U (View Source)
+            (e.ctrlKey && e.key.toLowerCase() === 'p');   // Ctrl+P (Print)
+
+        if (isBlockedKey) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+    });
+
+
+    // Put this at the very bottom before the return 
+    if (loading || hasAccess === null) {
+        return <LoadingOverlay open={loading} message="Check Access" />;
+    }
+
+    if (!hasAccess) {
+        return (
+            <Unauthorized />
+        );
+    }
 
 
     return (

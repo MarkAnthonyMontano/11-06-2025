@@ -12,12 +12,12 @@ import PersonSearchIcon from '@mui/icons-material/PersonSearch';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
 import Unauthorized from "../components/Unauthorized";
-
+import LoadingOverlay from "../components/LoadingOverlay";
 import { useNavigate } from "react-router-dom";
 
 const AssignInterviewExam = () => {
     const tabs = [
-            { label: "Admission Process For College", to: "/applicant_list", icon: <SchoolIcon fontSize="large" /> },
+        { label: "Admission Process For College", to: "/applicant_list", icon: <SchoolIcon fontSize="large" /> },
         { label: "Applicant Form", to: "/registrar_dashboard1", icon: <AssignmentIcon fontSize="large" /> },
         { label: "Student Requirements", to: "/registrar_requirements", icon: <AssignmentTurnedInIcon fontSize="large" /> },
         { label: "Interview Room Assignment", to: "/assign_interview_exam", icon: <MeetingRoomIcon fontSize="large" /> },
@@ -80,11 +80,14 @@ const AssignInterviewExam = () => {
         fetchSchedules();
     }, []);
 
-        const [userID, setUserID] = useState("");
+    const [userID, setUserID] = useState("");
     const [user, setUser] = useState("");
     const [userRole, setUserRole] = useState("");
     const [hasAccess, setHasAccess] = useState(null);
-    const pageId = 14;
+    const [loading, setLoading] = useState(false);
+
+
+    const pageId = 13;
 
     //
     useEffect(() => {
@@ -94,39 +97,39 @@ const AssignInterviewExam = () => {
         const storedID = localStorage.getItem("person_id");
 
         if (storedUser && storedRole && storedID) {
-          setUser(storedUser);
-          setUserRole(storedRole);
-          setUserID(storedID);
+            setUser(storedUser);
+            setUserRole(storedRole);
+            setUserID(storedID);
 
-          if (storedRole === "registrar") {
-            checkAccess(storedID);
-          } else {
-            window.location.href = "/login";
-          }
+            if (storedRole === "registrar") {
+                checkAccess(storedID);
+            } else {
+                window.location.href = "/login";
+            }
         } else {
-          window.location.href = "/login";
+            window.location.href = "/login";
         }
-      }, []);
+    }, []);
 
     const checkAccess = async (userID) => {
         try {
             const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
             if (response.data && response.data.page_privilege === 1) {
-              setHasAccess(true);
+                setHasAccess(true);
             } else {
-              setHasAccess(false);
+                setHasAccess(false);
             }
         } catch (error) {
             console.error('Error checking access:', error);
             setHasAccess(false);
             if (error.response && error.response.data.message) {
-              console.log(error.response.data.message);
+                console.log(error.response.data.message);
             } else {
-              console.log("An unexpected error occurred.");
+                console.log("An unexpected error occurred.");
             }
             setLoading(false);
         }
-      };
+    };
 
 
     const handleSaveSchedule = async (e) => {
@@ -175,15 +178,36 @@ const AssignInterviewExam = () => {
         }
     };
 
-    if (hasAccess === null) {
-   return "Loading...."
-}
+    // 🔒 Disable right-click
+    document.addEventListener('contextmenu', (e) => e.preventDefault());
 
-  if (!hasAccess) {
-    return (
-      <Unauthorized />
-    );
-  }
+    // 🔒 Block DevTools shortcuts + Ctrl+P silently
+    document.addEventListener('keydown', (e) => {
+        const isBlockedKey =
+            e.key === 'F12' || // DevTools
+            e.key === 'F11' || // Fullscreen
+            (e.ctrlKey && e.shiftKey && (e.key.toLowerCase() === 'i' || e.key.toLowerCase() === 'j')) || // Ctrl+Shift+I/J
+            (e.ctrlKey && e.key.toLowerCase() === 'u') || // Ctrl+U (View Source)
+            (e.ctrlKey && e.key.toLowerCase() === 'p');   // Ctrl+P (Print)
+
+        if (isBlockedKey) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+    });
+
+
+
+    // Put this at the very bottom before the return 
+    if (loading || hasAccess === null) {
+        return <LoadingOverlay open={loading} message="Check Access" />;
+    }
+
+    if (!hasAccess) {
+        return (
+            <Unauthorized />
+        );
+    }
 
 
     return (
@@ -195,9 +219,9 @@ const AssignInterviewExam = () => {
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     flexWrap: 'wrap',
-                    mt: 2,
+
                     mb: 2,
-                    px: 2,
+
                 }}
             >
                 <Typography
@@ -218,51 +242,51 @@ const AssignInterviewExam = () => {
 
             <br />
 
-          <Box
-                 sx={{
-                   display: "flex",
-                   justifyContent: "space-between",
-                   flexWrap: "nowrap", // ❌ prevent wrapping
-                   width: "100%",
-                   mt: 3,
-                   gap: 2,
-                 }}
-               >
-                 {tabs.map((tab, index) => (
-                   <Card
-                     key={index}
-                     onClick={() => handleStepClick(index, tab.to)}
-                     sx={{
-                       flex: `1 1 ${100 / tabs.length}%`, // evenly divide row
-                       height: 120,
-                       display: "flex",
-                       alignItems: "center",
-                       justifyContent: "center",
-                       cursor: "pointer",
-                       borderRadius: 2,
-                       border: "2px solid #6D2323",
-                       backgroundColor: activeStep === index ? "#6D2323" : "#E8C999",
-                       color: activeStep === index ? "#fff" : "#000",
-                       boxShadow:
-                         activeStep === index
-                           ? "0px 4px 10px rgba(0,0,0,0.3)"
-                           : "0px 2px 6px rgba(0,0,0,0.15)",
-                       transition: "0.3s ease",
-                       "&:hover": {
-                         backgroundColor: activeStep === index ? "#5a1c1c" : "#f5d98f",
-                       },
-                     }}
-                   >
-                     <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                       <Box sx={{ fontSize: 40, mb: 1 }}>{tab.icon}</Box>
-                       <Typography sx={{ fontSize: 14, fontWeight: "bold", textAlign: "center" }}>
-                         {tab.label}
-                       </Typography>
-                     </Box>
-                   </Card>
-                 ))}
-               </Box>
-         
+            <Box
+                sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    flexWrap: "nowrap", // ❌ prevent wrapping
+                    width: "100%",
+                    mt: 3,
+                    gap: 2,
+                }}
+            >
+                {tabs.map((tab, index) => (
+                    <Card
+                        key={index}
+                        onClick={() => handleStepClick(index, tab.to)}
+                        sx={{
+                            flex: `1 1 ${100 / tabs.length}%`, // evenly divide row
+                            height: 120,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            cursor: "pointer",
+                            borderRadius: 2,
+                            border: "2px solid #6D2323",
+                            backgroundColor: activeStep === index ? "#6D2323" : "#E8C999",
+                            color: activeStep === index ? "#fff" : "#000",
+                            boxShadow:
+                                activeStep === index
+                                    ? "0px 4px 10px rgba(0,0,0,0.3)"
+                                    : "0px 2px 6px rgba(0,0,0,0.15)",
+                            transition: "0.3s ease",
+                            "&:hover": {
+                                backgroundColor: activeStep === index ? "#5a1c1c" : "#f5d98f",
+                            },
+                        }}
+                    >
+                        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                            <Box sx={{ fontSize: 40, mb: 1 }}>{tab.icon}</Box>
+                            <Typography sx={{ fontSize: 14, fontWeight: "bold", textAlign: "center" }}>
+                                {tab.label}
+                            </Typography>
+                        </Box>
+                    </Card>
+                ))}
+            </Box>
+
             <Box
                 display="flex"
                 justifyContent="center"

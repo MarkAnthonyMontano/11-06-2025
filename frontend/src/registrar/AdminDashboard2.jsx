@@ -21,7 +21,7 @@ import PersonSearchIcon from "@mui/icons-material/PersonSearch";
 import PeopleIcon from "@mui/icons-material/People";
 import FactCheckIcon from "@mui/icons-material/FactCheck";
 import Unauthorized from "../components/Unauthorized";
-
+import LoadingOverlay from "../components/LoadingOverlay";
 
 import ExamPermit from "../applicant/ExamPermit";
 
@@ -79,10 +79,12 @@ const AdminDashboard2 = () => {
   const [selectedPerson, setSelectedPerson] = useState(null);
 
   const [hasAccess, setHasAccess] = useState(null);
-  const pageId = 2; 
+  const [loading, setLoading] = useState(false);
+
+  const pageId = 2;
 
   useEffect(() => {
-    
+
     const storedUser = localStorage.getItem("email");
     const storedRole = localStorage.getItem("role");
     const storedID = localStorage.getItem("person_id");
@@ -104,21 +106,21 @@ const AdminDashboard2 = () => {
 
   const checkAccess = async (userID) => {
     try {
-        const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
-        if (response.data && response.data.page_privilege === 1) {
-          setHasAccess(true);
-        } else {
-          setHasAccess(false);
-        }
-    } catch (error) {
-        console.error('Error checking access:', error);
+      const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
+      if (response.data && response.data.page_privilege === 1) {
+        setHasAccess(true);
+      } else {
         setHasAccess(false);
-        if (error.response && error.response.data.message) {
-          console.log(error.response.data.message);
-        } else {
-          console.log("An unexpected error occurred.");
-        }
-        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Error checking access:', error);
+      setHasAccess(false);
+      if (error.response && error.response.data.message) {
+        console.log(error.response.data.message);
+      } else {
+        console.log("An unexpected error occurred.");
+      }
+      setLoading(false);
     }
   };
 
@@ -440,15 +442,38 @@ const AdminDashboard2 = () => {
   }, [userID]);
 
 
-  if (hasAccess === null) {
-     return "Loading...."
-  }
-  
-    if (!hasAccess) {
-      return (
-        <Unauthorized />
-      );
+  // 🔒 Disable right-click
+  document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+  // 🔒 Block DevTools shortcuts + Ctrl+P silently
+  document.addEventListener('keydown', (e) => {
+    const isBlockedKey =
+      e.key === 'F12' || // DevTools
+      e.key === 'F11' || // Fullscreen
+      (e.ctrlKey && e.shiftKey && (e.key.toLowerCase() === 'i' || e.key.toLowerCase() === 'j')) || // Ctrl+Shift+I/J
+      (e.ctrlKey && e.key.toLowerCase() === 'u') || // Ctrl+U (View Source)
+      (e.ctrlKey && e.key.toLowerCase() === 'p');   // Ctrl+P (Print)
+
+    if (isBlockedKey) {
+      e.preventDefault();
+      e.stopPropagation();
     }
+  });
+
+
+
+
+
+  // Put this at the very bottom before the return 
+  if (loading || hasAccess === null) {
+    return <LoadingOverlay open={loading} message="Check Access" />;
+  }
+
+  if (!hasAccess) {
+    return (
+      <Unauthorized />
+    );
+  }
 
   // dot not alter
   return (
@@ -468,9 +493,9 @@ const AdminDashboard2 = () => {
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
-          mt: 3,
+
           mb: 2,
-          px: 2,
+
         }}
       >
         <Typography
@@ -481,7 +506,7 @@ const AdminDashboard2 = () => {
             fontSize: '36px',
           }}
         >
-          ADMISSION SHIFTING FORM
+          ADMISSION SHIFTING FORM - FAMILY BACKGROUND
         </Typography>
       </Box>
       <hr style={{ border: "1px solid #ccc", width: "100%" }} />
@@ -941,7 +966,7 @@ const AdminDashboard2 = () => {
                         readOnly
 
                         placeholder="Enter Father First Name"
-                        value={person.father_given_name}
+                        value={person.father_given_name || ""}
 
                         error={errors.father_given_name} helperText={errors.father_given_name ? "This field is required." : ""}
                       />
@@ -956,7 +981,7 @@ const AdminDashboard2 = () => {
 
                         name="father_middle_name"
                         placeholder="Enter Father Middle Name"
-                        value={person.father_middle_name}
+                        value={person.father_middle_name || ""}
 
                         error={errors.father_middle_name} helperText={errors.father_middle_name ? "This field is required." : ""}
                       />
@@ -999,7 +1024,7 @@ const AdminDashboard2 = () => {
 
                         name="father_nickname"
                         placeholder="Enter Father Nickname"
-                        value={person.father_nickname}
+                        value={person.father_nickname || ""}
 
                         error={errors.father_nickname} helperText={errors.father_nickname ? "This field is required." : ""}
                       />
@@ -1057,7 +1082,7 @@ const AdminDashboard2 = () => {
                           readOnly
                           placeholder="Enter Father Education Level"
                           name="father_education_level"
-                          value={person.father_education_level}
+                          value={person.father_education_level || ""}
 
                           error={errors.father_education_level}
                           helperText={errors.father_education_level ? "This field is required." : ""}
@@ -1073,7 +1098,7 @@ const AdminDashboard2 = () => {
                           readOnly
 
                           placeholder="Enter Father Last School"
-                          value={person.father_last_school}
+                          value={person.father_last_school || ""}
 
                           error={errors.father_last_school}
                           helperText={errors.father_last_school ? "This field is required." : ""}
@@ -1089,7 +1114,7 @@ const AdminDashboard2 = () => {
                           readOnly
 
                           placeholder="Enter Father Course"
-                          value={person.father_course}
+                          value={person.father_course || ""}
 
                           error={errors.father_course}
                           helperText={errors.father_course ? "This field is required." : ""}
@@ -1105,7 +1130,7 @@ const AdminDashboard2 = () => {
                           readOnly
 
                           placeholder="Enter Father Year Graduated"
-                          value={person.father_year_graduated}
+                          value={person.father_year_graduated || ""}
 
                           error={errors.father_year_graduated}
                           helperText={errors.father_year_graduated ? "This field is required." : ""}
@@ -1121,7 +1146,7 @@ const AdminDashboard2 = () => {
 
                           name="father_school_address"
                           placeholder="Enter Father School Address"
-                          value={person.father_school_address}
+                          value={person.father_school_address || ""}
 
                           error={errors.father_school_address}
                           helperText={errors.father_school_address ? "This field is required." : ""}
@@ -1148,7 +1173,7 @@ const AdminDashboard2 = () => {
 
                         name="father_contact"
                         placeholder="Enter Father Contact"
-                        value={person.father_contact}
+                        value={person.father_contact || ""}
 
                         error={errors.father_contact} helperText={errors.father_contact ? "This field is required." : ""}
                       />
@@ -1162,7 +1187,7 @@ const AdminDashboard2 = () => {
                         readOnly
 
                         name="father_occupation"
-                        value={person.father_occupation}
+                        value={person.father_occupation || ""}
                         placeholder="Enter Father Occupation"
 
                         error={errors.father_occupation} helperText={errors.father_occupation ? "This field is required." : ""}
@@ -1178,7 +1203,7 @@ const AdminDashboard2 = () => {
 
                         name="father_employer"
                         placeholder="Enter Father Employer"
-                        value={person.father_employer}
+                        value={person.father_employer || ""}
 
                         error={errors.father_employer} helperText={errors.father_employer ? "This field is required." : ""}
                       />
@@ -1194,7 +1219,7 @@ const AdminDashboard2 = () => {
                         readOnly
 
                         placeholder="Enter Father Income"
-                        value={person.father_income}
+                        value={person.father_income || ""}
 
                         error={errors.father_income}
                         helperText={errors.father_income ? "This field is required." : ""}
@@ -1212,7 +1237,7 @@ const AdminDashboard2 = () => {
 
                       name="father_email"
                       placeholder="Enter your Father Email Address (e.g., username@gmail.com)"
-                      value={person.father_email}
+                      value={person.father_email || ""}
 
 
                     />
@@ -1267,7 +1292,7 @@ const AdminDashboard2 = () => {
 
                         name="mother_family_name"
                         placeholder="Enter your Mother Last Name"
-                        value={person.mother_family_name}
+                        value={person.mother_family_name || ""}
 
                         error={errors.mother_family_name}
                         helperText={errors.mother_family_name ? "This field is required." : ""}
@@ -1284,7 +1309,7 @@ const AdminDashboard2 = () => {
 
                         name="mother_given_name"
                         placeholder="Enter your Mother First Name"
-                        value={person.mother_given_name}
+                        value={person.mother_given_name || ""}
 
                         error={errors.mother_given_name}
                         helperText={errors.mother_given_name ? "This field is required." : ""}
@@ -1301,7 +1326,7 @@ const AdminDashboard2 = () => {
 
                         name="mother_middle_name"
                         placeholder="Enter your Mother Middle Name"
-                        value={person.mother_middle_name}
+                        value={person.mother_middle_name || ""}
 
                         error={errors.mother_middle_name}
                         helperText={errors.mother_middle_name ? "This field is required." : ""}
@@ -1346,7 +1371,7 @@ const AdminDashboard2 = () => {
 
                         name="mother_nickname"
                         placeholder="Enter your Mother Nickname"
-                        value={person.mother_nickname}
+                        value={person.mother_nickname || ""}
 
                         error={errors.mother_nickname}
                         helperText={errors.mother_nickname ? "This field is required." : ""}
@@ -1404,7 +1429,7 @@ const AdminDashboard2 = () => {
                           readOnly
                           name="mother_education_level"
                           placeholder="Enter your Mother Education Level"
-                          value={person.mother_education_level}
+                          value={person.mother_education_level || ""}
 
                           error={errors.mother_education_level}
                           helperText={errors.mother_education_level ? "This field is required." : ""}
@@ -1419,7 +1444,7 @@ const AdminDashboard2 = () => {
                           name="mother_last_school"
                           readOnly
                           placeholder="Enter your Mother Last School Attended"
-                          value={person.mother_last_school}
+                          value={person.mother_last_school || ""}
 
                           error={errors.mother_last_school}
                           helperText={errors.mother_last_school ? "This field is required." : ""}
@@ -1435,7 +1460,7 @@ const AdminDashboard2 = () => {
                           readOnly
 
                           placeholder="Enter your Mother Course"
-                          value={person.mother_course}
+                          value={person.mother_course || ""}
 
                           error={errors.mother_course}
                           helperText={errors.mother_course ? "This field is required." : ""}
@@ -1451,7 +1476,7 @@ const AdminDashboard2 = () => {
                           readOnly
 
                           placeholder="Enter your Mother Year Graduated"
-                          value={person.mother_year_graduated}
+                          value={person.mother_year_graduated || ""}
 
                           error={errors.mother_year_graduated}
                           helperText={errors.mother_year_graduated ? "This field is required." : ""}
@@ -1467,7 +1492,7 @@ const AdminDashboard2 = () => {
                           readOnly
 
                           placeholder="Enter your Mother School Address"
-                          value={person.mother_school_address}
+                          value={person.mother_school_address || ""}
 
                           error={errors.mother_school_address}
                           helperText={errors.mother_school_address ? "This field is required." : ""}
@@ -1493,7 +1518,7 @@ const AdminDashboard2 = () => {
                         required
                         name="mother_contact"
                         placeholder="Enter your Mother Contact"
-                        value={person.mother_contact}
+                        value={person.mother_contact || ""}
 
                         error={errors.mother_contact} helperText={errors.mother_contact ? "This field is required." : ""}
                       />
@@ -1508,7 +1533,7 @@ const AdminDashboard2 = () => {
 
                         name="mother_occupation"
                         placeholder="Enter your Mother Occupation"
-                        value={person.mother_occupation}
+                        value={person.mother_occupation || ""}
 
                         error={errors.mother_occupation} helperText={errors.mother_occupation ? "This field is required." : ""}
                       />
@@ -1523,7 +1548,7 @@ const AdminDashboard2 = () => {
 
                         name="mother_employer"
                         placeholder="Enter your Mother Employer"
-                        value={person.mother_employer}
+                        value={person.mother_employer || ""}
 
                         error={errors.mother_employer} helperText={errors.mother_employer ? "This field is required." : ""}
                       />
@@ -1540,7 +1565,7 @@ const AdminDashboard2 = () => {
 
                         name="mother_income"
                         placeholder="Enter your Mother Income"
-                        value={person.mother_income}
+                        value={person.mother_income || ""}
 
                         error={errors.mother_income}
                         helperText={errors.mother_income ? "This field is required." : ""}
@@ -1558,7 +1583,7 @@ const AdminDashboard2 = () => {
 
                       name="mother_email"
                       placeholder="Enter your Mother Email Address (e.g., username@gmail.com)"
-                      value={person.mother_email}
+                      value={person.mother_email || ""}
 
 
                     />
@@ -1617,7 +1642,7 @@ const AdminDashboard2 = () => {
                   required
                   name="guardian_family_name"
                   placeholder="Enter your Guardian Family Name"
-                  value={person.guardian_family_name}
+                  value={person.guardian_family_name || ""}
 
                   error={!!errors.guardian_family_name}
                   helperText={errors.guardian_family_name ? "This field is required." : ""}
@@ -1635,7 +1660,7 @@ const AdminDashboard2 = () => {
 
                   name="guardian_given_name"
                   placeholder="Enter your Guardian First Name"
-                  value={person.guardian_given_name}
+                  value={person.guardian_given_name || ""}
 
                   error={!!errors.guardian_given_name}
                   helperText={errors.guardian_given_name ? "This field is required." : ""}
@@ -1653,7 +1678,7 @@ const AdminDashboard2 = () => {
 
                   name="guardian_middle_name"
                   placeholder="Enter your Guardian Middle Name"
-                  value={person.guardian_middle_name}
+                  value={person.guardian_middle_name || ""}
 
                   error={!!errors.guardian_middle_name}
                   helperText={errors.guardian_middle_name ? "This field is required." : ""}
@@ -1700,7 +1725,7 @@ const AdminDashboard2 = () => {
 
                   name="guardian_nickname"
                   placeholder="Enter your Guardian Nickname"
-                  value={person.guardian_nickname}
+                  value={person.guardian_nickname || ""}
 
                   error={!!errors.guardian_nickname}
                   helperText={errors.guardian_nickname ? "This field is required." : ""}
@@ -1722,7 +1747,7 @@ const AdminDashboard2 = () => {
 
                 name="guardian_address"
                 placeholder="Enter your Guardian Address"
-                value={person.guardian_address}
+                value={person.guardian_address || ""}
 
                 error={errors.guardian_address}
                 helperText={errors.guardian_address ? "This field is required." : ""}
@@ -1740,7 +1765,7 @@ const AdminDashboard2 = () => {
                   readOnly
 
                   placeholder="Enter your Guardian Contact Number"
-                  value={person.guardian_contact}
+                  value={person.guardian_contact || ""}
 
                   error={errors.guardian_contact} helperText={errors.guardian_contact ? "This field is required." : ""}
                 />
@@ -1756,7 +1781,7 @@ const AdminDashboard2 = () => {
                   readOnly
 
                   placeholder="Enter your Guardian Email Address (e.g., username@gmail.com)"
-                  value={person.guardian_email}
+                  value={person.guardian_email || ""}
 
 
                 />

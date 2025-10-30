@@ -1,14 +1,16 @@
-import { Box, Typography, TextField, Snackbar, Alert, Button } from "@mui/material";
+import { Box, Typography, TextField, Snackbar, Alert } from "@mui/material";
 import React, { useState, useEffect, useContext, useRef } from "react";
 import { SettingsContext } from "../App";
 import EaristLogo from "../assets/EaristLogo.png";
 import { Search } from "@mui/icons-material";
+import axios from 'axios';
 
 const ProgramEvaluation = () => {
 
     const settings = useContext(SettingsContext);
     const [fetchedLogo, setFetchedLogo] = useState(EaristLogo); // ✅ fallback
     const [companyName, setCompanyName] = useState("");
+
 
     useEffect(() => {
         if (settings) {
@@ -48,6 +50,12 @@ const ProgramEvaluation = () => {
     const [selectedStudent, setSelectedStudent] = useState(null);
     const [openSnackbar, setOpenSnackbar] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState("");
+    const [profData, setPerson] = useState({
+        prof_id: "",
+        fname: "",
+        mname: "",
+        lname: "",
+    });
 
     useEffect(() => {
         const storedUser = localStorage.getItem("email");
@@ -62,12 +70,30 @@ const ProgramEvaluation = () => {
             if (storedRole !== "faculty") {
                 window.location.href = "/login";
             } else {
-                console.log("Hello")
+                fetchPersonData(storedID);
             }
         } else {
             window.location.href = "/login";
         }
     }, []);
+
+    const fetchPersonData = async (id) => {
+        try {
+            const res = await axios.get(`http://localhost:5000/get_prof_data/${id}`)
+            const first = res.data[0];
+
+            const profInfo = {
+                prof_id: first.prof_id,
+                fname: first.fname,
+                mname: first.mname,
+                lname: first.lname,
+            };
+
+            setPerson(profInfo);
+        } catch (err) {
+            setSnackbarMessage("Error Fetching Professor Personal Data");
+        }
+    }
 
     useEffect(() => {
         if (!searchQuery || searchQuery.length < 9) {
@@ -84,6 +110,19 @@ const ProgramEvaluation = () => {
                 if (data) {
                     setSelectedStudent(data);
                     setStudentData(data);
+
+                    try {
+                        const student = data.student_number;
+                        const page_name = "Program Evaluation";
+                        const fullName = `${profData.lname}, ${profData.fname} ${profData.mname}`;
+                        const type = "Search"
+
+                        await axios.post(`http://localhost:5000/insert-logs/faculty/${profData.prof_id}`, {
+                            message: `User #${profData.prof_id} - ${fullName} searched student ${student} in ${page_name}`, type: type,
+                        });
+                    } catch (err) {
+                        console.error("Error inserting audit log", err);
+                    }
 
                     const detailsRes = await fetch(`http://localhost:5000/api/program_evaluation/details/${searchQuery}`);
                     const detailsData = await detailsRes.json();
@@ -147,81 +186,96 @@ const ProgramEvaluation = () => {
 
     const divToPrintRef = useRef();
 
-    const printDiv = () => {
-        window.print();
+    const printDiv = async () => {
+        try {
+            const page_name = "Program Evaluation";
+            const fullName = `${profData.lname}, ${profData.fname} ${profData.mname}`;
+            const type = "Printing"
+
+            await axios.post(`http://localhost:5000/insert-logs/faculty/${profData.prof_id}`, {
+                message: `User #${profData.prof_id} - ${fullName} printed ${page_name}`, type: type,
+            });
+
+            window.print();
+        } catch (err) {
+            console.error("Error inserting audit log");
+        }
     };
 
+    // 🔒 Disable right-click
+    document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+    // 🔒 Block DevTools shortcuts silently
+    document.addEventListener('keydown', (e) => {
+        const isBlockedKey =
+            e.key === 'F12' ||
+            e.key === 'F11' ||
+            (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J')) ||
+            (e.ctrlKey && e.key === 'U');
+
+        if (isBlockedKey) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+    });
+
     return (
-        <Box className="body" sx={{ height: 'calc(100vh - 150px)', overflowY: 'auto', overflowX: 'hidden', pr: 1, p: 2 }}>
-            <Box sx={{ background: "white", p: 2 }}>
-  {/* Header Row */}
-  <Box
-    sx={{
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      flexWrap: "wrap",
-    }}
-  >
-    {/* Title on the left */}
-    <Typography
-      variant="h4"
-      sx={{
-        fontWeight: "bold",
-        color: "maroon",
-        fontSize: "36px",
-      }}
-    >
-      Program Evaluation
-    </Typography>
+        <Box className="body" sx={{ height: 'calc(100vh - 150px)', overflowY: 'auto', overflowX: 'hidden', pr: 1 }}>
+            <Box sx={{ background: "white",  }}>
+                {/* Header Row */}
+                <Box
+                    sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        marginBottom: "0.5rem",
+                    }}
+                >
+                    {/* Left: Title */}
+                    <Typography
+                        variant="h4"
+                        sx={{
+                            fontWeight: "bold",
+                            color: "maroon",
+                            fontSize: "36px",
+                            background: "white",
+                            display: "flex",
+                            alignItems: "center",
+                        }}
+                    >
+                        PROGRAM EVALUATION
+                    </Typography>
 
-    {/* Right side: Search + Print */}
-    <Box
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        gap: 2, // spacing between the search bar and button
-      }}
-    >
-      {/* Search Field */}
-      <TextField
-        variant="outlined"
-        placeholder="Enter Student Number"
-        size="small"
-        value={studentNumber}
-        onChange={(e) => {
-          setStudentNumber(e.target.value);
-          setSearchQuery(e.target.value);
-        }}
-        InputProps={{ startAdornment: <Search sx={{ mr: 1 }} /> }}
-        sx={{
-          width: { xs: "220px", sm: "350px" },
-          background: "white",
-        }}
-      />
+                    {/* Right: Search + Print Button */}
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                        <TextField
+                            variant="outlined"
+                            placeholder="Enter Student Number"
+                            size="small"
+                            value={studentNumber}
+                            onChange={(e) => {
+                                setStudentNumber(e.target.value);
+                                setSearchQuery(e.target.value);
+                            }}
+                            InputProps={{ startAdornment: <Search sx={{ mr: 1 }} /> }}
+                            sx={{ width: 425, background: "white" }}
+                        />
+                        <button
+                            onClick={printDiv}
+                            className="bg-maroon-500 w-[10rem] h-[3rem] text-[18px] text-white rounded"
+                        >
+                            Print
+                        </button>
+                    </Box>
+                </Box>
 
-      {/* Print Button */}
-      <Button
-        onClick={printDiv}
-        variant="contained"
-        sx={{
-          backgroundColor: "maroon",
-          color: "white",
-          height: "40px",
-          width: "120px",
-          fontSize: "16px",
-          textTransform: "none",
-          "&:hover": { backgroundColor: "#800000" },
-        }}
-      >
-        Print
-      </Button>
-    </Box>
-  </Box>
+                {/* Divider and spacing below */}
+                <hr style={{ border: "1px solid #ccc", width: "100%" }} />
+                <br />
+            </Box>
 
-  {/* Divider Line */}
-  <hr style={{ border: "1px solid #ccc", width: "100%", marginTop: "1rem" }} />
-</Box>
+
+
 
             <style>
                 {`
@@ -264,205 +318,206 @@ const ProgramEvaluation = () => {
                 }
                 `}
             </style>
-            <Box className="print-container" style={{ paddingRight: "1.5rem", marginTop: "3rem", paddingBottom: "1.5rem", maxWidth: "600px" }} ref={divToPrintRef}>
-                <Box style={{ display: "flex", alignItems: "center", width: "70rem", justifyContent: "center" }}>
-                    {/* LEFT - Logo */}
-                    <Box
-                        style={{
-                            paddingTop: "1.5rem",
-                            paddingRight: "3rem",
-                        }}
-                    >
-                        <img
-                            src={fetchedLogo || EaristLogo} // ✅ Use dynamic logo with fallback
-                            alt="School Logo"
+            <Box>
+                <Box className="print-container" style={{ paddingRight: "1.5rem", marginTop: "3rem", paddingBottom: "1.5rem", maxWidth: "600px", }} ref={divToPrintRef}>
+                    <Box style={{ display: "flex", alignItems: "center", width: "70rem", justifyContent: "center" }}>
+                        {/* LEFT - Logo */}
+                        <Box
                             style={{
-                                width: "8rem",
-                                height: "8rem",
-                                display: "block",
-                                objectFit: "cover",
-                                borderRadius: "50%",
-                            }}
-                        />
-                    </Box>
-
-                    {/* CENTER - School Info */}
-                    <Box style={{ marginTop: "1.5rem" }}>
-                        <td
-                            colSpan={15}
-                            style={{
-                                textAlign: "center",
-                                fontFamily: "Arial",
-                                fontSize: "10px",
-                                lineHeight: "1.5",
+                                paddingTop: "1.5rem",
+                                paddingRight: "3rem",
                             }}
                         >
-                            <div
+                            <img
+                                src={fetchedLogo || EaristLogo} // ✅ Use dynamic logo with fallback
+                                alt="School Logo"
                                 style={{
-                                    fontSize: "12px",
-                                    letterSpacing: "1px",
+                                    width: "8rem",
+                                    height: "8rem",
+                                    display: "block",
+                                    objectFit: "cover",
+                                    borderRadius: "50%",
+                                }}
+                            />
+                        </Box>
+
+                        {/* CENTER - School Info */}
+                        <Box style={{ marginTop: "1.5rem" }}>
+                            <div
+                                colSpan={15}
+                                style={{
+                                    textAlign: "center",
+                                    fontFamily: "Arial",
+                                    fontSize: "10px",
+                                    lineHeight: "1.5",
                                 }}
                             >
-                                Republic of the Philippines
-                            </div>
+                                <div
+                                    style={{
+                                        fontSize: "12px",
+                                        letterSpacing: "1px",
+                                    }}
+                                >
+                                    Republic of the Philippines
+                                </div>
 
-                            {/* ✅ Dynamically split company name into two lines */}
-                            {companyName ? (
-                                (() => {
-                                    const name = companyName.trim();
-                                    const words = name.split(" ");
-                                    const middleIndex = Math.ceil(words.length / 2);
-                                    const firstLine = words.slice(0, middleIndex).join(" ");
-                                    const secondLine = words.slice(middleIndex).join(" ");
+                                {/* ✅ Dynamically split company name into two lines */}
+                                {companyName ? (
+                                    (() => {
+                                        const name = companyName.trim();
+                                        const words = name.split(" ");
+                                        const middleIndex = Math.ceil(words.length / 2);
+                                        const firstLine = words.slice(0, middleIndex).join(" ");
+                                        const secondLine = words.slice(middleIndex).join(" ");
 
-                                    return (
-                                        <>
-                                            <Typography
-                                                style={{
-                                                    textAlign: "center",
-                                                    marginTop: "0rem",
-                                                    lineHeight: "1",
-                                                    fontSize: "1.6rem",
-                                                    letterSpacing: "-1px",
-                                                    fontWeight: "600",
-                                                    fontFamily: "Times New Roman",
-                                                }}
-                                            >
-                                                {firstLine} <br />
-                                                {secondLine}
-                                            </Typography>
-
-                                            {/* ✅ Dynamic Campus Address */}
-                                            {campusAddress && (
+                                        return (
+                                            <>
                                                 <Typography
                                                     style={{
-                                                        mt: 1,
                                                         textAlign: "center",
-                                                        fontSize: "12px",
-                                                        letterSpacing: "1px",
-
+                                                        marginTop: "0rem",
+                                                        lineHeight: "1",
+                                                        fontSize: "1.6rem",
+                                                        letterSpacing: "-1px",
+                                                        fontWeight: "600",
                                                     }}
                                                 >
-                                                    {campusAddress}
+                                                    {firstLine} <br />
+                                                    {secondLine}
                                                 </Typography>
-                                            )}
-                                        </>
-                                    );
-                                })()
-                            ) : (
-                                <div style={{ height: "24px" }}></div>
-                            )}
-                        </td>
-                    </Box>
-                </Box>
-                <Typography style={{ marginLeft: "1rem", textAlign: "center", width: "80rem", fontSize: "1.6rem", letterSpacing: "-1px", fontWeight: "500" }}>OFFICE OF THE REGISTRAR</Typography>
-                <Typography style={{ marginLeft: "1rem", marginTop: "-0.2rem", width: "80rem", textAlign: "center", fontSize: "1.8rem", letterSpacing: "-1px", fontWeight: "600" }}>ACADEMIC PROGRAM EVALUATION</Typography>
-                <Box style={{ display: "flex" }}>
-                    <Box>
-                        <Box sx={{ padding: "1rem", marginLeft: "1rem", borderBottom: "solid black 1px", width: "80rem" }}>
-                            <Box style={{ display: "flex" }}>
-                                <Box style={{ display: "flex", width: "38rem" }}>
-                                    <Typography style={{ width: "9rem", fontSize: "1.05rem", letterSpacing: "-1px" }}>Student Name:</Typography>
-                                    <Typography style={{ fontSize: "1.06rem", fontWeight: "500" }}>{studentData.last_name}, {studentData.first_name} {studentData.middle_name}</Typography>
-                                </Box>
-                                <Box style={{ display: "flex" }}>
-                                    <Typography style={{ width: "6rem", fontSize: "1.05rem", letterSpacing: "-1px" }}>College:</Typography>
-                                    <Typography style={{ fontSize: "1.06rem", fontWeight: "500" }}>{studentData.dprtmnt_name}</Typography>
-                                </Box>
-                            </Box>
-                            <Box style={{ display: "flex" }}>
-                                <Box style={{ display: "flex", width: "38rem" }}>
-                                    <Typography style={{ width: "9rem", marginTop: "0.7rem", fontSize: "1.05rem", letterSpacing: "-1px" }}>Student No. :</Typography>
-                                    <Typography style={{ fontSize: "1.06rem", fontWeight: "500", marginTop: "0.7rem" }}>{studentData.student_number}</Typography>
-                                </Box>
-                                <Box style={{ display: "flex" }}>
-                                    <Typography style={{ width: "6rem", marginTop: "0.7rem", fontSize: "1.05rem", letterSpacing: "-1px" }}>Program:</Typography>
-                                    <Typography style={{ fontSize: "1.06rem", fontWeight: "500", marginTop: "0.7rem" }}>{studentData.program_description}</Typography>
-                                </Box>
-                            </Box>
-                            <Box style={{ display: "flex" }}>
-                                <Typography style={{ width: "9rem", marginTop: "0.7rem", fontSize: "1.05rem", letterSpacing: "-1px" }}>Curriculum:</Typography>
-                                <Typography style={{ fontSize: "1.06rem", fontWeight: "500", marginTop: "0.7rem" }}>{studentData.program_code} {studentData.year_description} RP (ORIGINAL)</Typography>
-                            </Box>
+
+                                                {/* ✅ Dynamic Campus Address */}
+                                                {campusAddress && (
+                                                    <Typography
+                                                        style={{
+                                                            mt: 1,
+                                                            textAlign: "center",
+                                                            fontSize: "12px",
+                                                            letterSpacing: "1px",
+
+                                                        }}
+                                                    >
+                                                        {campusAddress}
+                                                    </Typography>
+                                                )}
+                                            </>
+                                        );
+                                    })()
+                                ) : (
+                                    <div style={{ height: "24px" }}></div>
+                                )}
+                            </div>
                         </Box>
-                        <Box style={{ display: "flex", flexWrap: "wrap" }}>
-                            {Object.entries(groupedDetails).map(([key, courses]) => (
-                                <Box style={{ paddingLeft: "1rem", flex: "0 0 50%", marginBottom: "1rem", boxSizing: "border-box" }} key={key}>
-                                    <table>
-                                        <thead>
-                                            <tr>
-                                                <td style={{ textAlign: "center" }}>{getLevelBySection(courses[0].section)} - {courses[0].semester_description}</td>
-                                            </tr>
-                                            <tr style={{ display: "flex", borderBottom: "solid 1px rgba(0,0,0,0.1)" }}>
-                                                <td style={{ fontWeight: "700", display: "flex", alignItems: "center", justifyContent: "center", width: "6rem" }}>
-                                                    <span>GRADE</span>
-                                                </td>
-                                                <td style={{ fontWeight: "700", display: "flex", alignItems: "center", justifyContent: "center", width: "28rem" }}>
-                                                    <span>COURSE CODE / TITLE</span>
-                                                </td>
-                                                <td>
-                                                    <div style={{ margin: "-1px", fontWeight: "700", textAlign: "center", width: "5rem" }}>UNIT</div>
-                                                    <div style={{ display: "flex", alignItems: "center" }}>
-                                                        <div style={{ fontWeight: "700", fontSize: "0.9rem", textAlign: "center", width: "50%" }}>
-                                                            <span>LEC</span>
-                                                        </div>
-                                                        <div style={{ textAlign: "center", fontWeight: "700", fontSize: "0.9rem", width: "50%" }}>
-                                                            <span>LAB</span>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {courses.map((p) => (
-                                                <tr style={{ display: "flex", borderBottom: "solid 1px rgba(0,0,0,0.1)" }} key={p.enrolled_id}>
-                                                    <td style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "6rem" }}>
-                                                        <span>{p.final_grade}</span>
+                    </Box>
+                    <Typography style={{ marginLeft: "1rem", textAlign: "center", width: "80rem", fontSize: "1.6rem", letterSpacing: "-1px", fontWeight: "500" }}>OFFICE OF THE REGISTRAR</Typography>
+                    <Typography style={{ marginLeft: "1rem", marginTop: "-0.2rem", width: "80rem", textAlign: "center", fontSize: "1.8rem", letterSpacing: "-1px", fontWeight: "600" }}>ACADEMIC PROGRAM EVALUATION</Typography>
+                    <Box style={{ display: "flex" }}>
+                        <Box>
+                            <Box sx={{ padding: "1rem", marginLeft: "1rem", borderBottom: "solid black 1px", width: "80rem" }}>
+                                <Box style={{ display: "flex" }}>
+                                    <Box style={{ display: "flex", width: "38rem" }}>
+                                        <Typography style={{ width: "9rem", fontSize: "1.05rem", letterSpacing: "-1px" }}>Student Name:</Typography>
+                                        <Typography style={{ fontSize: "1.06rem", fontWeight: "500" }}>{studentData.last_name}, {studentData.first_name} {studentData.middle_name}</Typography>
+                                    </Box>
+                                    <Box style={{ display: "flex" }}>
+                                        <Typography style={{ width: "6rem", fontSize: "1.05rem", letterSpacing: "-1px" }}>College:</Typography>
+                                        <Typography style={{ fontSize: "1.06rem", fontWeight: "500" }}>{studentData.dprtmnt_name}</Typography>
+                                    </Box>
+                                </Box>
+                                <Box style={{ display: "flex" }}>
+                                    <Box style={{ display: "flex", width: "38rem" }}>
+                                        <Typography style={{ width: "9rem", marginTop: "0.7rem", fontSize: "1.05rem", letterSpacing: "-1px" }}>Student No. :</Typography>
+                                        <Typography style={{ fontSize: "1.06rem", fontWeight: "500", marginTop: "0.7rem" }}>{studentData.student_number}</Typography>
+                                    </Box>
+                                    <Box style={{ display: "flex" }}>
+                                        <Typography style={{ width: "6rem", marginTop: "0.7rem", fontSize: "1.05rem", letterSpacing: "-1px" }}>Program:</Typography>
+                                        <Typography style={{ fontSize: "1.06rem", fontWeight: "500", marginTop: "0.7rem" }}>{studentData.program_description}</Typography>
+                                    </Box>
+                                </Box>
+                                <Box style={{ display: "flex" }}>
+                                    <Typography style={{ width: "9rem", marginTop: "0.7rem", fontSize: "1.05rem", letterSpacing: "-1px" }}>Curriculum:</Typography>
+                                    <Typography style={{ fontSize: "1.06rem", fontWeight: "500", marginTop: "0.7rem" }}>{studentData.program_code} {studentData.year_description} RP (ORIGINAL)</Typography>
+                                </Box>
+                            </Box>
+                            <Box style={{ display: "flex", flexWrap: "wrap" }}>
+                                {Object.entries(groupedDetails).map(([key, courses]) => (
+                                    <Box style={{ paddingLeft: "1rem", flex: "0 0 50%", marginBottom: "1rem", boxSizing: "border-box" }} key={key}>
+                                        <table>
+                                            <thead>
+                                                <tr>
+                                                    <td style={{ textAlign: "center" }}>{getLevelBySection(courses[0].section)} - {courses[0].semester_description}</td>
+                                                </tr>
+                                                <tr style={{ display: "flex", borderBottom: "solid 1px rgba(0,0,0,0.1)" }}>
+                                                    <td style={{ fontWeight: "700", display: "flex", alignItems: "center", justifyContent: "center", width: "6rem" }}>
+                                                        <span>GRADE</span>
                                                     </td>
-                                                    <td style={{ display: "flex", width: "28rem" }}>
-                                                        <span style={{ width: "100px" }}>{p.course_code}</span>
-                                                        <span style={{ margin: "0", padding: "0" }}>{p.course_description}</span>
+                                                    <td style={{ fontWeight: "700", display: "flex", alignItems: "center", justifyContent: "center", width: "28rem" }}>
+                                                        <span>COURSE CODE / TITLE</span>
                                                     </td>
                                                     <td>
+                                                        <div style={{ margin: "-1px", fontWeight: "700", textAlign: "center", width: "5rem" }}>UNIT</div>
                                                         <div style={{ display: "flex", alignItems: "center" }}>
-                                                            <div style={{ fontSize: "0.9rem", width: "2.5rem", textAlign: "center" }}>
-                                                                <span>{p.course_unit}</span>
+                                                            <div style={{ fontWeight: "700", fontSize: "0.9rem", textAlign: "center", width: "50%" }}>
+                                                                <span>LEC</span>
                                                             </div>
-                                                            <div style={{ fontSize: "0.9rem", width: "2.5rem", textAlign: "center" }}>
-                                                                <span>{p.lab_unit}</span>
+                                                            <div style={{ textAlign: "center", fontWeight: "700", fontSize: "0.9rem", width: "50%" }}>
+                                                                <span>LAB</span>
                                                             </div>
                                                         </div>
                                                     </td>
                                                 </tr>
-                                            ))}
-                                            <tr style={{ display: "flex", fontWeight: "700" }}>
-                                                <td style={{ width: "6rem" }}></td>
-                                                <td style={{ width: "28rem", textAlign: "right", paddingRight: "1rem" }}>
-                                                </td>
-                                                <td style={{ display: "flex", alignItems: "center" }}>
-                                                    <div style={{ fontSize: "0.9rem", width: "2.5rem", textAlign: "center" }}>
-                                                        <span>{courses.reduce((sum, p) => sum + totalLec(p.course_unit), 0)}</span>
-                                                    </div>
-                                                    <div style={{ fontSize: "0.9rem", width: "2.5rem", textAlign: "center" }}>
-                                                        <span>{courses.reduce((sum, p) => sum + totalLab(p.lab_unit), 0)}</span>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </Box>
-                            ))}
+                                            </thead>
+                                            <tbody>
+                                                {courses.map((p) => (
+                                                    <tr style={{ display: "flex", borderBottom: "solid 1px rgba(0,0,0,0.1)" }} key={p.enrolled_id}>
+                                                        <td style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "6rem" }}>
+                                                            <span>{p.final_grade}</span>
+                                                        </td>
+                                                        <td style={{ display: "flex", width: "28rem" }}>
+                                                            <span style={{ width: "100px" }}>{p.course_code}</span>
+                                                            <span style={{ margin: "0", padding: "0" }}>{p.course_description}</span>
+                                                        </td>
+                                                        <td>
+                                                            <div style={{ display: "flex", alignItems: "center" }}>
+                                                                <div style={{ fontSize: "0.9rem", width: "2.5rem", textAlign: "center" }}>
+                                                                    <span>{p.course_unit}</span>
+                                                                </div>
+                                                                <div style={{ fontSize: "0.9rem", width: "2.5rem", textAlign: "center" }}>
+                                                                    <span>{p.lab_unit}</span>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                                <tr style={{ display: "flex", fontWeight: "700" }}>
+                                                    <td style={{ width: "6rem" }}></td>
+                                                    <td style={{ width: "28rem", textAlign: "right", paddingRight: "1rem" }}>
+                                                    </td>
+                                                    <td style={{ display: "flex", alignItems: "center" }}>
+                                                        <div style={{ fontSize: "0.9rem", width: "2.5rem", textAlign: "center" }}>
+                                                            <span>{courses.reduce((sum, p) => sum + totalLec(p.course_unit), 0)}</span>
+                                                        </div>
+                                                        <div style={{ fontSize: "0.9rem", width: "2.5rem", textAlign: "center" }}>
+                                                            <span>{courses.reduce((sum, p) => sum + totalLab(p.lab_unit), 0)}</span>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </Box>
+                                ))}
+                            </Box>
+                            <Snackbar
+                                open={openSnackbar}
+                                autoHideDuration={4000}
+                                onClose={() => setOpenSnackbar(false)}
+                                anchorOrigin={{ vertical: "top", horizontal: "center" }}
+                            >
+                                <Alert onClose={() => setOpenSnackbar(false)} severity="warning" sx={{ width: "100%" }}>
+                                    {snackbarMessage}
+                                </Alert>
+                            </Snackbar>
                         </Box>
-                        <Snackbar
-                            open={openSnackbar}
-                            autoHideDuration={4000}
-                            onClose={() => setOpenSnackbar(false)}
-                            anchorOrigin={{ vertical: "top", horizontal: "center" }}
-                        >
-                            <Alert onClose={() => setOpenSnackbar(false)} severity="warning" sx={{ width: "100%" }}>
-                                {snackbarMessage}
-                            </Alert>
-                        </Snackbar>
                     </Box>
                 </Box>
             </Box>

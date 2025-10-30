@@ -5,13 +5,16 @@ import { FcPrint } from "react-icons/fc";
 import { useLocation } from "react-router-dom";
 import { SettingsContext } from "../App";
 import Unauthorized from "../components/Unauthorized";
+import LoadingOverlay from "../components/LoadingOverlay";
 
 const HealthRecord = () => {
     const settings = useContext(SettingsContext); // ✅ Access the global settings
     const [fetchedLogo, setFetchedLogo] = useState(null);
 
     const [hasAccess, setHasAccess] = useState(null);
-    const pageId = 32;
+    const [loading, setLoading] = useState(false);
+
+    const pageId = 28;
 
     //
     useEffect(() => {
@@ -302,8 +305,9 @@ const HealthRecord = () => {
         return () => clearTimeout(delayDebounce);
     }, [searchQuery]);
 
-    if (hasAccess === null) {
-        return "Loading...."
+    // Put this at the very bottom before the return 
+    if (loading || hasAccess === null) {
+        return <LoadingOverlay open={loading} message="Check Access" />;
     }
 
     if (!hasAccess) {
@@ -311,7 +315,6 @@ const HealthRecord = () => {
             <Unauthorized />
         );
     }
-
 
     return (
 

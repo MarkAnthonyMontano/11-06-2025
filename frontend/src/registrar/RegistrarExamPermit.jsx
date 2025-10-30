@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState, useEffect, useContext, useRef } from "react";
+import { SettingsContext } from "../App";
 import axios from "axios";
 import { QRCodeSVG } from "qrcode.react";
 import EaristLogo from "../assets/EaristLogo.png";
@@ -7,6 +8,31 @@ import "../styles/Print.css";
 
 // ✅ Accept personId as a prop
 const RegistrarExamPermit = ({ personId }) => {
+    const settings = useContext(SettingsContext);
+    const [fetchedLogo, setFetchedLogo] = useState(null);
+    const [companyName, setCompanyName] = useState("");
+
+    useEffect(() => {
+        if (settings) {
+            // ✅ load dynamic logo
+            if (settings.logo_url) {
+                setFetchedLogo(`http://localhost:5000${settings.logo_url}`);
+            } else {
+                setFetchedLogo(EaristLogo);
+            }
+
+            // ✅ load dynamic name + address
+            if (settings.company_name) setCompanyName(settings.company_name);
+            if (settings.campus_address) setCampusAddress(settings.campus_address);
+        }
+    }, [settings]);
+
+    const words = companyName.trim().split(" ");
+    const middle = Math.ceil(words.length / 2);
+    const firstLine = words.slice(0, middle).join(" ");
+    const secondLine = words.slice(middle).join(" ");
+
+
     const divToPrintRef = useRef(null);
     const [person, setPerson] = useState({
         campus: "",
@@ -276,15 +302,44 @@ const RegistrarExamPermit = ({ personId }) => {
 
 
                         <td style={{ width: "20%", textAlign: "center" }}>
-                            <img src={EaristLogo} alt="Earist Logo" style={{ marginLeft: "-10px", width: "140px", height: "140px", }} />
+                            <img
+                                src={fetchedLogo}
+                                alt="School Logo"
+                                style={{
+                                    marginLeft: "-10px",
+                                    width: "140px",
+                                    height: "140px",
+
+                                    borderRadius: "50%", // ✅ perfectly circular
+                                    objectFit: "cover",
+
+                                }}
+                            />
                         </td>
 
                         {/* Center Column - School Information */}
                         <td style={{ width: "60%", textAlign: "center", lineHeight: "1", }}>
                             <div>Republic of the Philippines</div>
-                            <b style={{ letterSpacing: '1px', fontSize: "20px" }}>Eulogio "Amang" Rodriguez</b>
-                            <div style={{ letterSpacing: '1px', fontSize: "20px" }}><b>Institute of Science and Technology</b></div>
-
+                            <div
+                                style={{
+                                    letterSpacing: "1px",
+                                    fontSize: "20px",
+                                    fontFamily: "Times new roman",
+                                }}
+                            >
+                                {firstLine}
+                            </div>
+                            {secondLine && (
+                                <div
+                                    style={{
+                                        letterSpacing: "1px",
+                                        fontSize: "20px",
+                                        fontFamily: "Times new roman",
+                                    }}
+                                >
+                                    <b>{secondLine}</b>
+                                </div>
+                            )}
                             {campusAddress && (
                                 <div style={{ fontSize: "16px", letterSpacing: "1px", fontFamily: "Arial" }}>
                                     {campusAddress}

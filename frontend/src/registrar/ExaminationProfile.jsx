@@ -6,6 +6,7 @@ import { TextField, Button, Box, Typography } from "@mui/material";
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
 import QRScanner from "../components/QRScanner"; // make sure path is correct
 import Unauthorized from "../components/Unauthorized";
+import LoadingOverlay from "../components/LoadingOverlay";
 
 const ExaminationProfile = () => {
     const { applicantNumber } = useParams();
@@ -19,6 +20,7 @@ const ExaminationProfile = () => {
     const [user, setUser] = useState("");
     const [userRole, setUserRole] = useState("");
     const [hasAccess, setHasAccess] = useState(null);
+    const [loading, setLoading] = useState(false);
     const pageId = 31;
 
     //
@@ -110,15 +112,16 @@ const ExaminationProfile = () => {
         }
     };
 
-    if (hasAccess === null) {
-        return "Loading...."
-    }
+  // Put this at the very bottom before the return 
+if (loading || hasAccess === null) {
+   return <LoadingOverlay open={loading} message="Check Access"/>;
+}
 
-    if (!hasAccess) {
-        return (
-            <Unauthorized />
-        );
-    }
+  if (!hasAccess) {
+    return (
+      <Unauthorized />
+    );
+  }
 
     return (
         <Box sx={{ p: 2 }}>

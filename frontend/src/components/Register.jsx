@@ -47,7 +47,7 @@ const Register = () => {
       localStorage.setItem('person_id', response.data.person_id);
 
       setSnack({ open: true, message: "Registration Successful", severity: "success" });
-      setTimeout(() => navigate('/login_applicant'), 1000); 
+      setTimeout(() => navigate('/login_applicant'), 1000);
     } catch (error) {
       console.error("Registration failed:", error);
       setSnack({
@@ -104,7 +104,7 @@ const Register = () => {
           }}
           maxWidth={false}
         >
-          <div style={{ border: "5px solid white" }} className="Container">
+          <div style={{ border: "5px solid black" }} className="Container">
             <div className="Header">
               <div className="HeaderTitle">
                 <div className="CircleCon">
@@ -135,7 +135,7 @@ const Register = () => {
                   placeholder="Enter your email address"
                   value={usersData.email}
                   onChange={handleChanges}
-                  style={{ paddingLeft: "2.5rem" }}
+                  style={{ paddingLeft: "2.5rem", border: "2px solid maroon" }}
                 />
                 <EmailIcon
                   style={{
@@ -158,7 +158,7 @@ const Register = () => {
                   value={usersData.password}
                   onChange={handleChanges}
                   required
-                  style={{ paddingLeft: "2.5rem" }}
+                  style={{ paddingLeft: "2.5rem", border: "2px solid maroon" }}
                 />
                 <LockIcon
                   style={{

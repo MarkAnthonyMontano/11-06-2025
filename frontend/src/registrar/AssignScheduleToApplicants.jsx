@@ -28,7 +28,6 @@ import {
 } from "@mui/material";
 import { Search } from '@mui/icons-material';
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import LoadingOverlay from "../components/LoadingOverlay";
 import SchoolIcon from "@mui/icons-material/School";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import AssignmentIcon from "@mui/icons-material/Assignment";
@@ -38,7 +37,7 @@ import PersonSearchIcon from "@mui/icons-material/PersonSearch";
 import PeopleIcon from "@mui/icons-material/People";
 import FactCheckIcon from "@mui/icons-material/FactCheck";
 import Unauthorized from "../components/Unauthorized";
-
+import LoadingOverlay from "../components/LoadingOverlay";
 
 const socket = io("http://localhost:5000");
 
@@ -97,7 +96,8 @@ const AssignScheduleToApplicants = () => {
   const [user, setUser] = useState("");
   const [userRole, setUserRole] = useState("");
   const [hasAccess, setHasAccess] = useState(null);
-  const pageId = 15;
+  
+  const pageId = 14;
 
   //
   useEffect(() => {
@@ -679,8 +679,10 @@ const AssignScheduleToApplicants = () => {
     }
   });
 
-if (hasAccess === null) {
-   return "Loading...."
+
+// Put this at the very bottom before the return 
+if (loading || hasAccess === null) {
+   return <LoadingOverlay open={loading} message="Check Access"/>;
 }
 
   if (!hasAccess) {
@@ -699,9 +701,9 @@ if (hasAccess === null) {
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
-          mt: 2,
+        
           mb: 2,
-          px: 2,
+        
         }}
       >
         <Typography

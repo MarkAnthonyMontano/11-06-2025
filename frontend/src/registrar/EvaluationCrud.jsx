@@ -1,8 +1,9 @@
-import React, {useState, useEffect} from "react";
-import axios  from "axios";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import { Box, Typography, TextField, TableContainer, Table, Snackbar, Alert, TableHead, TableBody, TableRow, TableCell, Paper, Divider, Button, FormControl, Select, MenuItem, InputLabel, Dialog, DialogTitle, DialogContent, DialogActions, Stack } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import Unauthorized from "../components/Unauthorized";
+import LoadingOverlay from "../components/LoadingOverlay";
 
 const EvaluationCRUD = () => {
     const [openSnackbar, setOpenSnackbar] = useState(false);
@@ -25,60 +26,61 @@ const EvaluationCRUD = () => {
         choice5: ""
     });
 
-const [userID, setUserID] = useState("");
-const [user, setUser] = useState("");
-const [userRole, setUserRole] = useState("");
-const [hasAccess, setHasAccess] = useState(null);
-const pageId = 30;
+    const [userID, setUserID] = useState("");
+    const [user, setUser] = useState("");
+    const [userRole, setUserRole] = useState("");
+    const [hasAccess, setHasAccess] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const pageId = 26;
 
-//
-useEffect(() => {
-    
-    const storedUser = localStorage.getItem("email");
-    const storedRole = localStorage.getItem("role");
-    const storedID = localStorage.getItem("person_id");
+    //
+    useEffect(() => {
 
-    if (storedUser && storedRole && storedID) {
-      setUser(storedUser);
-      setUserRole(storedRole);
-      setUserID(storedID);
+        const storedUser = localStorage.getItem("email");
+        const storedRole = localStorage.getItem("role");
+        const storedID = localStorage.getItem("person_id");
 
-      if (storedRole === "registrar") {
-        checkAccess(storedID);
-      } else {
-        window.location.href = "/login";
-      }
-    } else {
-      window.location.href = "/login";
-    }
-  }, []);
+        if (storedUser && storedRole && storedID) {
+            setUser(storedUser);
+            setUserRole(storedRole);
+            setUserID(storedID);
 
-const checkAccess = async (userID) => {
-    try {
-        const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
-        if (response.data && response.data.page_privilege === 1) {
-          setHasAccess(true);
+            if (storedRole === "registrar") {
+                checkAccess(storedID);
+            } else {
+                window.location.href = "/login";
+            }
         } else {
-          setHasAccess(false);
+            window.location.href = "/login";
         }
-    } catch (error) {
-        console.error('Error checking access:', error);
-        setHasAccess(false);
-        if (error.response && error.response.data.message) {
-          console.log(error.response.data.message);
-        } else {
-          console.log("An unexpected error occurred.");
+    }, []);
+
+    const checkAccess = async (userID) => {
+        try {
+            const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
+            if (response.data && response.data.page_privilege === 1) {
+                setHasAccess(true);
+            } else {
+                setHasAccess(false);
+            }
+        } catch (error) {
+            console.error('Error checking access:', error);
+            setHasAccess(false);
+            if (error.response && error.response.data.message) {
+                console.log(error.response.data.message);
+            } else {
+                console.log("An unexpected error occurred.");
+            }
+            setLoading(false);
         }
-        setLoading(false);
-    }
-  };
+    };
 
     const fetchQuestions = async () => {
         try {
-        const response = await axios.get("http://localhost:5000/get_questions");
-        setQuestions(response.data);
+            const response = await axios.get("http://localhost:5000/get_questions");
+            setQuestions(response.data);
         } catch (err) {
-        console.error("Error fetching questions:", err);
+            console.error("Error fetching questions:", err);
         }
     };
 
@@ -95,45 +97,45 @@ const checkAccess = async (userID) => {
 
     useEffect(() => {
         axios
-          .get(`http://localhost:5000/get_school_year/`)
-          .then((res) => setSchoolYears(res.data))
-          .catch((err) => console.error(err));
+            .get(`http://localhost:5000/get_school_year/`)
+            .then((res) => setSchoolYears(res.data))
+            .catch((err) => console.error(err));
     }, [])
 
     useEffect(() => {
-      axios
-        .get(`http://localhost:5000/get_school_semester/`)
-        .then((res) => setSchoolSemester(res.data))
-        .catch((err) => console.error(err));
+        axios
+            .get(`http://localhost:5000/get_school_semester/`)
+            .then((res) => setSchoolSemester(res.data))
+            .catch((err) => console.error(err));
     }, [])
 
     useEffect(() => {
 
-      axios
-        .get(`http://localhost:5000/active_school_year`)
-        .then((res) => {
-          if (res.data.length > 0) {
-            setSelectedSchoolYear(res.data[0].year_id);
-            setSelectedSchoolSemester(res.data[0].semester_id);
-          }
-        })
-        .catch((err) => console.error(err));
+        axios
+            .get(`http://localhost:5000/active_school_year`)
+            .then((res) => {
+                if (res.data.length > 0) {
+                    setSelectedSchoolYear(res.data[0].year_id);
+                    setSelectedSchoolSemester(res.data[0].semester_id);
+                }
+            })
+            .catch((err) => console.error(err));
 
     }, []);
 
     useEffect(() => {
-      if (selectedSchoolYear && selectedSchoolSemester) {
-        axios
-          .get(`http://localhost:5000/get_selecterd_year/${selectedSchoolYear}/${selectedSchoolSemester}`)
-          .then((res) => {
-            if (res.data.length > 0) {
-              setSelectedActiveSchoolYear(res.data[0].school_year_id);
-            }
-          })
-          .catch((err) => console.error(err));
-      }
+        if (selectedSchoolYear && selectedSchoolSemester) {
+            axios
+                .get(`http://localhost:5000/get_selecterd_year/${selectedSchoolYear}/${selectedSchoolSemester}`)
+                .then((res) => {
+                    if (res.data.length > 0) {
+                        setSelectedActiveSchoolYear(res.data[0].school_year_id);
+                    }
+                })
+                .catch((err) => console.error(err));
+        }
     }, [selectedSchoolYear, selectedSchoolSemester]);
-    
+
 
     useEffect(() => {
         if (currentPage > totalPages) {
@@ -149,21 +151,21 @@ const checkAccess = async (userID) => {
     }
 
     const visiblePages = [];
-    
+
     for (let i = startPage; i <= endPage; i++) {
         visiblePages.push(i);
     }
 
     const filteredQuestion = questions
-    .filter((s) => {
-      const matchesYear =
-        selectedSchoolYear === "" || String(s.year_id) === String(selectedSchoolYear);
+        .filter((s) => {
+            const matchesYear =
+                selectedSchoolYear === "" || String(s.year_id) === String(selectedSchoolYear);
 
-      const matchesSemester =
-        selectedSchoolSemester === "" || String(s.semester_id) === String(selectedSchoolSemester);
+            const matchesSemester =
+                selectedSchoolSemester === "" || String(s.semester_id) === String(selectedSchoolSemester);
 
-      return matchesYear && matchesSemester
-    })
+            return matchesYear && matchesSemester
+        })
 
     const handleSchoolYearChange = (event) => {
         setSelectedSchoolYear(event.target.value);
@@ -185,8 +187,8 @@ const checkAccess = async (userID) => {
         try {
             if (editMode) {
                 const response = await axios.put(
-                `http://localhost:5000/update_question/${selectedId}`,
-                formData
+                    `http://localhost:5000/update_question/${selectedId}`,
+                    formData
                 );
                 setSnackbarMessage(response.data.message);
                 setOpenSnackbar(true);
@@ -211,34 +213,54 @@ const checkAccess = async (userID) => {
 
     const handleEdit = (question) => {
         setFormData({
-        question: question.question_description,
-        choice1: question.first_choice,
-        choice2: question.second_choice,
-        choice3: question.third_choice,
-        choice4: question.fourth_choice,
-        choice5: question.fifth_choice,
+            question: question.question_description,
+            choice1: question.first_choice,
+            choice2: question.second_choice,
+            choice3: question.third_choice,
+            choice4: question.fourth_choice,
+            choice5: question.fifth_choice,
         });
         setSelectedId(question.id);
         setEditMode(true);
         setOpenDialog(true);
     };
 
-if (hasAccess === null) {
-   return "Loading...."
-}
+    // 🔒 Disable right-click
+    document.addEventListener('contextmenu', (e) => e.preventDefault());
 
-  if (!hasAccess) {
+    // 🔒 Block DevTools shortcuts + Ctrl+P silently
+    document.addEventListener('keydown', (e) => {
+        const isBlockedKey =
+            e.key === 'F12' || // DevTools
+            e.key === 'F11' || // Fullscreen
+            (e.ctrlKey && e.shiftKey && (e.key.toLowerCase() === 'i' || e.key.toLowerCase() === 'j')) || // Ctrl+Shift+I/J
+            (e.ctrlKey && e.key.toLowerCase() === 'u') || // Ctrl+U (View Source)
+            (e.ctrlKey && e.key.toLowerCase() === 'p');   // Ctrl+P (Print)
+
+        if (isBlockedKey) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+    });
+
+
+
+    // Put this at the very bottom before the return 
+    if (loading || hasAccess === null) {
+        return <LoadingOverlay open={loading} message="Check Access" />;
+    }
+
+    if (!hasAccess) {
+        return (
+            <Unauthorized />
+        );
+    }
+
     return (
-      <Unauthorized />
-    );
-  }
-
-
-    return(
         <Box sx={{ height: "calc(100vh - 150px)", overflowY: "auto", pr: 2 }}>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} mt={2}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} >
                 <Typography variant="h4" fontWeight="bold" color="maroon">
-                   Evaluation Management
+                    EVALUATION MANAGEMENT
                 </Typography>
             </Box>
             <hr style={{ border: "1px solid #ccc", width: "100%" }} />
@@ -438,7 +460,7 @@ if (hasAccess === null) {
                                         startIcon={<AddIcon />}
                                         variant="contained"
                                         onClick={() => {
-                                            
+
                                             setOpenDialog(true);
                                         }}
                                         sx={{
@@ -465,13 +487,13 @@ if (hasAccess === null) {
                                             >
                                                 {schoolYears.length > 0 ? (
                                                     schoolYears.map((sy) => (
-                                                      <MenuItem value={sy.year_id} key={sy.year_id}>
-                                                        {sy.current_year} - {sy.next_year}
-                                                      </MenuItem>
+                                                        <MenuItem value={sy.year_id} key={sy.year_id}>
+                                                            {sy.current_year} - {sy.next_year}
+                                                        </MenuItem>
                                                     ))
-                                                  ) : (
+                                                ) : (
                                                     <MenuItem disabled>School Year is not found</MenuItem>
-                                                  )
+                                                )
                                                 }
                                             </Select>
                                         </FormControl>
@@ -486,13 +508,13 @@ if (hasAccess === null) {
                                             >
                                                 {schoolSemester.length > 0 ? (
                                                     schoolSemester.map((sem) => (
-                                                      <MenuItem value={sem.semester_id} key={sem.semester_id}>
-                                                        {sem.semester_description}
-                                                      </MenuItem>
+                                                        <MenuItem value={sem.semester_id} key={sem.semester_id}>
+                                                            {sem.semester_description}
+                                                        </MenuItem>
                                                     ))
-                                                  ) : (
+                                                ) : (
                                                     <MenuItem disabled>School Semester is not found</MenuItem>
-                                                  )
+                                                )
                                                 }
                                             </Select>
                                         </FormControl>
@@ -505,34 +527,34 @@ if (hasAccess === null) {
             </TableContainer>
             <TableContainer component={Paper} sx={{ border: "2px solid maroon", marginTop: "2rem" }}>
                 <Table>
-                    <TableHead sx={{ backgroundColor: "#6D2323"}}>
+                    <TableHead sx={{ backgroundColor: "#6D2323" }}>
                         <TableRow>
-                            <TableCell sx={{ color: "white", fontWeight: "bold", textAlign: "center", borderBottom: "maroon 1px solid"}} colSpan={7}>QUESTIONS</TableCell>
-                            <TableCell sx={{ color: "white", fontWeight: "bold", textAlign: "center", borderLeft: "1px solid maroon"}}rowSpan={2} colSpan={2}>Action</TableCell>
+                            <TableCell sx={{ color: "white", fontWeight: "bold", textAlign: "center", border: "2px solid maroon" }} colSpan={7}>QUESTIONS</TableCell>
+                            <TableCell sx={{ color: "white", fontWeight: "bold", textAlign: "center", border: "2px solid maroon" }} rowSpan={2} colSpan={2}>Action</TableCell>
                         </TableRow>
                         <TableRow>
-                            <TableCell sx={{ color: "white", width: "1rem", textAlign: "center"}}>#</TableCell>
-                            <TableCell sx={{ color: "white", width: "40rem", textAlign: "center" }}>Description</TableCell>
-                            <TableCell sx={{ color: "white", width: "9rem", textAlign: "center" }}>Choice 1</TableCell>
-                            <TableCell sx={{ color: "white", width: "9rem", textAlign: "center" }}>Choice 2</TableCell>
-                            <TableCell sx={{ color: "white", width: "9rem", textAlign: "center" }}>Choice 3</TableCell>
-                            <TableCell sx={{ color: "white", width: "9rem", textAlign: "center" }}>Choice 4</TableCell>
-                            <TableCell sx={{ color: "white", width: "9rem", textAlign: "center" }}>Choice 5</TableCell>
+                            <TableCell sx={{ color: "white", width: "1rem", textAlign: "center", border: "2px solid maroon" }}>#</TableCell>
+                            <TableCell sx={{ color: "white", width: "40rem", textAlign: "center", border: "2px solid maroon" }}>Description</TableCell>
+                            <TableCell sx={{ color: "white", width: "9rem", textAlign: "center", border: "2px solid maroon" }}>Choice 1</TableCell>
+                            <TableCell sx={{ color: "white", width: "9rem", textAlign: "center", border: "2px solid maroon" }}>Choice 2</TableCell>
+                            <TableCell sx={{ color: "white", width: "9rem", textAlign: "center", border: "2px solid maroon" }}>Choice 3</TableCell>
+                            <TableCell sx={{ color: "white", width: "9rem", textAlign: "center", border: "2px solid maroon" }}>Choice 4</TableCell>
+                            <TableCell sx={{ color: "white", width: "9rem", textAlign: "center", border: "2px solid maroon" }}>Choice 5</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {filteredQuestion.length > 0 ? (
                             filteredQuestion.map((q, index) => (
                                 <TableRow key={q.question_id}>
-                                    <TableCell style={{textAlign: "center"}}>{index + 1}</TableCell>
-                                    <TableCell style={{padding: "0px 20px"}}>{q.question_description}</TableCell>
-                                    <TableCell style={{textAlign: "center"}}>{q.first_choice}</TableCell>
-                                    <TableCell style={{textAlign: "center"}}>{q.second_choice}</TableCell>
-                                    <TableCell style={{textAlign: "center"}}>{q.third_choice}</TableCell>
-                                    <TableCell style={{textAlign: "center"}}>{q.fourth_choice}</TableCell>
-                                    <TableCell style={{textAlign: "center"}}>{q.fifth_choice}</TableCell>
-                                    <TableCell style={{textAlign: "center"}}>
-                                        <Button style={{background: "maroon", color: "white", width: "100px"}} onClick={() => handleEdit(q)}>Edit</Button>
+                                    <TableCell style={{ textAlign: "center", border: "2px solid maroon" }}>{index + 1}</TableCell>
+                                    <TableCell style={{ padding: "0px 20px", border: "2px solid maroon" }}>{q.question_description}</TableCell>
+                                    <TableCell style={{ textAlign: "center", border: "2px solid maroon" }}>{q.first_choice}</TableCell>
+                                    <TableCell style={{ textAlign: "center", border: "2px solid maroon" }}>{q.second_choice}</TableCell>
+                                    <TableCell style={{ textAlign: "center", border: "2px solid maroon" }}>{q.third_choice}</TableCell>
+                                    <TableCell style={{ textAlign: "center", border: "2px solid maroon" }}>{q.fourth_choice}</TableCell>
+                                    <TableCell style={{ textAlign: "center", border: "2px solid maroon" }}>{q.fifth_choice}</TableCell>
+                                    <TableCell style={{ textAlign: "center", border: "2px solid maroon" }}>
+                                        <Button style={{ background: "#4CAF50", color: "white", width: "100px" }} onClick={() => handleEdit(q)}>Edit</Button>
                                     </TableCell>
                                 </TableRow>
                             ))
@@ -578,11 +600,11 @@ if (hasAccess === null) {
                             fontWeight: "bold",
                         }}
                     >
-                       {editMode ? "Save Changes" : "Insert Question"}
+                        {editMode ? "Save Changes" : "Insert Question"}
                     </Button>
                 </DialogActions>
             </Dialog>
-             <Snackbar
+            <Snackbar
                 open={openSnackbar}
                 autoHideDuration={3000}
                 onClose={() => setOpenSnackbar(false)}

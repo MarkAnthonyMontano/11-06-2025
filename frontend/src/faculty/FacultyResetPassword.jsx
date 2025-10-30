@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import {
   Box,
   Button,
@@ -9,278 +9,313 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  Container,
   IconButton,
   InputAdornment,
   Snackbar,
   Alert,
   Divider,
-} from '@mui/material';
+  Paper,
+} from "@mui/material";
 import {
   Visibility,
   VisibilityOff,
   CheckCircle,
   Cancel,
-} from '@mui/icons-material';
+  LockReset,
+} from "@mui/icons-material";
 
 const passwordRules = [
-  { label: 'Minimum of 8 characters', test: pw => pw.length >= 8 },
-  { label: 'At least one lowercase letter (e.g. abc)', test: pw => /[a-z]/.test(pw) },
-  { label: 'At least one uppercase letter (e.g. ABC)', test: pw => /[A-Z]/.test(pw) },
-  { label: 'At least one number (e.g. 123)', test: pw => /\d/.test(pw) },
-  { label: 'At least one special character (! # $ ^ * @)', test: pw => /[!#$^*@]/.test(pw) },
+  { label: "Minimum of 8 characters", test: (pw) => pw.length >= 8 },
+  { label: "At least one lowercase letter (e.g. abc)", test: (pw) => /[a-z]/.test(pw) },
+  { label: "At least one uppercase letter (e.g. ABC)", test: (pw) => /[A-Z]/.test(pw) },
+  { label: "At least one number (e.g. 123)", test: (pw) => /\d/.test(pw) },
+  { label: "At least one special character (! # $ ^ * @)", test: (pw) => /[!#$^*@]/.test(pw) },
 ];
 
 const FacultyResetPassword = () => {
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [validations, setValidations] = useState([]);
-  const [showPassword, setShowPassword] = useState({ current: false, new: false, confirm: false });
-  const [message, setMessage] = useState('');
-  const [openSnackbar, setOpenSnackbar] = useState(false);
-  const [snackbarType, setSnackbarType] = useState('success');
-  const [userID, setUserID] = useState("");
-  const [user, setUser] = useState("");
-  const [userRole, setUserRole] = useState("");
+  const [showPassword, setShowPassword] = useState({
+    current: false,
+    new: false,
+    confirm: false,
+  });
+  const [snack, setSnack] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
 
-  // do not alter
+  // ✅ Ensure only faculty can access
   useEffect(() => {
     const storedUser = localStorage.getItem("email");
     const storedRole = localStorage.getItem("role");
     const storedID = localStorage.getItem("person_id");
 
-    if (storedUser && storedRole && storedID) {
-      setUser(storedUser);
-      setUserRole(storedRole);
-      setUserID(storedID);
-
-      if (storedRole === "faculty") {
-
-      } else {
-        window.location.href = "/login";
-      }
-    } else {
+    if (!(storedUser && storedRole && storedID && storedRole === "faculty")) {
       window.location.href = "/login";
     }
   }, []);
 
+  // ✅ Validate password rules
   useEffect(() => {
-    const results = passwordRules.map(rule => rule.test(newPassword));
+    const results = passwordRules.map((rule) => rule.test(newPassword));
     setValidations(results);
   }, [newPassword]);
 
   const isValid = validations.every(Boolean) && newPassword === confirmPassword;
 
-  const handleUpdate = async () => {
+  // ✅ Update Password
+  const handleUpdate = async (e) => {
+    e.preventDefault();
     try {
-      const person_id = localStorage.getItem('person_id');
-      const response = await axios.post('http://localhost:5000/faculty-change-password', {
+      const person_id = localStorage.getItem("person_id");
+      const response = await axios.post("http://localhost:5000/faculty-change-password", {
         person_id,
         currentPassword,
         newPassword,
       });
 
-      setSnackbarType('success');
-      setMessage(response.data.message);
-      setOpenSnackbar(true);
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
+      setSnack({
+        open: true,
+        message: response.data.message,
+        severity: "success",
+      });
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
     } catch (err) {
-      setSnackbarType('error');
-      setMessage(err.response?.data?.message || 'Error updating password.');
-      setOpenSnackbar(true);
+      setSnack({
+        open: true,
+        message: err.response?.data?.message || "Error updating password.",
+        severity: "error",
+      });
     }
   };
 
-  const toggleShowPassword = field => {
-    setShowPassword(prev => ({ ...prev, [field]: !prev[field] }));
+  const toggleShowPassword = (field) => {
+    setShowPassword((prev) => ({ ...prev, [field]: !prev[field] }));
   };
 
   // 🔒 Disable right-click
-  document.addEventListener('contextmenu', (e) => e.preventDefault());
+    document.addEventListener('contextmenu', (e) => e.preventDefault());
 
-  // 🔒 Block DevTools shortcuts silently
-  document.addEventListener('keydown', (e) => {
-    const isBlockedKey =
-      e.key === 'F12' ||
-      e.key === 'F11' ||
-      (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J')) ||
-      (e.ctrlKey && e.key === 'U');
+    // 🔒 Block DevTools shortcuts silently
+    document.addEventListener('keydown', (e) => {
+        const isBlockedKey =
+            e.key === 'F12' ||
+            e.key === 'F11' ||
+            (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J')) ||
+            (e.ctrlKey && e.key === 'U');
 
-    if (isBlockedKey) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-  });
-
-   // 🔒 Disable right-click
-  document.addEventListener('contextmenu', (e) => e.preventDefault());
-
-  // 🔒 Block DevTools shortcuts + Ctrl+P silently
-  document.addEventListener('keydown', (e) => {
-    const isBlockedKey =
-      e.key === 'F12' || // DevTools
-      e.key === 'F11' || // Fullscreen
-      (e.ctrlKey && e.shiftKey && (e.key.toLowerCase() === 'i' || e.key.toLowerCase() === 'j')) || // Ctrl+Shift+I/J
-      (e.ctrlKey && e.key.toLowerCase() === 'u') || // Ctrl+U (View Source)
-      (e.ctrlKey && e.key.toLowerCase() === 'p');   // Ctrl+P (Print)
-
-    if (isBlockedKey) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-  });
-
-
+        if (isBlockedKey) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+    });
 
   return (
     <Box
       sx={{
-        height: '100vh',
-
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        overflow: 'auto',
+        height: "calc(100vh - 150px)",
+        overflowY: "auto",
+        backgroundColor: "transparent",
       }}
     >
-      <Container maxWidth="sm" sx={{ height: '90%', overflowY: 'auto', marginTop: "-40px" }}>
-        <Box
+      {/* 🔝 Header Section */}
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "flex-start",
+          alignItems: "center",
+          flexWrap: "wrap",
+          mb: 2,
+        }}
+      >
+        <Typography
+          variant="h4"
           sx={{
-            borderRadius: 4,
-            boxShadow: 3,
-            p: 3,
-            mt: 1,
-            border: "3px solid maroon",
-            backgroundColor: '#fff',
+            fontWeight: "bold",
+            color: "maroon",
+            fontSize: "36px",
           }}
         >
-          <Typography variant="h5" fontWeight="bold" color="maroon" textAlign="center" gutterBottom>
-            Reset your password
-          </Typography>
-          <Typography fontSize={12} mt={-1} color="black" textAlign="center" gutterBottom>
-            Enter a new password for your account
-          </Typography>
+          FACULTY RESET PASSWORD
+        </Typography>
+      </Box>
+
+      <hr style={{ border: "1px solid #ccc", width: "100%" }} />
+      <br />
+
+      {/* 🔒 Password Reset Form Section */}
+      <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+        <Paper
+          elevation={6}
+          sx={{
+            p: 3,
+            width: "40%",
+            maxWidth: "540px",
+            borderRadius: 4,
+            backgroundColor: "#fff",
+            border: "2px solid maroon",
+            boxShadow: "0px 4px 20px rgba(0,0,0,0.1)",
+            mb: 12,
+          }}
+        >
+          {/* Lock Icon Header */}
+          <Box textAlign="center" mb={2}>
+            <LockReset
+              sx={{
+                fontSize: 80,
+                color: "#800000",
+                backgroundColor: "#f0f0f0",
+                borderRadius: "50%",
+                p: 1,
+              }}
+            />
+            <Typography variant="h5" fontWeight="bold" sx={{ mt: 1, color: "#800000" }}>
+              Reset Your Password
+            </Typography>
+            <Typography fontSize={13} color="text.secondary">
+              Update your password to keep your account secure.
+            </Typography>
+          </Box>
 
           <Divider sx={{ mb: 2 }} />
 
-          {/* Current Password */}
-          <label className="w-40 font-medium">Current Password:</label>
-          <TextField
-            label="Current Password"
-            type={showPassword.current ? 'text' : 'password'}
-            fullWidth
-            margin="dense"
-            value={currentPassword}
-            onChange={e => setCurrentPassword(e.target.value)}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton onClick={() => toggleShowPassword('current')} edge="end">
-                    {showPassword.current ? <Visibility /> : <VisibilityOff />}
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-          />
+          {/* Form */}
+          <form onSubmit={handleUpdate}>
+            <Box mb={2}>
+              <Typography variant="subtitle2">Current Password</Typography>
+              <TextField
+                fullWidth
+                type={showPassword.current ? "text" : "password"}
+                size="small"
+                variant="outlined"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton onClick={() => toggleShowPassword("current")} edge="end">
+                        {showPassword.current ? <Visibility /> : <VisibilityOff />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Box>
 
-          {/* New Password */}
-          <label className="w-40 font-medium">New Password:</label>
-          <TextField
-            label="New Password"
-            type={showPassword.new ? 'text' : 'password'}
-            fullWidth
-            margin="dense"
-            value={newPassword}
-            onChange={e => setNewPassword(e.target.value)}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton onClick={() => toggleShowPassword('new')} edge="end">
-                    {showPassword.new ? <Visibility /> : <VisibilityOff />}
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-          />
+            <Box mb={2}>
+              <Typography variant="subtitle2">New Password</Typography>
+              <TextField
+                fullWidth
+                type={showPassword.new ? "text" : "password"}
+                size="small"
+                variant="outlined"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton onClick={() => toggleShowPassword("new")} edge="end">
+                        {showPassword.new ? <Visibility /> : <VisibilityOff />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Box>
 
-          {/* Confirm Password */}
-          <label className="w-40 font-medium">Confirm Password:</label>
-          <TextField
-            label="Confirm New Password"
-            type={showPassword.confirm ? 'text' : 'password'}
-            fullWidth
-            margin="dense"
-            value={confirmPassword}
-            onChange={e => setConfirmPassword(e.target.value)}
-            error={confirmPassword && confirmPassword !== newPassword}
-            helperText={confirmPassword && confirmPassword !== newPassword ? 'Passwords do not match' : ''}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton onClick={() => toggleShowPassword('confirm')} edge="end">
-                    {showPassword.confirm ? <Visibility /> : <VisibilityOff />}
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-          />
+            <Box mb={2}>
+              <Typography variant="subtitle2">Confirm Password</Typography>
+              <TextField
+                fullWidth
+                type={showPassword.confirm ? "text" : "password"}
+                size="small"
+                variant="outlined"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                error={Boolean(confirmPassword && confirmPassword !== newPassword)}
+                helperText={
+                  confirmPassword && confirmPassword !== newPassword
+                    ? "Passwords do not match"
+                    : ""
+                }
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton onClick={() => toggleShowPassword("confirm")} edge="end">
+                        {showPassword.confirm ? <Visibility /> : <VisibilityOff />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Box>
 
-          <Typography variant="subtitle2" mt={2} gutterBottom>
-            Your new password must include:
-          </Typography>
+            <Typography variant="subtitle2" sx={{ mt: 2, mb: 1 }}>
+              Your new password must include:
+            </Typography>
 
-          <List dense disablePadding sx={{ mb: 1 }}>
-            {passwordRules.map((rule, i) => (
-              <ListItem key={i}>
-                <ListItemIcon>
-                  {validations[i] ? (
-                    <CheckCircle sx={{ color: 'green' }} />
-                  ) : (
-                    <Cancel sx={{ color: 'red' }} />
-                  )}
-                </ListItemIcon>
-                <ListItemText primary={rule.label} />
-              </ListItem>
-            ))}
-          </List>
+            <List dense disablePadding>
+              {passwordRules.map((rule, i) => (
+                <ListItem key={i}>
+                  <ListItemIcon>
+                    {validations[i] ? (
+                      <CheckCircle sx={{ color: "green" }} />
+                    ) : (
+                      <Cancel sx={{ color: "red" }} />
+                    )}
+                  </ListItemIcon>
+                  <ListItemText primary={rule.label} />
+                </ListItem>
+              ))}
+            </List>
 
-          <Typography variant="body2" color="warning.main" mt={1}>
-            Note: You are required to change your password to continue using the system securely.
-          </Typography>
+            <Typography variant="body2" color="warning.main" sx={{ mt: 1, mb: 2 }}>
+              Note: You are required to change your password to continue using the system securely.
+            </Typography>
 
-          <Button
-            fullWidth
-            variant="contained"
-            color="primary"
-            sx={{ mt: 3, py: 1 }}
-            disabled={!isValid}
-            onClick={handleUpdate}
-          >
-            Update Password
-          </Button>
-        </Box>
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              disabled={!isValid}
+              sx={{
+                py: 1.2,
+                borderRadius: 2,
+                backgroundColor: "#1976d2",
+                textTransform: "none",
+                fontWeight: "bold",
+                "&:hover": { backgroundColor: "#1565c0" },
+              }}
+            >
+              Update Password
+            </Button>
+          </form>
+        </Paper>
+      </Box>
 
-        <Snackbar
-          open={openSnackbar}
-          autoHideDuration={3000}
-          onClose={() => setOpenSnackbar(false)}
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      {/* Snackbar */}
+      <Snackbar
+        open={snack.open}
+        autoHideDuration={4000}
+        onClose={() => setSnack((prev) => ({ ...prev, open: false }))}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert
+          severity={snack.severity}
+          onClose={() => setSnack((prev) => ({ ...prev, open: false }))}
+          sx={{ width: "100%" }}
         >
-          <Alert
-            onClose={() => setOpenSnackbar(false)}
-            severity={snackbarType}
-            sx={{ width: '100%' }}
-          >
-            {message}
-          </Alert>
-        </Snackbar>
-      </Container>
+          {snack.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
-
 };
 
 export default FacultyResetPassword;

@@ -272,9 +272,9 @@ const allowedRoles = ["student", "registrar"];
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     flexWrap: 'wrap',
-                    mt: 2,
+               
                     mb: 2,
-                    px: 2,
+                  
                 }}
             >
                 <Typography
@@ -285,7 +285,7 @@ const allowedRoles = ["student", "registrar"];
                         fontSize: '36px',
                     }}
                 >
-                    STUDENT PROFILE
+                  EDUCATIONAL ATTAINMENT
                 </Typography>
 
 

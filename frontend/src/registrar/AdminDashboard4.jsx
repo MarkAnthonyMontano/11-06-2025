@@ -22,6 +22,7 @@ import PeopleIcon from "@mui/icons-material/People";
 import ExamPermit from "../applicant/ExamPermit";
 import FactCheckIcon from "@mui/icons-material/FactCheck";
 import Unauthorized from "../components/Unauthorized";
+import LoadingOverlay from "../components/LoadingOverlay";
 
 const AdminDashboard4 = () => {
   const stepsData = [
@@ -83,10 +84,12 @@ const AdminDashboard4 = () => {
   const queryPersonId = queryParams.get("person_id");
 
   const [hasAccess, setHasAccess] = useState(null);
+  const [loading, setLoading] = useState(false);
+
   const pageId = 4;
 
   useEffect(() => {
-    
+
     const storedUser = localStorage.getItem("email");
     const storedRole = localStorage.getItem("role");
     const storedID = localStorage.getItem("person_id");
@@ -106,23 +109,23 @@ const AdminDashboard4 = () => {
     }
   }, []);
 
-const checkAccess = async (userID) => {
+  const checkAccess = async (userID) => {
     try {
-        const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
-        if (response.data && response.data.page_privilege === 1) {
-          setHasAccess(true);
-        } else {
-          setHasAccess(false);
-        }
-    } catch (error) {
-        console.error('Error checking access:', error);
+      const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
+      if (response.data && response.data.page_privilege === 1) {
+        setHasAccess(true);
+      } else {
         setHasAccess(false);
-        if (error.response && error.response.data.message) {
-          console.log(error.response.data.message);
-        } else {
-          console.log("An unexpected error occurred.");
-        }
-        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Error checking access:', error);
+      setHasAccess(false);
+      if (error.response && error.response.data.message) {
+        console.log(error.response.data.message);
+      } else {
+        console.log("An unexpected error occurred.");
+      }
+      setLoading(false);
     }
   };
 
@@ -369,16 +372,37 @@ const checkAccess = async (userID) => {
   }, [userID]);
 
 
-  if (hasAccess === null) {
-   return "Loading...."
-}
+  // 🔒 Disable right-click
+  document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+  // 🔒 Block DevTools shortcuts + Ctrl+P silently
+  document.addEventListener('keydown', (e) => {
+    const isBlockedKey =
+      e.key === 'F12' || // DevTools
+      e.key === 'F11' || // Fullscreen
+      (e.ctrlKey && e.shiftKey && (e.key.toLowerCase() === 'i' || e.key.toLowerCase() === 'j')) || // Ctrl+Shift+I/J
+      (e.ctrlKey && e.key.toLowerCase() === 'u') || // Ctrl+U (View Source)
+      (e.ctrlKey && e.key.toLowerCase() === 'p');   // Ctrl+P (Print)
+
+    if (isBlockedKey) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  });
+
+
+
+
+  // Put this at the very bottom before the return 
+  if (loading || hasAccess === null) {
+    return <LoadingOverlay open={loading} message="Check Access" />;
+  }
 
   if (!hasAccess) {
     return (
       <Unauthorized />
     );
   }
-
 
   return (
     <Box sx={{ height: "calc(100vh - 140px)", overflowY: "auto", paddingRight: 1, backgroundColor: "transparent" }}>
@@ -396,9 +420,9 @@ const checkAccess = async (userID) => {
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
-          mt: 3,
+
           mb: 2,
-          px: 2,
+
         }}
       >
         <Typography
@@ -409,7 +433,7 @@ const checkAccess = async (userID) => {
             fontSize: '36px',
           }}
         >
-          ADMISSION SHIFTING FORM
+          ADMISSION SHIFTING FORM - HEALTH MEDICAL RECORDS
         </Typography>
       </Box>
       <hr style={{ border: "1px solid #ccc", width: "100%" }} />

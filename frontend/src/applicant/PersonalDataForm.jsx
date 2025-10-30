@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext, useRef } from "react";
 import { SettingsContext } from "../App";
 import axios from "axios";
-import { Box, Container, } from "@mui/material";
+import { Box, Container, Typography } from "@mui/material";
 import EaristLogo from "../assets/EaristLogo.png";
 import { FcPrint } from "react-icons/fc";
 import { useLocation } from "react-router-dom";
@@ -275,39 +275,72 @@ const PersonalDataForm = () => {
 
 
 
-
     return (
-        <Box sx={{ height: 'calc(95vh - 80px)', overflowY: 'auto', paddingRight: 1, backgroundColor: 'transparent' }}>
-            <Container>
-                <h1 style={{ fontSize: "40px", fontWeight: "bold", textAlign: "Left", color: "maroon", marginTop: "25px" }}>PERSONAL DATA FORM</h1>
-                <hr style={{ border: "1px solid #ccc", width: "41%" }} />
-                <button
-                    onClick={printDiv}
-                    style={{
-                        marginBottom: "1rem",
-                        padding: "10px 20px",
-                        border: "2px solid black",
-                        backgroundColor: "#f0f0f0",
-                        color: "black",
-                        borderRadius: "5px",
-                        marginTop: "20px",
-                        cursor: "pointer",
-                        fontSize: "16px",
+        <Box
+            sx={{
+                height: "calc(100vh - 150px)",
+                overflowY: "auto",
+                paddingRight: 1,
+                backgroundColor: "transparent",
+            }}
+        >
+            <Box
+                sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                    mb: 2,
+                }}
+            >
+                <Typography
+                    variant="h4"
+                    sx={{
                         fontWeight: "bold",
-                        transition: "background-color 0.3s, transform 0.2s",
+                        color: "maroon",
+                        fontSize: "36px",
                     }}
-                    onMouseEnter={(e) => (e.target.style.backgroundColor = "#d3d3d3")}
-                    onMouseLeave={(e) => (e.target.style.backgroundColor = "#f0f0f0")}
-                    onMouseDown={(e) => (e.target.style.transform = "scale(0.95)")}
-                    onMouseUp={(e) => (e.target.style.transform = "scale(1)")}
                 >
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <FcPrint size={20} />
-                        Print Personal Data Form
-                    </span>
-                </button>
+                    PERSONAL DATA FORM
+                </Typography>
+            </Box>
 
-            </Container>
+            <hr style={{ border: "1px solid #ccc", width: "100%" }} />
+            <br />
+
+             {/* ✅ PRINT BUTTON (unchanged) */}
+               <button
+                 onClick={printDiv}
+                 style={{
+                   marginBottom: "1rem",
+                   padding: "10px 20px",
+                   border: "2px solid black",
+                   backgroundColor: "#f0f0f0",
+                   color: "black",
+                   borderRadius: "5px",
+                   marginTop: "20px",
+                   cursor: "pointer",
+                   fontSize: "16px",
+                   fontWeight: "bold",
+                   transition: "background-color 0.3s, transform 0.2s",
+                 }}
+                 onMouseEnter={(e) => (e.target.style.backgroundColor = "#d3d3d3")}
+                 onMouseLeave={(e) => (e.target.style.backgroundColor = "#f0f0f0")}
+                 onMouseDown={(e) => (e.target.style.transform = "scale(0.95)")}
+                 onMouseUp={(e) => (e.target.style.transform = "scale(1)")}
+               >
+                 <span
+                   style={{
+                     display: "flex",
+                     alignItems: "center",
+                     gap: "8px",
+                   }}
+                 >
+                   <FcPrint size={20} />
+                   Print Personal Data Form
+                 </span>
+               </button>
+              
             <Container>
                 <div ref={divToPrintRef}>
                     <div>
@@ -355,7 +388,7 @@ const PersonalDataForm = () => {
                                             height: "120px",
                                             objectFit: "cover",   // ✅ ensures image fills the circle cleanly
                                             borderRadius: "50%",  // ✅ makes it circular
-                                        
+
                                             marginLeft: "10px",
                                             marginTop: "-25px",
                                         }}
@@ -405,7 +438,7 @@ const PersonalDataForm = () => {
                                 </div>
                             </div>
                         </div>
-              
+
                     </Container>
 
 
@@ -2165,7 +2198,7 @@ const PersonalDataForm = () => {
 
                                     </td>
 
-                                   
+
                                     {/* PERMANENT CONTACT NUMBER */}
                                     <td colSpan={10} style={{
                                         border: "1px solid black",
@@ -2185,7 +2218,7 @@ const PersonalDataForm = () => {
 
 
 
-                             
+
 
 
                             </tbody>

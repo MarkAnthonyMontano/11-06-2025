@@ -4,7 +4,7 @@ import {
   Container, Box, Button, Select, MenuItem, Typography, Paper, Grid
 } from "@mui/material";
 import Unauthorized from "../components/Unauthorized";
-
+import LoadingOverlay from "../components/LoadingOverlay";
 
 const DepartmentRoom = () => {
 
@@ -18,15 +18,16 @@ const DepartmentRoom = () => {
   const [roomList, setRoomList] = useState([]);
   const [assignedRooms, setAssignedRooms] = useState({});
 
-const [userID, setUserID] = useState("");
-const [user, setUser] = useState("");
-const [userRole, setUserRole] = useState("");
-const [hasAccess, setHasAccess] = useState(null);
-const pageId = 29;
+  const [userID, setUserID] = useState("");
+  const [user, setUser] = useState("");
+  const [userRole, setUserRole] = useState("");
+  const [hasAccess, setHasAccess] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const pageId = 25;
 
-//
-useEffect(() => {
-    
+  //
+  useEffect(() => {
+
     const storedUser = localStorage.getItem("email");
     const storedRole = localStorage.getItem("role");
     const storedID = localStorage.getItem("person_id");
@@ -46,23 +47,23 @@ useEffect(() => {
     }
   }, []);
 
-const checkAccess = async (userID) => {
+  const checkAccess = async (userID) => {
     try {
-        const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
-        if (response.data && response.data.page_privilege === 1) {
-          setHasAccess(true);
-        } else {
-          setHasAccess(false);
-        }
-    } catch (error) {
-        console.error('Error checking access:', error);
+      const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
+      if (response.data && response.data.page_privilege === 1) {
+        setHasAccess(true);
+      } else {
         setHasAccess(false);
-        if (error.response && error.response.data.message) {
-          console.log(error.response.data.message);
-        } else {
-          console.log("An unexpected error occurred.");
-        }
-        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Error checking access:', error);
+      setHasAccess(false);
+      if (error.response && error.response.data.message) {
+        console.log(error.response.data.message);
+      } else {
+        console.log("An unexpected error occurred.");
+      }
+      setLoading(false);
     }
   };
 
@@ -165,9 +166,11 @@ const checkAccess = async (userID) => {
   });
 
 
-if (hasAccess === null) {
-   return "Loading...."
-}
+
+  // Put this at the very bottom before the return 
+  if (loading || hasAccess === null) {
+    return <LoadingOverlay open={loading} message="Check Access" />;
+  }
 
   if (!hasAccess) {
     return (
@@ -184,10 +187,8 @@ if (hasAccess === null) {
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
-          mt: 2,
-
           mb: 2,
-          px: 2,
+
         }}
       >
         <Typography
@@ -198,7 +199,7 @@ if (hasAccess === null) {
             fontSize: '36px',
           }}
         >
-        DEPARTMENT ROOM
+          DEPARTMENT ROOM
         </Typography>
 
 

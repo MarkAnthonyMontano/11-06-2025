@@ -34,6 +34,8 @@ import RegisterStudent from './components/RegisterStudent';
 import PageCRUD from './components/PageCRUD';
 import UserPageAccess from './components/UserPageAccess';
 import Settings from './components/Settings';
+import ApplicantProfile from './components/ApplicantProfile';
+import ApplicantProfilePermit from './components/ApplicantProfile';
 
 // PAGES FOLDER
 import CourseManagement from './pages/CourseManagement';
@@ -52,9 +54,6 @@ import HistoryLogs from './pages/HistoryLogs';
 import GradingSheet from './faculty/GradingSheet';
 import FacultyWorkload from './faculty/FacultyWorkload';
 import FacultyMasterList from './faculty/FacultyMasterlist';
-import FacultyStudentClassList from './faculty/FacultyStudentClassList';
-import FacultySchedule from './faculty/FacultySchedule';
-import FacultyStudentList from './faculty/FacultyStudentList';
 import ProgramEvaluation from './faculty/ProgramEvaluation';
 import FacultyResetPassword from './faculty/FacultyResetPassword';
 import FacultyEvaluation from './faculty/FacultyEvaluation';
@@ -86,17 +85,13 @@ import AssignEntranceExam from './registrar/AssignEntranceExam';
 import ProctorApplicantList from './registrar/ProctorApplicantList';
 import ApplicantScoring from './registrar/ApplicantScoring';
 import QualifyingExamScore from './registrar/QualifyingExamScore';
-import MedicalClearance from './registrar/MedicalClearance';
-import MedicalProfile from './registrar/MedicalProfile';
 import InterviewerApplicantList from './registrar/InterviewerApplicantList';
 import AssignInterviewExam from './registrar/AssignInterviewExam';
 import AssignScheduleToApplicantsInterviewer from './registrar/AssignScheduleToApplicantsInterviewer';
-import ClassList from './registrar/ClassList';
 import ClassRoster from './registrar/ClassRoster';
 import ProfessorListPerSection from './registrar/ProfessorListPerClass';
 import DepartmentRegistration from './registrar/DprtmntRegistration';
 import DepartmentRoom from './registrar/DprtmntRoom';
-import DepartmentProf from './registrar/DprtmntProf';
 import ProgramTagging from './registrar/ProgramTagging';
 import CoursePanel from './registrar/CoursePanel';
 import ProgramPanel from './registrar/ProgramPanel';
@@ -118,8 +113,6 @@ import ChangeGradingPeriod from './registrar/ChangeYearGradPer';
 import ScheduleChecker from './registrar/ScheduleChecker';
 import RoomRegistration from './registrar/RoomRegistration';
 import RegistrarExamPermit from './registrar/RegistrarExamPermit';
-import ApplicantProfile from './registrar/ApplicantProfile';
-import ApplicantProfilePermit from './registrar/ApplicantProfile';
 import ReportOfGrade from './registrar/ReportOfGrade';
 import TranscriptOfRecords from './registrar/TranscriptOfRecords';
 import EvaluationCRUD from './registrar/EvaluationCrud';
@@ -347,7 +340,6 @@ function App() {
                     <Route path="/curriculum_panel" element={<ProtectedRoute><CurriculumPanel /></ProtectedRoute>} />
                     <Route path="/department_registration" element={<ProtectedRoute><DepartmentRegistration /></ProtectedRoute>} />
                     <Route path="/section_panel" element={<ProtectedRoute><SectionPanel /></ProtectedRoute>} />
-                    <Route path="/professor_registration" element={<ProtectedRoute><DepartmentProf /></ProtectedRoute>} />
                     <Route path="/student_profile_form" element={<ProtectedRoute><StudentProfileForm /></ProtectedRoute>} />
                     <Route path="/year_level_panel" element={<ProtectedRoute><YearLevelPanel /></ProtectedRoute>} />
                     <Route path="/year_panel" element={<ProtectedRoute><YearPanel /></ProtectedRoute>} />
@@ -384,11 +376,7 @@ function App() {
                     <Route path="/faculty_workload" element={<ProtectedRoute><FacultyWorkload /></ProtectedRoute>} />
                     <Route path="/faculty_evaluation" element={<ProtectedRoute><FacultyEvaluation /></ProtectedRoute>} />
                     <Route path="/faculty_masterlist" element={<ProtectedRoute><FacultyMasterList /></ProtectedRoute>} />
-                    <Route path="/subject_masterlist/:subject_id/:department_section_id/:school_year_id" element={<ProtectedRoute><FacultyStudentClassList /></ProtectedRoute>} />
-                    <Route path="/faculty_schedule" element={<ProtectedRoute><FacultySchedule /></ProtectedRoute>} />
                     <Route path="/program_evaluation" element={<ProtectedRoute><ProgramEvaluation /></ProtectedRoute>} />
-                    <Route path="/class_list/:course_id/:department_section_id/:school_year_id" element={<ProtectedRoute><FacultyStudentList /></ProtectedRoute>} />
-
                     <Route path="/student_dashboard" element={<ProtectedRoute allowedRoles={'student'}><StudentDashboard /></ProtectedRoute>} />
                     <Route path="/student_schedule" element={<ProtectedRoute allowedRoles={'student'}><StudentSchedule /></ProtectedRoute>} />
                     <Route path="/grades_page" element={<ProtectedRoute><StudentGradingPage allowedRoles={'student'} /></ProtectedRoute>} />
@@ -401,8 +389,8 @@ function App() {
                     <Route path="/applicant_list_admin" element={<ProtectedRoute><ApplicantListAdmin /></ProtectedRoute>} />
                     <Route path="/super_admin_applicant_list" element={<ProtectedRoute><SuperAdminApplicantList /></ProtectedRoute>} />
                     <Route path="/proctor_applicant_list" element={<ProtectedRoute><ProctorApplicantList /></ProtectedRoute>} />
-                    <Route path="/medical_clearance" element={<ProtectedRoute><MedicalClearance /></ProtectedRoute>} />
-                    <Route path="/medical_profile" element={<ProtectedRoute><MedicalProfile /></ProtectedRoute>} />
+            
+                
                     <Route path="/evaluation_crud" element={<ProtectedRoute><EvaluationCRUD /></ProtectedRoute>} />
 
                     <Route path="/qualifying_exam_scores" element={<ProtectedRoute><QualifyingExamScore /></ProtectedRoute>} />
@@ -495,7 +483,6 @@ function App() {
 
                     <Route path="/class_roster" element={<ProtectedRoute ><ClassRoster /></ProtectedRoute>} />
                     <Route path="/transcript_of_records" element={<ProtectedRoute ><TranscriptOfRecords /></ProtectedRoute>} />
-                    <Route path="/class_roster/class_list/ccs/:curriculum_id" element={<ProtectedRoute ><ClassList /></ProtectedRoute>} />
                     <Route path="/class_list/ccs/:curriculum_id/:dstID" element={<ProtectedRoute><ProfessorListPerSection /></ProtectedRoute>} />
                     <Route path="/email_template_manager" element={<ProtectedRoute><EmailTemplateManager /></ProtectedRoute>} />
                     <Route path="/announcement" element={<ProtectedRoute><Announcement /></ProtectedRoute>} />

@@ -22,7 +22,7 @@ import PeopleIcon from "@mui/icons-material/People";
 import ExamPermit from "../applicant/ExamPermit";
 import FactCheckIcon from "@mui/icons-material/FactCheck";
 import Unauthorized from "../components/Unauthorized";
-
+import LoadingOverlay from "../components/LoadingOverlay";
 
 
 
@@ -93,10 +93,12 @@ const AdminDashboard3 = () => {
   const queryPersonId = queryParams.get("person_id");
 
   const [hasAccess, setHasAccess] = useState(null);
+  const [loading, setLoading] = useState(false);
+
   const pageId = 3;
 
   useEffect(() => {
-    
+
     const storedUser = localStorage.getItem("email");
     const storedRole = localStorage.getItem("role");
     const storedID = localStorage.getItem("person_id");
@@ -116,23 +118,23 @@ const AdminDashboard3 = () => {
     }
   }, []);
 
-const checkAccess = async (userID) => {
+  const checkAccess = async (userID) => {
     try {
-        const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
-        if (response.data && response.data.page_privilege === 1) {
-          setHasAccess(true);
-        } else {
-          setHasAccess(false);
-        }
-    } catch (error) {
-        console.error('Error checking access:', error);
+      const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
+      if (response.data && response.data.page_privilege === 1) {
+        setHasAccess(true);
+      } else {
         setHasAccess(false);
-        if (error.response && error.response.data.message) {
-          console.log(error.response.data.message);
-        } else {
-          console.log("An unexpected error occurred.");
-        }
-        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Error checking access:', error);
+      setHasAccess(false);
+      if (error.response && error.response.data.message) {
+        console.log(error.response.data.message);
+      } else {
+        console.log("An unexpected error occurred.");
+      }
+      setLoading(false);
     }
   };
 
@@ -388,9 +390,32 @@ const checkAccess = async (userID) => {
   }, [userID]);
 
 
-  if (hasAccess === null) {
-   return "Loading...."
-}
+  // 🔒 Disable right-click
+  document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+  // 🔒 Block DevTools shortcuts + Ctrl+P silently
+  document.addEventListener('keydown', (e) => {
+    const isBlockedKey =
+      e.key === 'F12' || // DevTools
+      e.key === 'F11' || // Fullscreen
+      (e.ctrlKey && e.shiftKey && (e.key.toLowerCase() === 'i' || e.key.toLowerCase() === 'j')) || // Ctrl+Shift+I/J
+      (e.ctrlKey && e.key.toLowerCase() === 'u') || // Ctrl+U (View Source)
+      (e.ctrlKey && e.key.toLowerCase() === 'p');   // Ctrl+P (Print)
+
+    if (isBlockedKey) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  });
+
+
+
+
+
+  // Put this at the very bottom before the return 
+  if (loading || hasAccess === null) {
+    return <LoadingOverlay open={loading} message="Check Access" />;
+  }
 
   if (!hasAccess) {
     return (
@@ -415,9 +440,9 @@ const checkAccess = async (userID) => {
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
-          mt: 3,
+
           mb: 2,
-          px: 2,
+
         }}
       >
         <Typography
@@ -428,7 +453,7 @@ const checkAccess = async (userID) => {
             fontSize: '36px',
           }}
         >
-          ADMISSION SHIFTING FORM
+          ADMISSION SHIFTING FORM - EDUCATIONAL ATTAINMENT
         </Typography>
       </Box>
       <hr style={{ border: "1px solid #ccc", width: "100%" }} />
@@ -813,7 +838,7 @@ const checkAccess = async (userID) => {
                   required
                   name="schoolLastAttended"
                   placeholder="Enter School Last Attended"
-                  value={person.schoolLastAttended}
+                  value={person.schoolLastAttended || ""}
 
                   error={errors.schoolLastAttended}
                   helperText={errors.schoolLastAttended ? "This field is required." : ""}
@@ -831,7 +856,7 @@ const checkAccess = async (userID) => {
 
                   required
                   name="schoolAddress"
-                  value={person.schoolAddress}
+                  value={person.schoolAddress || ""}
 
                   placeholder="Enter your School Address"
 
@@ -851,7 +876,7 @@ const checkAccess = async (userID) => {
 
                   name="courseProgram"
                   required
-                  value={person.courseProgram}
+                  value={person.courseProgram || ""}
                   placeholder="Enter your Course Program"
 
                   error={errors.courseProgram}
@@ -878,7 +903,7 @@ const checkAccess = async (userID) => {
 
                   name="honor"
                   required
-                  value={person.honor}
+                  value={person.honor || ""}
                   placeholder="Enter your Honor"
 
                   error={errors.honor}
@@ -897,7 +922,7 @@ const checkAccess = async (userID) => {
 
                   required
                   name="generalAverage"
-                  value={person.generalAverage}
+                  value={person.generalAverage || ""}
                   placeholder="Enter your General Average"
 
                   error={errors.generalAverage}
@@ -917,7 +942,7 @@ const checkAccess = async (userID) => {
 
                   name="yearGraduated"
                   placeholder="Enter your Year Graduated"
-                  value={person.yearGraduated}
+                  value={person.yearGraduated || ""}
 
                   error={errors.yearGraduated}
                   helperText={errors.yearGraduated ? "This field is required." : ""}
@@ -983,7 +1008,7 @@ const checkAccess = async (userID) => {
 
                   name="schoolLastAttended1"
                   placeholder="Enter School Last Attended"
-                  value={person.schoolLastAttended1}
+                  value={person.schoolLastAttended1 || ""}
 
                   error={errors.schoolLastAttended1}
                   helperText={errors.schoolLastAttended1 ? "This field is required." : ""}
@@ -1003,7 +1028,7 @@ const checkAccess = async (userID) => {
                   InputProps={{ readOnly: true }}
 
                   placeholder="Enter your School Address"
-                  value={person.schoolAddress1}
+                  value={person.schoolAddress1 || ""}
 
                   error={errors.schoolAddress1}
                   helperText={errors.schoolAddress1 ? "This field is required." : ""}
@@ -1023,7 +1048,7 @@ const checkAccess = async (userID) => {
 
                   name="courseProgram1"
                   placeholder="Enter your Course Program"
-                  value={person.courseProgram1}
+                  value={person.courseProgram1 || ""}
 
                   error={errors.courseProgram1}
                   helperText={errors.courseProgram1 ? "This field is required." : ""}
@@ -1051,7 +1076,7 @@ const checkAccess = async (userID) => {
                   InputProps={{ readOnly: true }}
 
                   placeholder="Enter your Honor"
-                  value={person.honor1}
+                  value={person.honor1 || ""}
 
                   error={errors.honor1}
                   helperText={errors.honor1 ? "This field is required." : ""}
@@ -1071,7 +1096,7 @@ const checkAccess = async (userID) => {
 
                   name="generalAverage1"
                   placeholder="Enter your General Average"
-                  value={person.generalAverage1}
+                  value={person.generalAverage1 || ""}
 
                   error={errors.generalAverage1}
                   helperText={errors.generalAverage1 ? "This field is required." : ""}
@@ -1091,7 +1116,7 @@ const checkAccess = async (userID) => {
 
                   name="yearGraduated1"
                   placeholder="Enter your Year Graduated"
-                  value={person.yearGraduated1}
+                  value={person.yearGraduated1 || ""}
 
                   error={errors.yearGraduated1}
                   helperText={errors.yearGraduated1 ? "This field is required." : ""}

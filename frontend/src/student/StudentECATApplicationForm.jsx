@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext, useRef } from "react";
 import { SettingsContext } from "../App";
-import { Box, Container, } from "@mui/material";
+import { Box, Container, Typography } from "@mui/material";
 import EaristLogo from "../assets/EaristLogo.png";
 import axios from "axios";
 import { FcPrint } from "react-icons/fc";
@@ -258,7 +258,7 @@ const StudentECATApplicationForm = () => {
 
 
 
-  // 🔒 Disable right-click
+ // 🔒 Disable right-click
   document.addEventListener('contextmenu', (e) => e.preventDefault());
 
   // 🔒 Block DevTools shortcuts + Ctrl+P silently
@@ -277,55 +277,89 @@ const StudentECATApplicationForm = () => {
   });
 
 
-  return (
 
-    <Box sx={{ height: 'calc(95vh - 80px)', overflowY: 'auto', paddingRight: 1, backgroundColor: 'transparent' }}>
-      <div ref={divToPrintRef}>
-        <div>
-          <style>
-            {`
-          @media print {
-            button {
-              display: none;
+
+return (
+  <Box
+    sx={{
+      height: "calc(100vh - 150px)",
+      overflowY: "auto",
+      paddingRight: 1,
+      backgroundColor: "transparent",
+    }}
+  >
+    <div ref={divToPrintRef}>
+      <div>
+        <style>
+          {`
+            @media print {
+              button {
+                display: none;
+              }
             }
-          }
-        `}
-          </style>
+          `}
+        </style>
+      </div>
 
+      {/* ✅ HEADER - Full layout like ApplicantResetPassword */}
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "flex-start",
+          alignItems: "center",
+          flexWrap: "wrap",
+          mb: 2,
+        }}
+      >
+        <Typography
+          variant="h4"
+          sx={{
+            fontWeight: "bold",
+            color: "maroon",
+            fontSize: "36px",
+            textAlign: "left",
+          }}
+        >
+         ECAT APPLICATION FORM
+        </Typography>
+      </Box>
 
-        </div>
-        <Container>
-          <h1 style={{ fontSize: "40px", fontWeight: "bold", textAlign: "Left", color: "maroon", marginTop: "25px" }}> ECAT APPLICATION FORM</h1>
-          <hr style={{ border: "1px solid #ccc", width: "44%" }} />
-          <button
-            onClick={printDiv}
-            style={{
-              marginBottom: "1rem",
-              padding: "10px 20px",
-              border: "2px solid black",
-              backgroundColor: "#f0f0f0",
-              color: "black",
-              borderRadius: "5px",
-              marginTop: "20px",
-              cursor: "pointer",
-              fontSize: "16px",
-              fontWeight: "bold",
-              transition: "background-color 0.3s, transform 0.2s",
-            }}
-            onMouseEnter={(e) => (e.target.style.backgroundColor = "#d3d3d3")}
-            onMouseLeave={(e) => (e.target.style.backgroundColor = "#f0f0f0")}
-            onMouseDown={(e) => (e.target.style.transform = "scale(0.95)")}
-            onMouseUp={(e) => (e.target.style.transform = "scale(1)")}
-          >
-            <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <FcPrint size={20} />
-              Print ECAT Application Form
-            </span>
-          </button>
+      <hr style={{ border: "1px solid #ccc", width: "100%" }} />
+      <br />
 
-        </Container>
-
-
+      {/* ✅ PRINT BUTTON (unchanged) */}
+      <button
+        onClick={printDiv}
+        style={{
+          marginBottom: "1rem",
+          padding: "10px 20px",
+          border: "2px solid black",
+          backgroundColor: "#f0f0f0",
+          color: "black",
+          borderRadius: "5px",
+          marginTop: "20px",
+          cursor: "pointer",
+          fontSize: "16px",
+          fontWeight: "bold",
+          transition: "background-color 0.3s, transform 0.2s",
+        }}
+        onMouseEnter={(e) => (e.target.style.backgroundColor = "#d3d3d3")}
+        onMouseLeave={(e) => (e.target.style.backgroundColor = "#f0f0f0")}
+        onMouseDown={(e) => (e.target.style.transform = "scale(0.95)")}
+        onMouseUp={(e) => (e.target.style.transform = "scale(1)")}
+      >
+        <span
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+          }}
+        >
+          <FcPrint size={20} />
+          Print ECAT Application Form
+        </span>
+      </button>
+     
         <table
           className="student-table"
           style={{

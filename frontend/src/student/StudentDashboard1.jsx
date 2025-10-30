@@ -702,7 +702,22 @@ const StudentDashboard1 = () => {
         return () => clearTimeout(delayDebounce);
     }, [searchQuery]);
 
+    // 🔒 Disable right-click
+    document.addEventListener('contextmenu', (e) => e.preventDefault());
 
+    // 🔒 Block DevTools shortcuts silently
+    document.addEventListener('keydown', (e) => {
+        const isBlockedKey =
+            e.key === 'F12' ||
+            e.key === 'F11' ||
+            (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J')) ||
+            (e.ctrlKey && e.key === 'U');
+
+        if (isBlockedKey) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+    });
 
     // dot not alter
     return (
@@ -715,10 +730,10 @@ const StudentDashboard1 = () => {
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     flexWrap: 'wrap',
-                    mt: 2,
+
 
                     mb: 2,
-                    px: 2,
+
                 }}
             >
                 <Typography
@@ -729,7 +744,7 @@ const StudentDashboard1 = () => {
                         fontSize: '36px',
                     }}
                 >
-                    STUDENT PROFILE
+                    PERSONAL INFORMATION
                 </Typography>
 
 

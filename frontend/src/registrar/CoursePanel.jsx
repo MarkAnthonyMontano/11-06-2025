@@ -7,6 +7,8 @@ import {
   Alert,
 } from "@mui/material";
 import Unauthorized from "../components/Unauthorized";
+import LoadingOverlay from "../components/LoadingOverlay";
+
 
 const CoursePanel = () => {
   const [course, setCourse] = useState({
@@ -36,15 +38,16 @@ const CoursePanel = () => {
     });
   };
 
-const [userID, setUserID] = useState("");
-const [user, setUser] = useState("");
-const [userRole, setUserRole] = useState("");
-const [hasAccess, setHasAccess] = useState(null);
-const pageId = 21;
+  const [userID, setUserID] = useState("");
+  const [user, setUser] = useState("");
+  const [userRole, setUserRole] = useState("");
+  const [hasAccess, setHasAccess] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const pageId = 19;
 
-//
-useEffect(() => {
-    
+  //
+  useEffect(() => {
+
     const storedUser = localStorage.getItem("email");
     const storedRole = localStorage.getItem("role");
     const storedID = localStorage.getItem("person_id");
@@ -64,23 +67,23 @@ useEffect(() => {
     }
   }, []);
 
-const checkAccess = async (userID) => {
+  const checkAccess = async (userID) => {
     try {
-        const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
-        if (response.data && response.data.page_privilege === 1) {
-          setHasAccess(true);
-        } else {
-          setHasAccess(false);
-        }
-    } catch (error) {
-        console.error('Error checking access:', error);
+      const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
+      if (response.data && response.data.page_privilege === 1) {
+        setHasAccess(true);
+      } else {
         setHasAccess(false);
-        if (error.response && error.response.data.message) {
-          console.log(error.response.data.message);
-        } else {
-          console.log("An unexpected error occurred.");
-        }
-        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Error checking access:', error);
+      setHasAccess(false);
+      if (error.response && error.response.data.message) {
+        console.log(error.response.data.message);
+      } else {
+        console.log("An unexpected error occurred.");
+      }
+      setLoading(false);
     }
   };
 
@@ -192,9 +195,29 @@ const checkAccess = async (userID) => {
     setSnack((prev) => ({ ...prev, open: false }));
   };
 
-  if (hasAccess === null) {
-   return "Loading...."
-}
+  // 🔒 Disable right-click
+  document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+  // 🔒 Block DevTools shortcuts + Ctrl+P silently
+  document.addEventListener('keydown', (e) => {
+    const isBlockedKey =
+      e.key === 'F12' || // DevTools
+      e.key === 'F11' || // Fullscreen
+      (e.ctrlKey && e.shiftKey && (e.key.toLowerCase() === 'i' || e.key.toLowerCase() === 'j')) || // Ctrl+Shift+I/J
+      (e.ctrlKey && e.key.toLowerCase() === 'u') || // Ctrl+U (View Source)
+      (e.ctrlKey && e.key.toLowerCase() === 'p');   // Ctrl+P (Print)
+
+    if (isBlockedKey) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  });
+
+
+  // Put this at the very bottom before the return 
+  if (loading || hasAccess === null) {
+    return <LoadingOverlay open={loading} message="Check Access" />;
+  }
 
   if (!hasAccess) {
     return (
@@ -202,6 +225,8 @@ const checkAccess = async (userID) => {
     );
   }
 
+
+  
   return (
     <Box
       sx={{
@@ -217,9 +242,9 @@ const checkAccess = async (userID) => {
           justifyContent: "space-between",
           alignItems: "center",
           flexWrap: "wrap",
-          mt: 2,
+
           mb: 2,
-          px: 2,
+
         }}
       >
         <Typography
@@ -240,7 +265,7 @@ const checkAccess = async (userID) => {
       <div style={styles.flexContainer}>
         {/* ✅ FORM SECTION */}
         <div style={styles.leftPane}>
-          <h3 style={{ color: "#800000" }}>
+          <h3 style={{ color: "#800000", fontWeight: "bold" }}>
             {editMode ? "Edit Course" : "Add New Course"}
           </h3>
 
@@ -299,41 +324,67 @@ const checkAccess = async (userID) => {
 
         {/* ✅ TABLE SECTION */}
         <div style={styles.rightPane}>
-          <h3 style={{ color: "maroon" }}>All Courses</h3>
+          <h3 style={{ color: "maroon", fontWeight: "bold" }}>All Courses</h3>
           <div style={styles.tableContainer}>
             <table style={styles.table}>
               <thead>
                 <tr>
-                  <th>ID</th>
-                  <th>Description</th>
-                  <th>Code</th>
-                  <th>Course Unit</th>
-                  <th>Lab Unit</th>
-                  <th>Actions</th>
+                  <th style={{ border: "2px solid maroon" }}>ID</th>
+                  <th style={{ border: "2px solid maroon" }}>Description</th>
+                  <th style={{ border: "2px solid maroon" }}>Code</th>
+                  <th style={{ border: "2px solid maroon" }}>Course Unit</th>
+                  <th style={{ border: "2px solid maroon" }}>Lab Unit</th>
+                  <th style={{ border: "2px solid maroon" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {courseList.map((c) => (
                   <tr key={c.course_id}>
-                    <td>{c.course_id}</td>
-                    <td>{c.course_description}</td>
-                    <td>{c.course_code}</td>
-                    <td>{c.course_unit}</td>
-                    <td>{c.lab_unit}</td>
-                    <td>
-                      <button
-                        style={styles.editBtn}
-                        onClick={() => handleEdit(c)}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        style={styles.deleteBtn}
-                        onClick={() => handleDelete(c.course_id)}
-                      >
-                        Delete
-                      </button>
+                    <td style={{ border: "2px solid maroon" }}>{c.course_id}</td>
+                    <td style={{ border: "2px solid maroon" }}>{c.course_description}</td>
+                    <td style={{ border: "2px solid maroon", textAlign: "center" }}>{c.course_code}</td>
+                    <td style={{ border: "2px solid maroon", textAlign: "center" }}>{c.course_unit}</td>
+                    <td style={{ border: "2px solid maroon", textAlign: "center" }}>{c.lab_unit}</td>
+                    <td style={{ border: "2px solid maroon", textAlign: "center" }}>
+                      <div style={{ display: "flex", justifyContent: "center", gap: "8px", textAlign: "center" }}>
+                        <button
+                          onClick={() => handleEdit(c)}
+                          style={{
+                            backgroundColor: "#4CAF50",
+                            color: "white",
+                            border: "none",
+                            padding: "6px 0",
+                            width: "80px",
+                            borderRadius: "4px",
+                            cursor: "pointer",
+                            transition: "background-color 0.3s",
+                          }}
+                          onMouseOver={(e) => (e.target.style.backgroundColor = "#45A049")}
+                          onMouseOut={(e) => (e.target.style.backgroundColor = "#4CAF50")}
+                        >
+                          Edit
+                        </button>
+
+                        <button
+                          onClick={() => handleDelete(c.course_id)}
+                          style={{
+                            backgroundColor: "#B22222",
+                            color: "white",
+                            border: "none",
+                            padding: "6px 0",
+                            width: "80px",
+                            borderRadius: "4px",
+                            cursor: "pointer",
+                            transition: "background-color 0.3s",
+                          }}
+                          onMouseOver={(e) => (e.target.style.backgroundColor = "#8B0000")}
+                          onMouseOut={(e) => (e.target.style.backgroundColor = "#B22222")}
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
+
                   </tr>
                 ))}
               </tbody>

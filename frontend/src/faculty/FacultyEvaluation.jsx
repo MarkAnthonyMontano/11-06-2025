@@ -24,6 +24,7 @@ import {
 import axios from "axios";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Cell } from "recharts";
 import LoadingOverlay from '../components/LoadingOverlay';
+import { Message } from "@mui/icons-material";
 
 const FacultyEvaluation = () => {
     const [userID, setUserID] = useState("");
@@ -83,7 +84,7 @@ const FacultyEvaluation = () => {
             };
             setPerson(profInfo);
         } catch (err) {
-            setMessage("Error Fetching Professor Personal Data");
+            console.error("Error Fetching Professor Personal Data");
         }
     }
 
@@ -158,6 +159,7 @@ const FacultyEvaluation = () => {
             setChartData(formatted);
         } catch (err) {
             setChartData([]);
+
         } finally {
             setLoading(false);
         }
@@ -171,11 +173,44 @@ const FacultyEvaluation = () => {
         setSelectedSchoolSemester(event.target.value);
     };
 
-    // if (loading) return <LoadingOverlay open={loading} message={"Loading"} />;  
+    const AuditLog = async () => {
+
+        try {
+            const page_name = "Faculty Evaluation Report";
+            const fullName = `${profData.lname}, ${profData.fname} ${profData.mname}`;
+            const type = "Printing"
+
+            await axios.post(`http://localhost:5000/insert-logs/faculty/${profData.prof_id}`, {
+                message: `User #${profData.prof_id} - ${fullName} printed ${page_name}`, type: type,
+            });
+
+            alert("Audit log inserted successfully!");
+        } catch (err) {
+            console.error("Error inserting audit log:", err);
+            alert("Failed to insert audit log.");
+        }
+    };
+
+    // 🔒 Disable right-click
+    document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+    // 🔒 Block DevTools shortcuts silently
+    document.addEventListener('keydown', (e) => {
+        const isBlockedKey =
+            e.key === 'F12' ||
+            e.key === 'F11' ||
+            (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J')) ||
+            (e.ctrlKey && e.key === 'U');
+
+        if (isBlockedKey) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+    });
 
     return (
-        <Box sx={{ height: 'calc(100vh - 150px)', overflowY: 'auto', pr: 1, p: 2 }}>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} mt={2}>
+        <Box sx={{ height: 'calc(100vh - 150px)', overflowY: 'auto', pr: 1 }}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                 <Typography variant="h4" fontWeight="bold" color="maroon">
                     FACULTY EVALUATION
                 </Typography>
@@ -201,7 +236,7 @@ const FacultyEvaluation = () => {
                 <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", margin: "1rem 0", padding: "0 1rem", }} gap={5}>
                     <Box style={{ display: "flex", alignItems: "center", minWidth: "500px" }}>
                         <Typography fontSize={13} sx={{ minWidth: "100px" }}>Print: </Typography>
-                        <Button style={{ background: "maroon", color: "white", width: "220px", height: "55px" }}>Print Evaluation</Button>
+                        <Button style={{ background: "maroon", color: "white", width: "220px", height: "55px" }} onClick={AuditLog}>Print Evaluation</Button>
                     </Box>
                     <Box display="flex" gap={2} sx={{ minWidth: "450px" }}>
                         <Box display="flex" alignItems="center" gap={1}>

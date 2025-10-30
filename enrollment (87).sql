@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 24, 2025 at 04:42 AM
+-- Generation Time: Oct 30, 2025 at 02:46 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -1200,7 +1200,43 @@ CREATE TABLE `page_access` (
 --
 
 INSERT INTO `page_access` (`id`, `page_privilege`, `page_id`, `user_id`) VALUES
-(0, 1, 3, 61);
+(30, 1, 6, 61),
+(32, 1, 2, 61),
+(33, 1, 1, 61),
+(34, 1, 3, 61),
+(35, 1, 5, 61),
+(36, 1, 4, 61),
+(37, 1, 7, 61),
+(38, 1, 8, 61),
+(39, 1, 9, 61),
+(40, 1, 10, 61),
+(41, 1, 11, 61),
+(42, 1, 12, 61),
+(43, 1, 13, 61),
+(44, 1, 14, 61),
+(45, 1, 15, 61),
+(46, 1, 16, 61),
+(47, 1, 17, 61),
+(48, 1, 18, 61),
+(49, 1, 19, 61),
+(50, 1, 20, 61),
+(51, 1, 21, 61),
+(52, 1, 22, 61),
+(53, 1, 23, 61),
+(54, 1, 24, 61),
+(55, 1, 25, 61),
+(56, 1, 26, 61),
+(57, 1, 27, 61),
+(58, 1, 29, 61),
+(59, 1, 28, 61),
+(60, 1, 30, 61),
+(61, 1, 31, 61),
+(62, 1, 32, 61),
+(63, 1, 33, 61),
+(64, 1, 34, 61),
+(65, 1, 35, 61),
+(66, 1, 36, 61),
+(67, 1, 37, 61);
 
 -- --------------------------------------------------------
 
@@ -1220,8 +1256,47 @@ CREATE TABLE `page_table` (
 --
 
 INSERT INTO `page_table` (`id`, `page_description`, `page_group`, `created_at`) VALUES
-(3, 'COURSE TAGGING', 'enrolling enforcer, registrar', '2025-10-02 06:45:13'),
-(4, 'ADMISSION PROCESS FOR REGISTRAR', 'Registrar', '2025-10-02 06:39:45');
+(1, 'Admin Dashboard - Personal Information', 'registrar', '2025-10-23 06:27:49'),
+(2, 'Admin Dashboard - Family Background', 'registrar', '2025-10-23 06:26:47'),
+(3, 'Admin Dashboard - Educational Attainment', 'registrar', '2025-10-23 06:31:17'),
+(4, 'Admin Dashboard - Health Medical ', 'registrar', '2025-10-23 06:36:22'),
+(5, 'Admin Dashboard - Other Information', 'registrar', '2025-10-23 06:38:11'),
+(6, 'Admin ECAT Application Form', 'registrar', '2025-10-23 06:39:18'),
+(7, 'Admin Office of the Registrar', 'registrar', '2025-10-23 06:39:48'),
+(8, 'Admin Personal Data Form', 'registrar', '2025-10-23 06:40:03'),
+(9, 'Applicant List', 'registrar', '2025-10-23 06:40:12'),
+(10, 'Applicant List Admin', 'registrar', '2025-10-23 06:40:24'),
+(11, 'Applicant Scoring', 'registrar', '2025-10-23 06:40:47'),
+(12, 'Assign Entrance Exam', 'registrar', '2025-10-23 06:40:59'),
+(13, 'Assign Interview Exam', 'registrar', '2025-10-23 06:41:15'),
+(14, 'Assign Schedule to Applicants', 'registrar', '2025-10-23 06:41:27'),
+(15, 'Assign Schedule to Applicants Interviewer', 'registrar', '2025-10-23 06:41:56'),
+(16, 'COR for registrar', 'registrar', '2025-10-23 06:42:09'),
+(17, 'Change Year Grad Per', 'registrar', '2025-10-23 06:42:26'),
+(18, 'Class Roster', 'registrar', '2025-10-23 06:42:40'),
+(19, 'Course Panel', 'registrar', '2025-10-23 06:42:50'),
+(20, 'Course Tagging', 'registrar', '2025-10-23 06:42:59'),
+(21, 'Curriculum Panel', 'registrar', '2025-10-23 06:43:10'),
+(22, 'Dental Assessment', 'registrar', '2025-10-23 06:43:23'),
+(23, 'Department Section', 'registrar', '2025-10-23 06:43:40'),
+(24, 'Department Registration', 'registrar', '2025-10-23 06:44:12'),
+(25, 'Department Room', 'registrar', '2025-10-23 06:44:20'),
+(26, 'Evaluation CRUD', 'registrar', '2025-10-23 06:44:34'),
+(27, 'Examination Profile', 'registrar', '2025-10-23 06:44:45'),
+(28, 'Health Record', 'registrar', '2025-10-23 06:44:55'),
+(29, 'Interviewer Applicant List', 'registrar', '2025-10-23 06:45:07'),
+(30, 'Medical Applicant List', 'registrar', '2025-10-23 06:45:19'),
+(31, 'Medical Certificate', 'registrar', '2025-10-23 06:45:32'),
+(32, 'Medical Dashboard - Personal Information', 'registrar', '2025-10-23 06:45:52'),
+(33, 'Medical Dashboard - Family Background', 'registrar', '2025-10-30 01:02:49'),
+(34, 'Medical Dashboard - Educational Attainment', 'registrar', '2025-10-30 01:02:49'),
+(35, 'Medical Dashboard - Health Medical Records', 'registrar', '2025-10-30 01:03:31'),
+(36, 'Medical Dashboard - Other Information', 'registrar\r\n', '2025-10-30 01:03:31'),
+(37, 'Medical Requirements', 'registrar', '2025-10-30 01:06:17'),
+(38, 'Medical Requirements Form', 'registrar', '2025-10-30 01:06:17'),
+(39, 'Notifications', 'registrar', '2025-10-30 01:07:04'),
+(40, 'Physical Neuro Exam', 'registrar', '2025-10-30 01:07:04'),
+(41, 'Proctor Applicant List', 'registrar', '2025-10-30 01:07:52');
 
 -- --------------------------------------------------------
 
@@ -1459,7 +1534,7 @@ CREATE TABLE `person_table` (
 --
 
 INSERT INTO `person_table` (`person_id`, `student_number`, `profile_img`, `campus`, `academicProgram`, `classifiedAs`, `applyingAs`, `program`, `program2`, `program3`, `yearLevel`, `last_name`, `first_name`, `middle_name`, `extension`, `nickname`, `height`, `weight`, `lrnNumber`, `nolrnNumber`, `gender`, `pwdMember`, `pwdType`, `pwdId`, `birthOfDate`, `age`, `birthPlace`, `languageDialectSpoken`, `citizenship`, `religion`, `civilStatus`, `tribeEthnicGroup`, `cellphoneNumber`, `emailAddress`, `presentStreet`, `presentBarangay`, `presentZipCode`, `presentRegion`, `presentProvince`, `presentMunicipality`, `presentDswdHouseholdNumber`, `sameAsPresentAddress`, `permanentStreet`, `permanentBarangay`, `permanentZipCode`, `permanentRegion`, `permanentProvince`, `permanentMunicipality`, `permanentDswdHouseholdNumber`, `solo_parent`, `father_deceased`, `father_family_name`, `father_given_name`, `father_middle_name`, `father_ext`, `father_nickname`, `father_education`, `father_education_level`, `father_last_school`, `father_course`, `father_year_graduated`, `father_school_address`, `father_contact`, `father_occupation`, `father_employer`, `father_income`, `father_email`, `mother_deceased`, `mother_family_name`, `mother_given_name`, `mother_middle_name`, `mother_ext`, `mother_nickname`, `mother_education`, `mother_education_level`, `mother_last_school`, `mother_course`, `mother_year_graduated`, `mother_school_address`, `mother_contact`, `mother_occupation`, `mother_employer`, `mother_income`, `mother_email`, `guardian`, `guardian_family_name`, `guardian_given_name`, `guardian_middle_name`, `guardian_ext`, `guardian_nickname`, `guardian_address`, `guardian_contact`, `guardian_email`, `annual_income`, `schoolLevel`, `schoolLastAttended`, `schoolAddress`, `courseProgram`, `honor`, `generalAverage`, `yearGraduated`, `schoolLevel1`, `schoolLastAttended1`, `schoolAddress1`, `courseProgram1`, `honor1`, `generalAverage1`, `yearGraduated1`, `strand`, `cough`, `colds`, `fever`, `asthma`, `faintingSpells`, `heartDisease`, `tuberculosis`, `frequentHeadaches`, `hernia`, `chronicCough`, `headNeckInjury`, `hiv`, `highBloodPressure`, `diabetesMellitus`, `allergies`, `cancer`, `smokingCigarette`, `alcoholDrinking`, `hospitalized`, `hospitalizationDetails`, `medications`, `hadCovid`, `covidDate`, `vaccine1Brand`, `vaccine1Date`, `vaccine2Brand`, `vaccine2Date`, `booster1Brand`, `booster1Date`, `booster2Brand`, `booster2Date`, `chestXray`, `cbc`, `urinalysis`, `otherworkups`, `symptomsToday`, `remarks`, `termsOfAgreement`, `created_at`, `current_step`) VALUES
-(1, '202500001', '2025100001_1by1_2025.jpg', 0, 'Techvoc', 'Freshman (First Year)', 'Master Degree Graduate', '1', '11', '14', 'First Year', 'Montaño', 'Mark Anthony', 'Placido', '', 'Johnny', '5\'11', '65kg', 'No LRN Number', 0, 0, 0, '', '', '2003-06-20', 21, 'Manila, Philippines', 'Tagalog, English', 'FILIPINO', 'Born Again', 'Single', 'Agta', '09171234567999999', 'markmontano999@gmail.com', '19 G Dona Yayang Street ', 'Libis', '1000', 'National Capital Region (NCR)', 'Metro Manila, Second District', 'Quezon City', 'DSWD123456', 0, '19 G Dona Yayang Street ', 'Libis', '1000', 'National Capital Region (NCR)', 'Metro Manila, Second District', 'Quezon City', 'DSWD123456', 0, 0, 'Doe Sre', 'Jonathan', 'Smiths', 'III', 'Jon', 1, '', '', '', '', '', '09181234567', 'Engineer', 'ABC Corp', '50000', 'jon.doe@abc.com', 0, 'Jane', 'Mary', 'Anne', '', 'Janey', 1, '', '', '', '', '', '09221234567', 'Accountant', 'XYZ Corp', '100000', 'jane.doe@xyz.com', 'StepFather', 'Parker', 'Ben', 'Jose', 'IV', 'Benny', '789 Recto Av', '09192233445', '', '135,000 to 250,000', 'Senior High School', 'CGEAHS', 'Pasig City', 'STEM', 'With Honors', 92.50, 2022, 'Senior High School', 'CGEAHS', 'Rizal High School', 'Rizal High School', '0', 66.00, 0, 'Information and Communications Technology (ICT)', 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 'Wala ngani', 'Vitamins C', 1, '2022-02-11', 'Pfizer', '2022-03-14', 'Pfizer', '2022-04-13', 'Moderna', '2022-07-14', 'Pfizer', '2023-01-14', 'Normal', 'Normal', 'Normal', 'Normal', 1, 'Fit to enroll', 1, '2024-11-08', 1),
+(1, '202500001', '2025100001_1by1_2025.jpg', 1, 'Techvoc', 'Freshman (First Year)', 'Master Degree Graduate', '1', '11', '14', 'First Year', 'Montaño', 'Mark Anthony', 'Placido', NULL, 'Johnny', '5\'11', '65kg', '123456789012', 0, 0, 0, NULL, NULL, '2005-10-23', 20, 'Manila, Philippines', 'Tagalog, English', 'FILIPINO', 'Born Again', 'Single', 'Agta', '09171234567999999', 'markmontano999@gmail.com', '19 G Dona Yayang Street ', 'Libis', '1000', 'National Capital Region (NCR)', 'Metro Manila, Second District', 'Quezon City', 'DSWD123456', 0, '19 G Dona Yayang Street ', 'Libis', '1000', 'National Capital Region (NCR)', 'Metro Manila, Second District', 'Quezon City', 'DSWD123456', 0, 0, 'Doe Sr.', 'Jonathan', 'Smiths', 'III', 'Jon', 0, NULL, NULL, NULL, NULL, NULL, '09181234567', 'Engineer', 'ABC Corp', '50000', 'jon.doe@abc.com', 0, 'Jane', 'Mary', 'Anne', NULL, 'Janey', 0, NULL, NULL, NULL, NULL, NULL, '09221234567', 'Accountant', 'XYZ Corp', '100000', 'jane.doe@xyz.com', 'StepFather', 'Parker', 'Ben', 'Jose', 'IV', 'Benny', '789 Recto Av', '09192233445', NULL, '135,000 to 250,000', 'Senior High School', 'CGEAHS', 'Pasig City', 'STEM', 'With Honors', 92.50, 2022, 'Senior High School', 'CGEAHS', 'Rizal High School', 'Rizal High School', '0', 66.00, 0, 'Information and Communications Technology (ICT)', 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 'Wala ngani', 'Vitamins C', 1, '2022-02-11', 'Pfizer', '2022-03-14', 'Pfizer', '2022-04-13', 'Moderna', '2022-07-14', 'Pfizer', '2023-01-14', 'Normal', 'Normal', 'Normal', 'Normal', 1, 'Fit to enroll', 1, '2024-11-08', 1),
 (2, '202500002', '3_1by1_2025.jpg', 1, 'Techvoc', 'Freshman (First Year)', 'Senior High School Graduate', '38', '4', '3', 'Second  Year', 'Emily', 'Johnson', 'Grace', '', 'MARK', '5\'11', '65', '123456789012', 0, 0, 0, '', '', '2003-06-26', 21, 'Manila, Philippines', 'Tagalog, English', 'ALGERIAN', 'Iglesia Ni Cristo', 'Single', 'Cebuano', '09953242510', 'emily.johnson2@example.com', '19 G Dona yayang Street Libis', 'Pag-asa', '4100', 'National Capital Region (NCR)', 'Metro Manila, Second District', 'City Of Mandaluyong', 'DSWD123456', 0, '19 G Dona yayang Street Libis', 'Malipayon', '4100', 'Region X (Northern Mindanao)', 'Bukidnon', 'Pangantucan', 'DSWD123456', 0, 0, '', '', '', '', '', 0, '', '', '', '', '', '', '', '', '', '', 0, '', '', '', '', '', 0, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 'fgdsgfasftrasf', '', '', '', 0.00, 0, '', '', '', '', '', 83.00, 0, '', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '', '', 0, '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', 0, '2024-12-10', 1),
 (60, NULL, NULL, 0, NULL, NULL, NULL, '31', NULL, NULL, NULL, 'Bell', 'Evelyn', 'Faith', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'evelyn.bell60@example.com', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 63.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2024-08-09', 1),
 (59, NULL, NULL, 0, NULL, NULL, NULL, '5', NULL, NULL, NULL, 'Morgan', 'Levi', 'Anne', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'levi.morgan59@example.com', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 99.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-04-12', 1),
@@ -2789,6 +2864,18 @@ ALTER TABLE `evaluation_table`
 --
 ALTER TABLE `medical_requirements`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+
+--
+-- AUTO_INCREMENT for table `page_access`
+--
+ALTER TABLE `page_access`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=68;
+
+--
+-- AUTO_INCREMENT for table `page_table`
+--
+ALTER TABLE `page_table`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
 
 --
 -- AUTO_INCREMENT for table `period_status`

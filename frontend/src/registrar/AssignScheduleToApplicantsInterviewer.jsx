@@ -28,7 +28,6 @@ import {
 } from "@mui/material";
 import { Search } from '@mui/icons-material';
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import LoadingOverlay from "../components/LoadingOverlay";
 import SchoolIcon from '@mui/icons-material/School';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
@@ -38,7 +37,7 @@ import PersonSearchIcon from '@mui/icons-material/PersonSearch';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
 import Unauthorized from "../components/Unauthorized";
-
+import LoadingOverlay from "../components/LoadingOverlay";
 
 const socket = io("http://localhost:5000");
 
@@ -60,7 +59,8 @@ const AssignScheduleToApplicantsInterviewer = () => {
     const [userID, setUserID] = useState("");
     const [userRole, setUserRole] = useState("");
     const [hasAccess, setHasAccess] = useState(null);
-    const pageId = 16;
+
+    const pageId = 15;
 
     //
     useEffect(() => {
@@ -70,39 +70,39 @@ const AssignScheduleToApplicantsInterviewer = () => {
         const storedID = localStorage.getItem("person_id");
 
         if (storedUser && storedRole && storedID) {
-          setUser(storedUser);
-          setUserRole(storedRole);
-          setUserID(storedID);
+            setUser(storedUser);
+            setUserRole(storedRole);
+            setUserID(storedID);
 
-          if (storedRole === "registrar") {
-            checkAccess(storedID);
-          } else {
-            window.location.href = "/login";
-          }
+            if (storedRole === "registrar") {
+                checkAccess(storedID);
+            } else {
+                window.location.href = "/login";
+            }
         } else {
-          window.location.href = "/login";
+            window.location.href = "/login";
         }
-      }, []);
+    }, []);
 
     const checkAccess = async (userID) => {
         try {
             const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
             if (response.data && response.data.page_privilege === 1) {
-              setHasAccess(true);
+                setHasAccess(true);
             } else {
-              setHasAccess(false);
+                setHasAccess(false);
             }
         } catch (error) {
             console.error('Error checking access:', error);
             setHasAccess(false);
             if (error.response && error.response.data.message) {
-              console.log(error.response.data.message);
+                console.log(error.response.data.message);
             } else {
-              console.log("An unexpected error occurred.");
+                console.log("An unexpected error occurred.");
             }
             setLoading(false);
         }
-      };
+    };
 
     const fetchPersonData = async () => {
         try {
@@ -841,16 +841,37 @@ Please bring the following requirements:`
         }
     }, [filteredPersons.length, totalPages]);
 
+    // 🔒 Disable right-click
+    document.addEventListener('contextmenu', (e) => e.preventDefault());
 
-if (hasAccess === null) {
-   return "Loading...."
-}
+    // 🔒 Block DevTools shortcuts + Ctrl+P silently
+    document.addEventListener('keydown', (e) => {
+        const isBlockedKey =
+            e.key === 'F12' || // DevTools
+            e.key === 'F11' || // Fullscreen
+            (e.ctrlKey && e.shiftKey && (e.key.toLowerCase() === 'i' || e.key.toLowerCase() === 'j')) || // Ctrl+Shift+I/J
+            (e.ctrlKey && e.key.toLowerCase() === 'u') || // Ctrl+U (View Source)
+            (e.ctrlKey && e.key.toLowerCase() === 'p');   // Ctrl+P (Print)
 
-  if (!hasAccess) {
-    return (
-      <Unauthorized />
-    );
-  }
+        if (isBlockedKey) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+    });
+
+
+
+
+    // Put this at the very bottom before the return 
+    if (loading || hasAccess === null) {
+        return <LoadingOverlay open={loading} message="Check Access" />;
+    }
+
+    if (!hasAccess) {
+        return (
+            <Unauthorized />
+        );
+    }
 
     return (
         <Box sx={{ height: "calc(100vh - 150px)", overflowY: "auto", paddingRight: 1, backgroundColor: "transparent" }}>
@@ -861,9 +882,9 @@ if (hasAccess === null) {
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     flexWrap: 'wrap',
-                    mt: 2,
+
                     mb: 2,
-                    px: 2,
+
                 }}
             >
                 <Typography

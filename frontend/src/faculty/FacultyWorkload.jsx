@@ -66,7 +66,6 @@ const FacultyWorkload = () => {
         const fetchSchedule = async () => {
             try {
                 const response = await axios.get(`http://localhost:5000/api/professor-schedule/${profData.prof_id}`);
-                console.log(response.data);
                 setSchedule(response.data);
             } catch (err) {
                 console.error('Error fetching professor schedule:', err);
@@ -189,9 +188,39 @@ const FacultyWorkload = () => {
 
     const divToPrintRef = useRef();
 
-    const printDiv = () => {
-        window.print();
+    const printDiv = async () => {
+        try {
+          const page_name = "Faculty Workload Report";
+          const fullName = `${profData.lname}, ${profData.fname} ${profData.mname}`;
+          const type = "Printing"
+    
+          await axios.post(`http://localhost:5000/insert-logs/for-print/faculty/${profData.prof_id}`, {
+            message: `User #${profData.prof_id} - ${fullName} printed ${page_name}`, type: type,
+          });
+    
+          window.print();
+        } catch (err) {
+          console.error("Error inserting audit log");
+        }
     };
+
+    // 🔒 Disable right-click
+    document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+    // 🔒 Block DevTools shortcuts + Ctrl+P silently
+    document.addEventListener('keydown', (e) => {
+        const isBlockedKey =
+        e.key === 'F12' || // DevTools
+        e.key === 'F11' || // Fullscreen
+        (e.ctrlKey && e.shiftKey && (e.key.toLowerCase() === 'i' || e.key.toLowerCase() === 'j')) || // Ctrl+Shift+I/J
+        (e.ctrlKey && e.key.toLowerCase() === 'u') || // Ctrl+U (View Source)
+        (e.ctrlKey && e.key.toLowerCase() === 'p');   // Ctrl+P (Print)
+
+        if (isBlockedKey) {
+        e.preventDefault();
+        e.stopPropagation();
+        }
+    });
 
     return (
         <Box className="body" sx={{ height: 'calc(100vh - 150px)', overflowY: 'auto', overflowX: 'hidden', pr: 1, p: 2 }}>
@@ -203,8 +232,7 @@ const FacultyWorkload = () => {
                     flexWrap: 'wrap',
 
                     mb: 2,
-                    px: 2,
-                    mt: 2,
+                   
                 }}
             >
                 <Typography

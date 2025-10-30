@@ -74,27 +74,23 @@ const ApplicantForgotPassword = () => {
     ? `http://localhost:5000${settings.logo_url}`
     : Logo;
 
-  // 🔒 Disable right-click & DevTools
-  useEffect(() => {
-    const handleContextMenu = (e) => e.preventDefault();
-    const handleKeyDown = (e) => {
-      const blocked =
-        e.key === "F12" ||
-        e.key === "F11" ||
-        (e.ctrlKey && e.shiftKey && ["i", "j"].includes(e.key.toLowerCase())) ||
-        (e.ctrlKey && ["u", "p"].includes(e.key.toLowerCase()));
-      if (blocked) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-    };
-    document.addEventListener("contextmenu", handleContextMenu);
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("contextmenu", handleContextMenu);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, []);
+   // 🔒 Disable right-click
+  document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+  // 🔒 Block DevTools shortcuts + Ctrl+P silently
+  document.addEventListener('keydown', (e) => {
+    const isBlockedKey =
+      e.key === 'F12' || // DevTools
+      e.key === 'F11' || // Fullscreen
+      (e.ctrlKey && e.shiftKey && (e.key.toLowerCase() === 'i' || e.key.toLowerCase() === 'j')) || // Ctrl+Shift+I/J
+      (e.ctrlKey && e.key.toLowerCase() === 'u') || // Ctrl+U (View Source)
+      (e.ctrlKey && e.key.toLowerCase() === 'p');   // Ctrl+P (Print)
+
+    if (isBlockedKey) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  });
 
   const isButtonDisabled = !email || !capVal;
 
@@ -116,7 +112,7 @@ const ApplicantForgotPassword = () => {
         style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
         maxWidth={false}
       >
-        <div style={{ border: "5px solid white" }} className="Container">
+        <div style={{ border: "5px solid black" }} className="Container">
           {/* Header */}
           <div className="Header">
             <div className="HeaderTitle">
@@ -138,6 +134,7 @@ const ApplicantForgotPassword = () => {
               type="email"
               placeholder="Enter your Email Address (e.g., username@gmail.com)"
               variant="outlined"
+              style={{ border: "2px solid maroon", borderRadius: "5px" }}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               InputProps={{

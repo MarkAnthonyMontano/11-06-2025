@@ -79,23 +79,30 @@ const Login = ({ setIsAuthenticated }) => {
     setSnack((prev) => ({ ...prev, open: false }));
   };
 
-  // Prevent dev tools
-  document.addEventListener("contextmenu", (e) => e.preventDefault());
-  document.addEventListener("keydown", (e) => {
-    const blocked =
-      e.key === "F12" ||
-      e.key === "F11" ||
-      (e.ctrlKey && e.shiftKey && ["i", "j"].includes(e.key.toLowerCase())) ||
-      (e.ctrlKey && ["u", "p"].includes(e.key.toLowerCase()));
-    if (blocked) e.preventDefault();
-  });
-
   const backgroundImage = settings?.bg_image
     ? `url(http://localhost:5000${settings.bg_image})`
     : "linear-gradient(to right, #f5f5f5, #fafafa)";
   const logoSrc = settings?.logo_url
     ? `http://localhost:5000${settings.logo_url}`
     : Logo;
+
+  // 🔒 Disable right-click
+  document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+  // 🔒 Block DevTools shortcuts + Ctrl+P silently
+  document.addEventListener('keydown', (e) => {
+    const isBlockedKey =
+      e.key === 'F12' || // DevTools
+      e.key === 'F11' || // Fullscreen
+      (e.ctrlKey && e.shiftKey && (e.key.toLowerCase() === 'i' || e.key.toLowerCase() === 'j')) || // Ctrl+Shift+I/J
+      (e.ctrlKey && e.key.toLowerCase() === 'u') || // Ctrl+U (View Source)
+      (e.ctrlKey && e.key.toLowerCase() === 'p');   // Ctrl+P (Print)
+
+    if (isBlockedKey) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  });
 
   return (
     <Box
@@ -119,7 +126,7 @@ const Login = ({ setIsAuthenticated }) => {
         }}
         maxWidth={false}
       >
-        <div style={{ border: "5px solid white !important" }} className="Container">
+        <div style={{ border: "5px solid black" }} className="Container">
 
           {/* ✅ Header (same as LoginEnrollment) */}
           <div className="Header">
@@ -162,7 +169,7 @@ const Login = ({ setIsAuthenticated }) => {
                   WebkitAppearance: "none",
                   MozAppearance: "none",
                   cursor: "pointer",
-                  
+
                 }}
               >
                 <option value="user">Student / Faculty / Registrar</option>

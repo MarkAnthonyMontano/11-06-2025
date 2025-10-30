@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import '../styles/TempStyles.css';
 import axios from 'axios';
 import { FaFileExcel } from "react-icons/fa";
-import { Table, TableBody, TableCell, TableHead, TableRow, TableContainer, TextField, Button, FormControl, Select, InputLabel, MenuItem, Box, Typography, Paper, } from "@mui/material";
+import { Table, TableBody, TableCell, TableHead, TableRow, TableContainer, TextField, Button, FormControl, Select, InputLabel, MenuItem, Box, Typography, Paper, Snackbar, Alert} from "@mui/material";
 
 const GradingSheet = () => {
   const [userID, setUserID] = useState("");
@@ -30,6 +30,7 @@ const GradingSheet = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortOrder, setSortOrder] = useState("asc");
+  const [snack, setSnack] = useState({ open: false, message: '', severity: 'info' });
   const filteredStudents = students;
   const itemsPerPage = 10;
 
@@ -163,20 +164,31 @@ const GradingSheet = () => {
     }
   };
 
-
   const handleChanges = (index, field, value) => {
     const updatedStudents = [...students];
     updatedStudents[index][field] = value;
 
+    console.log(updatedStudents);
     if (field === "midterm" || field === "finals") {
+      let midterm = parseFloat(updatedStudents[index].midterm);
+      let finals = parseFloat(updatedStudents[index].finals);
+
+      if (!isNaN(midterm)) midterm = parseFloat(midterm.toFixed(2));
+      if (!isNaN(finals)) finals = parseFloat(finals.toFixed(2));
+
       const finalGrade = finalGradeCalc(updatedStudents[index].midterm, updatedStudents[index].finals);
+      console.log(midterm, finals, finalGrade)
       updatedStudents[index].final_grade = finalGrade;
 
-      if (finalGrade == 0) {
+      if (midterm === 5.00 || finals === 5.00) {
+        updatedStudents[index].en_remarks = 2; 
+      } else if (String(midterm).toLowerCase() === "inc" || String(finals).toLowerCase() === "inc") {
+        updatedStudents[index].en_remarks = 3;
+      } else if (finalGrade === 0.00 || finals < 1.00 || midterm < 1.00 || isNaN(midterm) || isNaN(finals)) {
         updatedStudents[index].en_remarks = 0;
-      } else if (finalGrade >= 75) {
+      } else if (finalGrade >= 1.00 && finalGrade <= 3.00) {
         updatedStudents[index].en_remarks = 1;
-      } else if (finalGrade >= 60) {
+      } else if (finalGrade >= 3.25) {
         updatedStudents[index].en_remarks = 2;
       } else {
         updatedStudents[index].en_remarks = 3;
@@ -201,14 +213,33 @@ const GradingSheet = () => {
         })
       });
 
-      const result = await response.json();
-
       if (response.ok) {
         setLoading(false);
-        alert("Grades saved successfully!");
+        try {
+          const page_name = "Grading Sheet";
+          const fullName = `${profData.lname}, ${profData.fname} ${profData.mname}`;
+          const type = "submit"
+    
+          await axios.post(`http://localhost:5000/insert-logs/faculty/${profData.prof_id}`, {
+            message: `User #${profData.prof_id} - ${fullName} successfully submit the student grades in ${page_name}`, type: type,
+          });
+    
+        } catch (err) {
+          console.error("Error inserting audit log");
+        }
+
+        setSnack({
+          open: true,
+          message: "Grades saved successfully!",
+          severity: "success",
+        });
       } else {
         setLoading(false);
-        alert("Failed to save grades.");
+        setSnack({
+          open: true,
+          message: "Failed to saved grades!",
+          severity: "error",
+        });
       }
     } catch (error) {
       setLoading(false);
@@ -232,15 +263,18 @@ const GradingSheet = () => {
   };
 
   const finalGradeCalc = (midterm, finals) => {
+    if ( String(midterm).toLowerCase() === "inc" || String(finals).toLowerCase() === "inc") {
+      return "INC";
+    }
+
     const midtermScore = parseFloat(midterm);
     const finalScore = parseFloat(finals);
 
     if (isNaN(midtermScore) || isNaN(finalScore)) {
       return "Invalid input";
-    }
-
+    } 
+    
     const finalGrade = (midtermScore + finalScore) / 2;
-
     return finalGrade.toFixed(2);
   };
 
@@ -256,10 +290,20 @@ const GradingSheet = () => {
     setSelectedSchoolSemester(event.target.value);
   };
 
+  const handleSnackClose = (_, reason) => {
+    if (reason === 'clickaway') return;
+    setSnack(prev => ({ ...prev, open: false }));
+  };
+
+
   const handleImport = async () => {
     try {
       if (!selectedFile) {
-        alert("Please choose a file first!");
+        setSnack({
+          open: true,
+          message: "Please choose a file first!",
+          severity: "warning",
+        });
         return;
       }
 
@@ -275,7 +319,24 @@ const GradingSheet = () => {
       });
 
       if (res.data.success) {
-        alert(res.data.message || "Excel imported successfully!");
+        try {
+          const page_name = "Grading Sheet";
+          const fullName = `${profData.lname}, ${profData.fname} ${profData.mname}`;
+          const type = "upload"
+    
+          await axios.post(`http://localhost:5000/insert-logs/faculty/${profData.prof_id}`, {
+            message: `User #${profData.prof_id} - ${fullName} successfully upload file in ${page_name}`, type: type,
+          });
+    
+        } catch (err) {
+          console.error("Error inserting audit log");
+        }
+
+        setSnack({
+          open: true,
+          message: res.data.message || "Excel imported successfully!",
+          severity: "success",
+        });
         setSelectedFile(null);
 
         // ✅ refresh enrolled student list
@@ -283,11 +344,43 @@ const GradingSheet = () => {
           handleFetchStudents(sectionsHandle[0].department_section_id);
         }
       } else {
-        alert(res.data.error || "Failed to import");
+        try {
+          const page_name = "Grading Sheet";
+          const fullName = `${profData.lname}, ${profData.fname} ${profData.mname}`;
+          const type = "upload"
+    
+          await axios.post(`http://localhost:5000/insert-logs/faculty/${profData.prof_id}`, {
+            message: `User #${profData.prof_id} - ${fullName} tried to upload file in ${page_name}`, type: type,
+          });
+    
+        } catch (err) {
+          console.error("Error inserting audit log");
+        }
+        setSnack({
+          open: true,
+          message: res.data.error || "Failed to import",
+          severity: "error",
+        });
       }
     } catch (err) {
-      console.error("❌ Import error:", err);
-      alert("Import failed: " + (err.response?.data?.error || err.message));
+      console.error("Import Error");
+      try {
+        const page_name = "Grading Sheet";
+        const fullName = `${profData.lname}, ${profData.fname} ${profData.mname}`;
+        const type = "upload"
+  
+        await axios.post(`http://localhost:5000/insert-logs/faculty/${profData.prof_id}`, {
+          message: `User #${profData.prof_id} - ${fullName} failed to upload file in ${page_name}`, type: type,
+        });
+  
+      } catch (err) {
+        console.error("Error inserting audit log");
+      }
+      setSnack({
+        open: true,
+        message: "Import failed: " + (err.response?.data?.error || err.message),
+        severity: "error",
+      });
     }
   };
 
@@ -337,7 +430,7 @@ const GradingSheet = () => {
   });
 
   return (
-    <Box sx={{ height: 'calc(100vh - 150px)', overflowY: 'auto', overflowX: 'hidden', pr: 1, p: 2, marginRight: "3rem" }}>
+    <Box sx={{ height: 'calc(100vh - 150px)', overflowY: 'auto', overflowX: 'hidden', pr: 1, marginRight: "3rem" }}>
 
       <Box
         sx={{
@@ -345,11 +438,8 @@ const GradingSheet = () => {
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
-         
-
           mb: 2,
-          px: 2,
-          mt: 2,
+         
         }}
       >
         <Typography
@@ -622,7 +712,9 @@ const GradingSheet = () => {
           </Box>
           <Box sx={{ display: "flex", flexDirection: "column", flexWrap: "wrap", gap: "1rem" }}>
 
-            <Typography fontSize={13} sx={{ minWidth: "100%", border: "maroon 1px solid", padding: "3px", color: "maroon", textAlign: "center" }}>Choose Excel File to Upload </Typography>
+            <Typography fontSize={13} sx={{ minWidth: "100%", border: "maroon 1px solid", padding: "3px", color: "maroon", textAlign: "center" }}>
+              {selectedFile ? `SELECTED FILE: ${selectedFile.name}` : "Choose Excel File to Upload"}
+            </Typography>
             <Box sx={{ display: "flex", flexWrap: "wrap", gap: "1rem", marginBottom: "0.5rem" }}>
               <Box display="flex" alignItems="center" gap={1} sx={{ minWidth: 200 }}>
                 <input
@@ -830,7 +922,16 @@ const GradingSheet = () => {
           </TableBody>
         </Table>
       </TableContainer>
-
+      <Snackbar
+        open={snack.open}
+        autoHideDuration={3000}
+        onClose={handleSnackClose}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert severity={snack.severity} onClose={handleSnackClose} sx={{ width: '100%' }}>
+          {snack.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
