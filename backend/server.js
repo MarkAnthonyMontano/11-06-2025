@@ -78,39 +78,60 @@ const storage = multer.diskStorage({
     cb(null, filename);
   },
 });
+
+// ---------------- PROFILE UPLOAD (Registrar) ----------------
+// ---------------- PROFILE UPLOAD (Registrar) ----------------
 const profileStorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, "uploads"));
+    const uploadDir = path.join(__dirname, "uploads");
+    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+    cb(null, uploadDir);
   },
   filename: async (req, file, cb) => {
-    const { person_id } = req.params;
+    const { id } = req.params;
 
     try {
-      // Get old filename from DB
+      // ✅ Get registrar info
       const [rows] = await db3.query(
-        "SELECT profile_picture FROM user_accounts WHERE person_id = ?",
-        [person_id]
+        "SELECT employee_id, role, profile_picture FROM user_accounts WHERE id = ?",
+        [id]
       );
 
-      let filename;
-      if (rows.length && rows[0].profile_image) {
-        // ✅ use existing filename (so it overwrites)
-        filename = rows[0].profile_image;
-      } else {
-        // if no old image, generate new one
-        const ext = path.extname(file.originalname);
-        filename = `${person_id}_profile${ext}`;
-      }
+      if (!rows.length) return cb(new Error("Registrar not found"));
+
+      const registrar = rows[0];
+      const ext = path.extname(file.originalname).toLowerCase();
+
+      // ✅ Get Philippine year
+      const philTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Manila" });
+      const year = new Date(philTime).getFullYear();
+
+      // ✅ Construct filename based on employee_id + year
+      const employeeID = registrar.employee_id || "unknown";
+      const filename = `${employeeID}_profile_image_${year}${ext}`;
 
       cb(null, filename);
     } catch (err) {
-      console.error("Error fetching old image:", err);
+      console.error("❌ Error generating filename:", err);
       cb(err);
     }
   },
 });
 
-const profileUpload = multer({ storage: profileStorage });
+const profileUpload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => {
+      const uploadDir = path.join(__dirname, "uploads");
+      if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+      cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+      // We’ll handle renaming AFTER upload (multer doesn’t await async)
+      cb(null, "temp_" + Date.now() + path.extname(file.originalname));
+    },
+  }),
+});
+
 
 const announcementStorage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -549,6 +570,7 @@ app.get("/api/registrars", async (req, res) => {
   }
 });
 
+// ✅ Actual upload + database update route
 app.post("/update_registrar/:id", profileUpload.single("profile_picture"), async (req, res) => {
   const { id } = req.params;
   const data = req.body;
@@ -560,6 +582,36 @@ app.post("/update_registrar/:id", profileUpload.single("profile_picture"), async
 
     const current = existing[0];
 
+    let finalFilename = current.profile_picture; // fallback to existing if no new file
+
+    if (file) {
+      // ✅ Get employee_id for filename
+      const employee_id = current.employee_id || "unknown";
+
+      // ✅ Get current Philippine year
+      const philTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Manila" });
+      const year = new Date(philTime).getFullYear();
+
+      // ✅ Build final filename
+      const ext = path.extname(file.originalname).toLowerCase();
+      finalFilename = `${employee_id}_profile_image_${year}${ext}`;
+
+      // ✅ Paths
+      const uploadDir = path.join(__dirname, "uploads");
+      const tempPath = path.join(uploadDir, file.filename);
+      const newPath = path.join(uploadDir, finalFilename);
+
+      // ✅ Delete old image if exists
+      if (current.profile_picture) {
+        const oldPath = path.join(uploadDir, current.profile_picture);
+        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      }
+
+      // ✅ Rename temp file to proper name
+      fs.renameSync(tempPath, newPath);
+    }
+
+    // ✅ Update registrar data in DB
     const updated = {
       employee_id: data.employee_id ?? current.employee_id,
       last_name: data.last_name ?? current.last_name,
@@ -568,20 +620,19 @@ app.post("/update_registrar/:id", profileUpload.single("profile_picture"), async
       role: data.role ?? current.role,
       email: data.email ?? current.email,
       dprtmnt_id: data.dprtmnt_id ?? current.dprtmnt_id,
-      profile_picture: file ? file.filename : current.profile_picture,
+      profile_picture: finalFilename,
       status:
         data.status === "0" || data.status === 0
           ? 0
           : data.status === "1" || data.status === 1
-            ? 1
-            : current.status,
+          ? 1
+          : current.status,
     };
 
-    let sql = `
+    const sql = `
       UPDATE user_accounts 
       SET employee_id=?, last_name=?, middle_name=?, first_name=?, role=?, email=?, status=?, dprtmnt_id=?, profile_picture=?
-      WHERE id=?
-    `;
+      WHERE id=?`;
     const values = [
       updated.employee_id,
       updated.last_name,
@@ -596,12 +647,34 @@ app.post("/update_registrar/:id", profileUpload.single("profile_picture"), async
     ];
 
     await db3.query(sql, values);
-    res.json({ success: true, message: "Registrar updated successfully!", updated });
+
+    res.json({
+      success: true,
+      message: "Registrar updated successfully!",
+      updated,
+    });
   } catch (error) {
     console.error("❌ Error updating registrar:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
+// ✅ Get user_accounts.id using person_id
+app.get("/api/get_user_account_id/:person_id", async (req, res) => {
+  const { person_id } = req.params;
+  try {
+    const [rows] = await db3.query(
+      "SELECT id FROM user_accounts WHERE person_id = ? LIMIT 1",
+      [person_id]
+    );
+    if (rows.length === 0) return res.status(404).json({ message: "User not found" });
+    res.json({ user_account_id: rows[0].id });
+  } catch (err) {
+    console.error("❌ Error fetching user_account_id:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 
 //DISPLAY
 app.get("/api/students", async (req, res) => {
@@ -643,6 +716,7 @@ app.get("/api/students", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+
 
 //CREATE
 app.post("/register_student", profileUpload.single("profile_picture"), async (req, res) => {
@@ -787,6 +861,7 @@ app.put("/update_student/:id", profileUpload.single("profile_picture"), async (r
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
 
 //TOGGLE STATUS
 app.put("/update_student_status/:id", async (req, res) => {
@@ -13176,6 +13251,66 @@ app.post("/insert-logs/faculty/:prof_id", async (req, res) => {
   } catch (err) {
     console.error("Error fetching notifications:", err);
     res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+app.get("/api/verification-status/:applicant_number", async (req, res) => {
+  const { applicant_number } = req.params;
+
+  try {
+    // ✅ Step 1: Get person_id from applicant_number
+    const [personRows] = await db.query(
+      "SELECT person_id FROM applicant_numbering_table WHERE applicant_number = ?",
+      [applicant_number]
+    );
+    if (personRows.length === 0) {
+      return res.json({ verified: false, reason: "Applicant not found" });
+    }
+
+    const personId = personRows[0].person_id;
+
+    // ✅ Step 2: Count how many verifiable requirements exist
+    const [requirements] = await db.query(
+      "SELECT COUNT(*) AS total_required FROM requirements_table WHERE is_verifiable = 1"
+    );
+    const totalRequired = requirements[0]?.total_required || 0;
+
+    // ✅ Step 3: Count how many of those requirements were submitted & verified
+    const [verifiedUploads] = await db.query(
+      `
+      SELECT COUNT(DISTINCT requirements_id) AS total_verified
+      FROM requirement_uploads
+      WHERE person_id = ?
+      AND document_status = 'Documents Verified & ECAT'
+      `,
+      [personId]
+    );
+    const totalVerified = verifiedUploads[0]?.total_verified || 0;
+
+    // ✅ Step 4: Check if applicant has an exam schedule
+    const [schedule] = await db.query(
+      `
+      SELECT ees.*
+      FROM exam_applicants ea
+      JOIN entrance_exam_schedule ees ON ea.schedule_id = ees.schedule_id
+      WHERE ea.applicant_id = ?
+      `,
+      [applicant_number]
+    );
+    const hasSchedule = schedule.length > 0;
+
+    // ✅ Step 5: Determine if verified
+    const fullyVerified = totalVerified >= totalRequired && hasSchedule;
+
+    res.json({
+      verified: fullyVerified,
+      totalRequired,
+      totalVerified,
+      hasSchedule,
+    });
+  } catch (error) {
+    console.error("Error checking applicant verification:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 

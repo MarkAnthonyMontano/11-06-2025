@@ -3,67 +3,10 @@ import { SettingsContext } from "../App";
 import axios from "axios";
 import { QRCodeSVG } from "qrcode.react";
 import EaristLogo from "../assets/EaristLogo.png";
-import EaristLogoBW from "../assets/earistblackandwhite.png";
 import "../styles/Print.css";
-import Unauthorized from "../components/Unauthorized";
-import LoadingOverlay from "../components/LoadingOverlay";
 
 // ✅ Accept personId as a prop
 const RegistrarExamPermit = ({ personId }) => {
-
-
-    // Also put it at the very top
-    const [userID, setUserID] = useState("");
-    const [user, setUser] = useState("");
-    const [userRole, setUserRole] = useState("");
-
-    const [hasAccess, setHasAccess] = useState(null);
-    const [loading, setLoading] = useState(false);
-
-
-    const pageId = 56;
-
-    //Put this After putting the code of the past code
-    useEffect(() => {
-
-        const storedUser = localStorage.getItem("email");
-        const storedRole = localStorage.getItem("role");
-        const storedID = localStorage.getItem("person_id");
-
-        if (storedUser && storedRole && storedID) {
-            setUser(storedUser);
-            setUserRole(storedRole);
-            setUserID(storedID);
-
-            if (storedRole === "registrar") {
-                checkAccess(storedID);
-            } else {
-                window.location.href = "/login";
-            }
-        } else {
-            window.location.href = "/login";
-        }
-    }, []);
-
-    const checkAccess = async (userID) => {
-        try {
-            const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
-            if (response.data && response.data.page_privilege === 1) {
-                setHasAccess(true);
-            } else {
-                setHasAccess(false);
-            }
-        } catch (error) {
-            console.error('Error checking access:', error);
-            setHasAccess(false);
-            if (error.response && error.response.data.message) {
-                console.log(error.response.data.message);
-            } else {
-                console.log("An unexpected error occurred.");
-            }
-            setLoading(false);
-        }
-    };
 
 
 
@@ -144,20 +87,25 @@ const RegistrarExamPermit = ({ personId }) => {
 
                 setPerson(personData);
 
-                // ✅ Check verification + schedule
                 if (applicantRes.data?.applicant_number) {
                     const applicant_number = applicantRes.data.applicant_number;
 
-                    // Verify documents
-                    const verifyRes = await axios.get(`http://localhost:5000/api/verified-exam-applicants`);
-                    const verified = verifyRes.data.some(a => a.applicant_id === applicant_number);
+                    // ✅ Use new unified verification route
+                    const verifyStatusRes = await axios.get(
+                        `http://localhost:5000/api/verification-status/${applicant_number}`
+                    );
+
+                    const { verified, totalRequired, totalVerified, hasSchedule } = verifyStatusRes.data;
+
+                    setIsVerified(verified);
 
                     if (!verified) {
-                        alert("❌ Your documents are not yet verified. You cannot print the Exam Permit.");
-                        return;
+                        console.warn(
+                            `Applicant not verified. Verified ${totalVerified}/${totalRequired} requirements. Schedule: ${hasSchedule ? "Yes" : "No"}`
+                        );
                     }
 
-                    // Fetch exam schedule
+                    // Always load exam schedule (for display)
                     const schedRes = await axios.get(
                         `http://localhost:5000/api/exam-schedule/${applicant_number}`
                     );
@@ -294,22 +242,12 @@ const RegistrarExamPermit = ({ personId }) => {
     const [qualifyingInterviewScore, setQualifyingInterviewScore] = useState(null);
     const [examScore, setExamScore] = useState(null);
 
+    const [isVerified, setIsVerified] = useState(false);
+
 
 
     if (!person) return <div>Loading Exam Permit...</div>;
 
-
-
-    // Put this at the very bottom before the return 
-    if (loading || hasAccess === null) {
-        return <LoadingOverlay open={loading} message="Check Access" />;
-    }
-
-    if (!hasAccess) {
-        return (
-            <Unauthorized />
-        );
-    }
 
     return (
         <div
@@ -339,35 +277,39 @@ const RegistrarExamPermit = ({ personId }) => {
         }
       `}</style>
 
-            {/* Watermark */}
+            {/* ✅ VERIFIED / NOT VERIFIED Watermark */}
             <div
                 style={{
                     position: "absolute",
-                    top: "35%",
+                    top: "40%",
                     left: "50%",
-                    transform: "translate(-50%, -50%)",
-                    opacity: 0.1,
-                    textAlign: "center",
-                    zIndex: 0,
+                    transform: "translate(-50%, -50%) rotate(-30deg)",
+                    fontSize: "90px",
+                    fontWeight: "900",
+
+                    color: isVerified ? "rgba(0, 128, 0, 0.15)" : "rgba(255, 0, 0, 0.15)",
+                    textTransform: "uppercase",
+                    whiteSpace: "nowrap",
                     pointerEvents: "none",
+                    userSelect: "none",
+                    zIndex: 0,
+                    fontFamily: "'Arial Black', sans-serif",
+                    letterSpacing: "0.3rem",
                 }}
             >
-                <img
-                    src={EaristLogoBW}
-                    alt="Earist Watermark"
-                    style={{ width: "350px", height: "350px", marginBottom: "10px" }}
-                />
-                <div
-                    style={{
-                        fontSize: "36px",
-                        fontWeight: "bold",
-                        color: "black",
-                        letterSpacing: "2px",
-                    }}
-                >
-                    VERIFIED
-                </div>
+                {isVerified ? "VERIFIED" : "NOT VERIFIED"}
             </div>
+
+            <style>{`
+  @media print {
+    div[style*="rotate(-30deg)"] {
+      color: ${isVerified
+                    ? "rgba(0, 128, 0, 0.25)"
+                    : "rgba(255, 0, 0, 0.25)"};
+    }
+    button { display: none; }
+  }
+`}</style>
 
             <table width="100%" style={{ borderCollapse: "collapse", marginTop: "-30px", fontFamily: "Arial" }}>
                 <tbody>
@@ -475,34 +417,8 @@ const RegistrarExamPermit = ({ personId }) => {
             <div style={{ height: "20px" }} />
             <div className="certificate-wrapper">
                 {/* ✅ Watermark */}
-                <div
-                    style={{
-                        position: "absolute",
-                        top: "35%",
-                        left: "50%",
-                        transform: "translate(-50%, -50%)",
-                        opacity: 0.1,
-                        textAlign: "center",
-                        zIndex: 0,
-                        pointerEvents: "none",
-                    }}
-                >
-                    <img
-                        src={EaristLogoBW}
-                        alt="Earist Watermark"
-                        style={{ width: "350px", height: "350px", marginBottom: "10px" }}
-                    />
-                    <div
-                        style={{
-                            fontSize: "36px",
-                            fontWeight: "bold",
-                            color: "black",
-                            letterSpacing: "2px",
-                        }}
-                    >
-                        VERIFIED
-                    </div>
-                </div>
+
+
 
                 {/* ✅ Applicant Details Table */}
                 <table

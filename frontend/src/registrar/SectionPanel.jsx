@@ -19,20 +19,20 @@ import LoadingOverlay from "../components/LoadingOverlay";
 
 const SectionPanel = () => {
 
-// Also put it at the very top
-const [userID, setUserID] = useState("");
-const [user, setUser] = useState("");
-const [userRole, setUserRole] = useState("");
+  // Also put it at the very top
+  const [userID, setUserID] = useState("");
+  const [user, setUser] = useState("");
+  const [userRole, setUserRole] = useState("");
 
-const [hasAccess, setHasAccess] = useState(null);
-const [loading, setLoading] = useState(false);
+  const [hasAccess, setHasAccess] = useState(null);
+  const [loading, setLoading] = useState(false);
 
 
-const pageId = 65;
+  const pageId = 65;
 
-//Put this After putting the code of the past code
-useEffect(() => {
-    
+  //Put this After putting the code of the past code
+  useEffect(() => {
+
     const storedUser = localStorage.getItem("email");
     const storedRole = localStorage.getItem("role");
     const storedID = localStorage.getItem("person_id");
@@ -52,23 +52,23 @@ useEffect(() => {
     }
   }, []);
 
-const checkAccess = async (userID) => {
+  const checkAccess = async (userID) => {
     try {
-        const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
-        if (response.data && response.data.page_privilege === 1) {
-          setHasAccess(true);
-        } else {
-          setHasAccess(false);
-        }
-    } catch (error) {
-        console.error('Error checking access:', error);
+      const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
+      if (response.data && response.data.page_privilege === 1) {
+        setHasAccess(true);
+      } else {
         setHasAccess(false);
-        if (error.response && error.response.data.message) {
-          console.log(error.response.data.message);
-        } else {
-          console.log("An unexpected error occurred.");
-        }
-        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Error checking access:', error);
+      setHasAccess(false);
+      if (error.response && error.response.data.message) {
+        console.log(error.response.data.message);
+      } else {
+        console.log("An unexpected error occurred.");
+      }
+      setLoading(false);
     }
   };
 
@@ -103,7 +103,7 @@ const checkAccess = async (userID) => {
     }
   };
 
-   // 🔒 Disable right-click
+  // 🔒 Disable right-click
   document.addEventListener('contextmenu', (e) => e.preventDefault());
 
   // 🔒 Block DevTools shortcuts + Ctrl+P silently
@@ -123,10 +123,10 @@ const checkAccess = async (userID) => {
 
 
 
-// Put this at the very bottom before the return 
-if (loading || hasAccess === null) {
-   return <LoadingOverlay open={loading} message="Check Access"/>;
-}
+  // Put this at the very bottom before the return 
+  if (loading || hasAccess === null) {
+    return <LoadingOverlay open={loading} message="Check Access" />;
+  }
 
   if (!hasAccess) {
     return (
@@ -137,7 +137,7 @@ if (loading || hasAccess === null) {
   return (
     <Box sx={{ height: "calc(100vh - 150px)", overflowY: "auto", paddingRight: 1, backgroundColor: "transparent" }}>
 
-  <Box
+      <Box
         sx={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -145,7 +145,7 @@ if (loading || hasAccess === null) {
           flexWrap: 'wrap',
 
           mb: 2,
-       
+
         }}
       >
         <Typography
@@ -156,10 +156,10 @@ if (loading || hasAccess === null) {
             fontSize: '36px',
           }}
         >
-      SECTION PANEL FORM
+          SECTION PANEL FORM
         </Typography>
 
-      
+
 
 
       </Box>
@@ -169,8 +169,8 @@ if (loading || hasAccess === null) {
 
       <Box display="flex" gap={3}>
         {/* Left Form Section */}
-        <Paper elevation={3} sx={{ flex: 1, p: 3, border: "2px solid maroon",     borderRadius: 2, }}>
-          <Typography style={{color: "maroon"}} variant="h6" gutterBottom>
+        <Paper elevation={3} sx={{ flex: 1, p: 3, border: "2px solid maroon", borderRadius: 2, }}>
+          <Typography style={{ color: "maroon" }} variant="h6" gutterBottom>
             Section Description
           </Typography>
 
@@ -195,8 +195,8 @@ if (loading || hasAccess === null) {
         </Paper>
 
         {/* Right Table Display Section */}
-        <Paper elevation={3} sx={{ flex: 2, p: 3, border: "2px solid maroon",     borderRadius: 2, }}>
-          <Typography style={{color: "maroon"}} variant="h6" gutterBottom>
+        <Paper elevation={3} sx={{ flex: 2, p: 3, border: "2px solid maroon", borderRadius: 2, }}>
+          <Typography style={{ color: "maroon" }} variant="h6" gutterBottom>
             Section List
           </Typography>
           <TableContainer sx={{ maxHeight: 400, overflowY: 'auto' }}>

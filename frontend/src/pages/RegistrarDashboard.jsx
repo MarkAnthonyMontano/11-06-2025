@@ -226,29 +226,42 @@ const Dashboard = () => {
     }
   }, []);
 
-  const handleFileChange = async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
+ const handleFileChange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  try {
+    // ✅ Get the logged-in role (registrar, admin, etc.)
+    const role = localStorage.getItem("role");
+
+    // ✅ Get the registrar’s user_account_id using person_id
+    const accountRes = await axios.get(
+      `http://localhost:5000/api/get_user_account_id/${personData.person_id}`
+    );
+    const user_account_id = accountRes.data.user_account_id;
 
     const formData = new FormData();
-    formData.append("profileImage", file);
+    formData.append("profile_picture", file);
 
-    try {
-      await axios.put(
-        `http://localhost:5000/api/update_profile_image/${personData.person_id}`,
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
-      );
-      // Refresh data after update
-      const role = localStorage.getItem("role");
-      const res = await axios.get(
-        `http://localhost:5000/api/person_data/${personData.person_id}/${role}`
-      );
-      setPersonData(res.data);
-    } catch (err) {
-      console.error("Upload failed:", err);
-    }
-  };
+    // ✅ Use your backend route
+    await axios.post(
+      `http://localhost:5000/update_registrar/${user_account_id}`,
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } }
+    );
+
+    // ✅ Refresh the data (using correct role)
+    const refreshed = await axios.get(
+      `http://localhost:5000/api/person_data/${personData.person_id}/${role}`
+    );
+    setPersonData(refreshed.data);
+
+    console.log("✅ Profile updated successfully!");
+  } catch (err) {
+    console.error("❌ Upload failed:", err);
+  }
+};
+
 
   return (
     <Box

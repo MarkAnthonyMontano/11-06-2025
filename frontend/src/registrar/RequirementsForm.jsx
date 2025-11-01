@@ -9,27 +9,28 @@ import {
   InputLabel,
   Snackbar,
   Alert,
+  Button,
 } from "@mui/material";
 import Unauthorized from "../components/Unauthorized";
 import LoadingOverlay from "../components/LoadingOverlay";
 
 const RequirementsForm = () => {
 
-  
-// Also put it at the very top
-const [userID, setUserID] = useState("");
-const [user, setUser] = useState("");
-const [userRole, setUserRole] = useState("");
 
-const [hasAccess, setHasAccess] = useState(null);
-const [loading, setLoading] = useState(false);
+  // Also put it at the very top
+  const [userID, setUserID] = useState("");
+  const [user, setUser] = useState("");
+  const [userRole, setUserRole] = useState("");
+
+  const [hasAccess, setHasAccess] = useState(null);
+  const [loading, setLoading] = useState(false);
 
 
-const pageId = 59;
+  const pageId = 59;
 
-//Put this After putting the code of the past code
-useEffect(() => {
-    
+  //Put this After putting the code of the past code
+  useEffect(() => {
+
     const storedUser = localStorage.getItem("email");
     const storedRole = localStorage.getItem("role");
     const storedID = localStorage.getItem("person_id");
@@ -49,23 +50,23 @@ useEffect(() => {
     }
   }, []);
 
-const checkAccess = async (userID) => {
+  const checkAccess = async (userID) => {
     try {
-        const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
-        if (response.data && response.data.page_privilege === 1) {
-          setHasAccess(true);
-        } else {
-          setHasAccess(false);
-        }
-    } catch (error) {
-        console.error('Error checking access:', error);
+      const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
+      if (response.data && response.data.page_privilege === 1) {
+        setHasAccess(true);
+      } else {
         setHasAccess(false);
-        if (error.response && error.response.data.message) {
-          console.log(error.response.data.message);
-        } else {
-          console.log("An unexpected error occurred.");
-        }
-        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Error checking access:', error);
+      setHasAccess(false);
+      if (error.response && error.response.data.message) {
+        console.log(error.response.data.message);
+      } else {
+        console.log("An unexpected error occurred.");
+      }
+      setLoading(false);
     }
   };
 
@@ -183,12 +184,12 @@ const checkAccess = async (userID) => {
     return acc;
   }, {});
 
-  
 
-// Put this at the very bottom before the return 
-if (loading || hasAccess === null) {
-   return <LoadingOverlay open={loading} message="Check Access"/>;
-}
+
+  // Put this at the very bottom before the return 
+  if (loading || hasAccess === null) {
+    return <LoadingOverlay open={loading} message="Check Access" />;
+  }
 
   if (!hasAccess) {
     return (
@@ -211,9 +212,9 @@ if (loading || hasAccess === null) {
           justifyContent: "space-between",
           alignItems: "center",
           flexWrap: "wrap",
-         
+
           mb: 2,
-        
+
         }}
       >
         <Typography
@@ -296,12 +297,19 @@ if (loading || hasAccess === null) {
                     className="bg-white p-3 border border-gray-200 rounded-lg shadow-sm flex justify-between items-center"
                   >
                     <span className="text-gray-800">{req.description}</span>
-                    <button
-                      className="text-red-600 hover:text-red-800"
+                    <Button
+                      variant="contained"
+                      size="small"
+                      sx={{
+                        backgroundColor: "#B22222",
+                        color: "white",
+                        "&:hover": { backgroundColor: "#8B0000" },
+                      }}
                       onClick={() => handleDelete(req.id)}
                     >
                       Delete
-                    </button>
+                    </Button>
+
                   </li>
                 ))}
               </ul>

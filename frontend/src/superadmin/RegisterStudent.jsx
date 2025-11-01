@@ -35,7 +35,6 @@ import LoadingOverlay from "../components/LoadingOverlay";
 
 const RegisterStudents = () => {
 
-
     // Also put it at the very top
     const [userID, setUserID] = useState("");
     const [user, setUser] = useState("");
@@ -88,7 +87,6 @@ const RegisterStudents = () => {
             setLoading(false);
         }
     };
-
 
     const [department, setDepartment] = useState([]);
     const [programs, setPrograms] = useState([]);
@@ -181,7 +179,6 @@ const RegisterStudents = () => {
             fd.append("curriculum_id", form.curriculum_id);
             if (form.profile_picture) fd.append("profile_picture", form.profile_picture);
 
-            // 🟢 Decide if this is an edit or create
             const url = editData
                 ? `http://localhost:5000/update_student/${editData.user_id}`
                 : "http://localhost:5000/register_student";
@@ -340,8 +337,6 @@ const RegisterStudents = () => {
     }
 
 
-
-
     // Put this at the very bottom before the return 
     if (loading || hasAccess === null) {
         return <LoadingOverlay open={loading} message="Check Access" />;
@@ -353,17 +348,9 @@ const RegisterStudents = () => {
         );
     }
 
-
-
-
-
-
-
-
-
     return (
         <Box sx={{ height: "calc(100vh - 150px)", overflowY: "auto", pr: 1 }}>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} >
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                 {/* Left: Header */}
                 <Typography variant="h4" fontWeight="bold" color="maroon">
                     STUDENTS ACCOUNTS
