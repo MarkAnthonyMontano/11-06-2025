@@ -230,9 +230,9 @@ const ProgramTagging = () => {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          mt: 2,
+         
           mb: 2,
-          px: 2,
+      
         }}
       >
         <Typography variant="h4" sx={{ fontWeight: "bold", color: "maroon", fontSize: "36px" }}>

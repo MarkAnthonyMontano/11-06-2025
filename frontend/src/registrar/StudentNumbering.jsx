@@ -37,6 +37,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import FactCheckIcon from '@mui/icons-material/FactCheck';
 import Unauthorized from "../components/Unauthorized";
 import LoadingOverlay from "../components/LoadingOverlay";
+import SearchIcon from "@mui/icons-material/Search";
 
 const socket = io("http://localhost:5000");
 
@@ -516,7 +517,7 @@ const StudentNumbering = () => {
     }
 
     return (
-        <Box sx={{ height: 'calc(100vh - 150px)', overflowY: 'auto', pr: 1, p: 2 }}>
+        <Box sx={{ height: 'calc(100vh - 150px)', overflowY: 'auto', pr: 1, }}>
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                 <Typography variant="h4" fontWeight="bold" color="maroon">
                     ASSIGN STUDENT NUMBER FOR REGISTRAR
@@ -526,14 +527,22 @@ const StudentNumbering = () => {
                     variant="outlined"
                     placeholder="Search Applicant Name / Email / Applicant ID"
                     size="small"
-                    style={{ width: '425px' }}
+
                     value={searchQuery}
                     onChange={(e) => {
                         setSearchQuery(e.target.value);
                         setCurrentPage(1);
                     }}
+                    sx={{
+                        width: 450,
+                        backgroundColor: "#fff",
+                        borderRadius: 1,
+                        "& .MuiOutlinedInput-root": {
+                            borderRadius: "10px",
+                        },
+                    }}
                     InputProps={{
-                        startAdornment: <Search sx={{ mr: 1 }} />,
+                        startAdornment: <SearchIcon sx={{ mr: 1, color: "gray" }} />,
                     }}
                 />
             </Box>

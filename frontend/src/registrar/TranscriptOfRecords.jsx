@@ -7,6 +7,8 @@ import { useLocation } from "react-router-dom";
 import axios from "axios";
 import Unauthorized from "../components/Unauthorized";
 import LoadingOverlay from "../components/LoadingOverlay";
+import SearchIcon from "@mui/icons-material/Search";
+
 
 const TOR = () => {
 
@@ -342,7 +344,7 @@ const TOR = () => {
                     background: "white",
                     alignItems: "center",
                     justifyContent: "space-between",
-                    paddingX: "1rem",
+
                     mb: 2,
                 }}
             >
@@ -356,6 +358,7 @@ const TOR = () => {
                         background: "white",
                         display: "flex",
                         alignItems: "center",
+
                     }}
                 >
                     TRANSCRIPT OF RECORDS
@@ -372,10 +375,16 @@ const TOR = () => {
                             setStudentNumber(e.target.value);
                             setSearchQuery(e.target.value);
                         }}
-                        InputProps={{ startAdornment: <Search sx={{ mr: 1 }} /> }}
                         sx={{
-                            width: { xs: "100%", sm: "425px" },
-                            background: "white",
+                            width: 450,
+                            backgroundColor: "#fff",
+                            borderRadius: 1,
+                            "& .MuiOutlinedInput-root": {
+                                borderRadius: "10px",
+                            },
+                        }}
+                        InputProps={{
+                            startAdornment: <SearchIcon sx={{ mr: 1, color: "gray" }} />,
                         }}
                     />
 

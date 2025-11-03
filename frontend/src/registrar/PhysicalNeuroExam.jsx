@@ -95,30 +95,7 @@ const PhysicalNeuroExam = () => {
         }
     };
 
-    useEffect(() => {
-        const storedUser = localStorage.getItem("email");
-        const storedRole = localStorage.getItem("role");
-        const storedID = localStorage.getItem("person_id");
-        const storedStudentNumber = localStorage.getItem("student_number");
-
-        if (storedUser && storedRole && (storedStudentNumber || storedID)) {
-            setUser(storedUser);
-            setUserRole(storedRole);
-            setUserID(storedStudentNumber || storedID);
-
-            if (storedRole === "applicant" || storedRole === "registrar") {
-                if (storedStudentNumber) {
-                    fetchPersonBySearch(storedStudentNumber);
-                } else {
-                    fetchPersonBySearch(storedID);
-                }
-            } else {
-                window.location.href = "/login";
-            }
-        } else {
-            window.location.href = "/login";
-        }
-    }, []);
+  
 
     const [searchQuery, setSearchQuery] = useState("");
     const [searchError, setSearchError] = useState("");
@@ -358,23 +335,7 @@ const PhysicalNeuroExam = () => {
     const [medicalData, setMedicalData] = useState(null);
     const [personResults, setPersonResults] = useState([]);
 
-    const fetchPersonBySearch = async (query) => {
-        try {
-            const res = await axios.get("http://localhost:5000/api/search-person-student", {
-                params: { query }
-            });
-
-            setPersonResults(res.data);
-            if (res.data.length === 1) {
-                setPerson(res.data[0]);
-                fetchMedicalData(res.data[0].student_number);
-            }
-            console.log("✅ Person search results:", res.data);
-        } catch (error) {
-            console.error("❌ Failed to search person:", error);
-            setPersonResults([]);
-        }
-    };
+   
 
     // Fetch person by student number or name
     const fetchByStudentNumber = async (number) => {
@@ -485,7 +446,7 @@ const PhysicalNeuroExam = () => {
                     justifyContent: "space-between",
                     alignItems: "center",
                     mb: 1,
-                 
+
                 }}
             >
                 {/* 🦷 Left side: Title */}
@@ -493,10 +454,9 @@ const PhysicalNeuroExam = () => {
                     variant="h4"
                     fontWeight="bold"
                     sx={{
-                        color: "#6D2323",
-
-                        letterSpacing: 1,
-                        marginTop: "-10px",
+                        fontWeight: "bold",
+                        color: "maroon",
+                        fontSize: "36px",
                     }}
                 >
                     PHYSICAL AND NEUROLOGICAL EXAMINATION
@@ -508,7 +468,7 @@ const PhysicalNeuroExam = () => {
                         display: "flex",
                         alignItems: "center",
                         gap: 1.5,
-                        marginTop: "-5px",
+
                     }}
                 >
                     <TextField

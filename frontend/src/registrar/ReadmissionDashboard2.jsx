@@ -409,9 +409,9 @@ const ReadmissionDashboard2 = () => {
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     flexWrap: 'wrap',
-                    mt: 2,
+
                     mb: 2,
-                    px: 2,
+
                 }}
             >
                 <Typography
@@ -757,6 +757,7 @@ const ReadmissionDashboard2 = () => {
                             <FormControlLabel
                                 control={
                                     <Checkbox
+                                        disabled
                                         name="father_deceased"
                                         checked={person.father_deceased === 1}
                                         onChange={(e) => {
@@ -786,6 +787,8 @@ const ReadmissionDashboard2 = () => {
                                         <Box sx={{ flex: 1 }}>
                                             <Typography variant="subtitle2" mb={1}>Father Family Name</Typography>
                                             <TextField
+                                                InputProps={{ readOnly: true }}
+
                                                 fullWidth
                                                 size="small"
                                                 required
@@ -800,6 +803,8 @@ const ReadmissionDashboard2 = () => {
                                         <Box sx={{ flex: 1 }}>
                                             <Typography variant="subtitle2" mb={1}>Father Given Name</Typography>
                                             <TextField
+                                                InputProps={{ readOnly: true }}
+
                                                 fullWidth
                                                 size="small"
                                                 required
@@ -814,6 +819,8 @@ const ReadmissionDashboard2 = () => {
                                         <Box sx={{ flex: 1 }}>
                                             <Typography variant="subtitle2" mb={1}>Father Middle Name</Typography>
                                             <TextField
+                                                InputProps={{ readOnly: true }}
+
                                                 fullWidth
                                                 size="small"
                                                 required
@@ -830,6 +837,7 @@ const ReadmissionDashboard2 = () => {
                                             <FormControl fullWidth size="small" required error={!!errors.father_ext}>
                                                 <InputLabel id="father-ext-label">Extension</InputLabel>
                                                 <Select
+                                                    readOnly
                                                     labelId="father-ext-label"
                                                     id="father_ext"
                                                     name="father_ext"
@@ -856,6 +864,8 @@ const ReadmissionDashboard2 = () => {
                                         <Box sx={{ flex: 1 }}>
                                             <Typography variant="subtitle2" mb={1}>Father Nickname</Typography>
                                             <TextField
+                                                InputProps={{ readOnly: true }}
+
                                                 fullWidth
                                                 size="small"
                                                 required
@@ -877,6 +887,7 @@ const ReadmissionDashboard2 = () => {
                                     <Box display="flex" gap={3} alignItems="center">
                                         {/* Father's Education Not Applicable Checkbox */}
                                         <Checkbox
+                                            disabled
                                             name="father_education"
                                             checked={person.father_education === 1}
                                             onChange={(e) => {
@@ -914,6 +925,8 @@ const ReadmissionDashboard2 = () => {
                                             <Box sx={{ flex: 1 }}>
                                                 <Typography variant="subtitle2" mb={1}>Father Education Level</Typography>
                                                 <TextField
+                                                    InputProps={{ readOnly: true }}
+
                                                     fullWidth
                                                     size="small"
                                                     placeholder="Enter Father Education Level"
@@ -929,6 +942,8 @@ const ReadmissionDashboard2 = () => {
                                             <Box sx={{ flex: 1 }}>
                                                 <Typography variant="subtitle2" mb={1}>Father Last School</Typography>
                                                 <TextField
+                                                    InputProps={{ readOnly: true }}
+
                                                     fullWidth
                                                     size="small"
                                                     name="father_last_school"
@@ -944,6 +959,8 @@ const ReadmissionDashboard2 = () => {
                                             <Box sx={{ flex: 1 }}>
                                                 <Typography variant="subtitle2" mb={1}>Father Course</Typography>
                                                 <TextField
+                                                    InputProps={{ readOnly: true }}
+
                                                     fullWidth
                                                     size="small"
                                                     name="father_course"
@@ -959,6 +976,8 @@ const ReadmissionDashboard2 = () => {
                                             <Box sx={{ flex: 1 }}>
                                                 <Typography variant="subtitle2" mb={1}>Father Year Graduated</Typography>
                                                 <TextField
+                                                    InputProps={{ readOnly: true }}
+
                                                     fullWidth
                                                     size="small"
                                                     name="father_year_graduated"
@@ -974,6 +993,8 @@ const ReadmissionDashboard2 = () => {
                                             <Box sx={{ flex: 1 }}>
                                                 <Typography variant="subtitle2" mb={1}>Father School Address</Typography>
                                                 <TextField
+                                                    InputProps={{ readOnly: true }}
+
                                                     fullWidth
                                                     size="small"
                                                     name="father_school_address"
@@ -999,6 +1020,8 @@ const ReadmissionDashboard2 = () => {
                                         <Box sx={{ flex: 1 }}>
                                             <Typography variant="subtitle2" mb={0.5}>Father Contact</Typography>
                                             <TextField
+                                                InputProps={{ readOnly: true }}
+
                                                 fullWidth
                                                 size="small"
                                                 required
@@ -1013,6 +1036,8 @@ const ReadmissionDashboard2 = () => {
                                         <Box sx={{ flex: 1 }}>
                                             <Typography variant="subtitle2" mb={0.5}>Father Occupation</Typography>
                                             <TextField
+                                                InputProps={{ readOnly: true }}
+
                                                 fullWidth
                                                 size="small"
                                                 required
@@ -1027,6 +1052,8 @@ const ReadmissionDashboard2 = () => {
                                         <Box sx={{ flex: 1 }}>
                                             <Typography variant="subtitle2" mb={0.5}>Father Employer</Typography>
                                             <TextField
+                                                InputProps={{ readOnly: true }}
+
                                                 fullWidth
                                                 size="small"
                                                 required
@@ -1042,6 +1069,8 @@ const ReadmissionDashboard2 = () => {
                                         <Box sx={{ flex: 1 }}>
                                             <Typography variant="subtitle2" mb={0.5}>Father Income</Typography>
                                             <TextField
+                                                InputProps={{ readOnly: true }}
+
                                                 fullWidth
                                                 size="small"
                                                 required
@@ -1059,6 +1088,8 @@ const ReadmissionDashboard2 = () => {
                                     <Box sx={{ mb: 2 }}>
                                         <Typography variant="subtitle2" mb={1}>Father Email Address</Typography>
                                         <TextField
+                                            InputProps={{ readOnly: true }}
+
                                             fullWidth
                                             size="small"
                                             required
@@ -1084,6 +1115,7 @@ const ReadmissionDashboard2 = () => {
                             <FormControlLabel
                                 control={
                                     <Checkbox
+                                        disabled
                                         name="mother_deceased"
                                         checked={person.mother_deceased === 1}
                                         onChange={(e) => {
@@ -1113,6 +1145,8 @@ const ReadmissionDashboard2 = () => {
                                         <Box sx={{ flex: 1 }}>
                                             <Typography variant="subtitle2" mb={1}>Mother Family Name</Typography>
                                             <TextField
+                                                InputProps={{ readOnly: true }}
+
                                                 fullWidth
                                                 size="small"
                                                 required
@@ -1129,6 +1163,8 @@ const ReadmissionDashboard2 = () => {
                                         <Box sx={{ flex: 1 }}>
                                             <Typography variant="subtitle2" mb={1}>Mother First Name</Typography>
                                             <TextField
+                                                InputProps={{ readOnly: true }}
+
                                                 fullWidth
                                                 size="small"
                                                 required
@@ -1145,6 +1181,8 @@ const ReadmissionDashboard2 = () => {
                                         <Box sx={{ flex: 1 }}>
                                             <Typography variant="subtitle2" mb={1}>Mother Middle Name</Typography>
                                             <TextField
+                                                InputProps={{ readOnly: true }}
+
                                                 fullWidth
                                                 size="small"
                                                 required
@@ -1164,6 +1202,7 @@ const ReadmissionDashboard2 = () => {
                                             <FormControl fullWidth size="small" >
                                                 <InputLabel id="mother-ext-label">Extension</InputLabel>
                                                 <Select
+                                                    readOnly
                                                     labelId="mother-ext-label"
                                                     id="mother_ext"
                                                     name="mother_ext"
@@ -1189,6 +1228,8 @@ const ReadmissionDashboard2 = () => {
                                         <Box sx={{ flex: 1 }}>
                                             <Typography variant="subtitle2" mb={1}>Mother Nickname</Typography>
                                             <TextField
+                                                InputProps={{ readOnly: true }}
+
                                                 fullWidth
                                                 size="small"
                                                 required
@@ -1213,6 +1254,7 @@ const ReadmissionDashboard2 = () => {
                                     <Box display="flex" gap={3} alignItems="center">
                                         {/* Mother's Education Not Applicable Checkbox */}
                                         <Checkbox
+                                            disabled
                                             name="mother_education"
                                             checked={person.mother_education === 1}
                                             onChange={(e) => {
@@ -1247,6 +1289,8 @@ const ReadmissionDashboard2 = () => {
                                             <Box sx={{ flex: 1 }}>
                                                 <Typography variant="subtitle2" mb={1}>Mother Education Level</Typography>
                                                 <TextField
+                                                    InputProps={{ readOnly: true }}
+
                                                     fullWidth
                                                     size="small"
                                                     name="mother_education_level"
@@ -1262,6 +1306,8 @@ const ReadmissionDashboard2 = () => {
                                             <Box sx={{ flex: 1 }}>
                                                 <Typography variant="subtitle2" mb={1}>Mother Last School</Typography>
                                                 <TextField
+                                                    InputProps={{ readOnly: true }}
+
                                                     fullWidth
                                                     size="small"
                                                     name="mother_last_school"
@@ -1277,6 +1323,8 @@ const ReadmissionDashboard2 = () => {
                                             <Box sx={{ flex: 1 }}>
                                                 <Typography variant="subtitle2" mb={1}>Mother Course</Typography>
                                                 <TextField
+                                                    InputProps={{ readOnly: true }}
+
                                                     fullWidth
                                                     size="small"
                                                     name="mother_course"
@@ -1292,6 +1340,8 @@ const ReadmissionDashboard2 = () => {
                                             <Box sx={{ flex: 1 }}>
                                                 <Typography variant="subtitle2" mb={1}>Mother Year Graduated</Typography>
                                                 <TextField
+                                                    InputProps={{ readOnly: true }}
+
                                                     fullWidth
                                                     size="small"
                                                     name="mother_year_graduated"
@@ -1307,6 +1357,8 @@ const ReadmissionDashboard2 = () => {
                                             <Box sx={{ flex: 1 }}>
                                                 <Typography variant="subtitle2" mb={1}>Mother School Address</Typography>
                                                 <TextField
+                                                    InputProps={{ readOnly: true }}
+
                                                     fullWidth
                                                     size="small"
                                                     name="mother_school_address"
@@ -1331,6 +1383,8 @@ const ReadmissionDashboard2 = () => {
                                         <Box sx={{ flex: 1 }}>
                                             <Typography variant="subtitle2" mb={0.5}>Mother Contact</Typography>
                                             <TextField
+                                                InputProps={{ readOnly: true }}
+
                                                 fullWidth
                                                 size="small"
                                                 required
@@ -1345,6 +1399,8 @@ const ReadmissionDashboard2 = () => {
                                         <Box sx={{ flex: 1 }}>
                                             <Typography variant="subtitle2" mb={0.5}>Mother Occupation</Typography>
                                             <TextField
+                                                InputProps={{ readOnly: true }}
+
                                                 fullWidth
                                                 size="small"
                                                 required
@@ -1359,6 +1415,8 @@ const ReadmissionDashboard2 = () => {
                                         <Box sx={{ flex: 1 }}>
                                             <Typography variant="subtitle2" mb={0.5}>Mother Employer</Typography>
                                             <TextField
+                                                InputProps={{ readOnly: true }}
+
                                                 fullWidth
                                                 size="small"
                                                 required
@@ -1375,6 +1433,8 @@ const ReadmissionDashboard2 = () => {
                                         <Box sx={{ flex: 1 }}>
                                             <Typography variant="subtitle2" mb={0.5}>Mother Income</Typography>
                                             <TextField
+                                                InputProps={{ readOnly: true }}
+
                                                 fullWidth
                                                 size="small"
                                                 required
@@ -1392,6 +1452,8 @@ const ReadmissionDashboard2 = () => {
                                     <Box sx={{ mb: 2 }}>
                                         <Typography variant="subtitle2" mb={1}>Mother Email</Typography>
                                         <TextField
+                                            InputProps={{ readOnly: true }}
+
                                             fullWidth
                                             size="small"
                                             required
@@ -1417,6 +1479,7 @@ const ReadmissionDashboard2 = () => {
                             <FormControl style={{ marginBottom: "10px", width: "200px" }} size="small" required error={!!errors.guardian}>
                                 <InputLabel id="guardian-label">Guardian</InputLabel>
                                 <Select
+                                    readOnly
                                     labelId="guardian-label"
                                     id="guardian"
                                     name="guardian"
@@ -1450,6 +1513,8 @@ const ReadmissionDashboard2 = () => {
                             <Box sx={{ flex: 1 }}>
                                 <Typography variant="subtitle2" mb={1}>Guardian Family Name</Typography>
                                 <TextField
+                                    InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     required
@@ -1467,6 +1532,8 @@ const ReadmissionDashboard2 = () => {
                             <Box sx={{ flex: 1 }}>
                                 <Typography variant="subtitle2" mb={1}>Guardian First Name</Typography>
                                 <TextField
+                                    InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     required
@@ -1484,6 +1551,8 @@ const ReadmissionDashboard2 = () => {
                             <Box sx={{ flex: 1 }}>
                                 <Typography variant="subtitle2" mb={1}>Guardian Middle Name</Typography>
                                 <TextField
+                                    InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     required
@@ -1503,6 +1572,7 @@ const ReadmissionDashboard2 = () => {
                                 <FormControl fullWidth size="small" required error={!!errors.guardian_ext}>
                                     <InputLabel id="guardian-ext-label">Extension</InputLabel>
                                     <Select
+                                        readOnly
                                         labelId="guardian-ext-label"
                                         id="guardian_ext"
                                         name="guardian_ext"
@@ -1530,6 +1600,8 @@ const ReadmissionDashboard2 = () => {
                             <Box sx={{ flex: 1 }}>
                                 <Typography variant="subtitle2" mb={1}>Guardian Nickname</Typography>
                                 <TextField
+                                    InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     required
@@ -1551,6 +1623,8 @@ const ReadmissionDashboard2 = () => {
                         <Box sx={{ width: '100%', mb: 2 }}>
                             <Typography variant="subtitle2" mb={1}>Guardian Address</Typography>
                             <TextField
+                                InputProps={{ readOnly: true }}
+
                                 fullWidth
                                 size="small"
                                 required
@@ -1568,6 +1642,8 @@ const ReadmissionDashboard2 = () => {
                             <Box sx={{ flex: 1 }}>
                                 <Typography variant="subtitle2" mb={1}>Guardian Contact</Typography>
                                 <TextField
+                                    InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     required
@@ -1583,6 +1659,8 @@ const ReadmissionDashboard2 = () => {
                             <Box sx={{ flex: 1 }}>
                                 <Typography variant="subtitle2" mb={1}>Guardian Email</Typography>
                                 <TextField
+                                    InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     required
@@ -1606,6 +1684,7 @@ const ReadmissionDashboard2 = () => {
                             <FormControl fullWidth size="small" required error={!!errors.annual_income}>
                                 <InputLabel id="annual-income-label">Annual Income</InputLabel>
                                 <Select
+                                    readOnly
                                     labelId="annual-income-label"
                                     name="annual_income"
                                     value={person.annual_income || ""}

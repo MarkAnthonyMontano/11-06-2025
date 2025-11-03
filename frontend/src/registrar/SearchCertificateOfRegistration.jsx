@@ -3,28 +3,28 @@ import axios from "axios";
 import { Box, TextField, Typography } from "@mui/material";
 import '../styles/Print.css'
 import CertificateOfRegistration from '../registrar/CertificateOfRegistrationForRegistrar';
-import { Search } from "@mui/icons-material";
+import SearchIcon from "@mui/icons-material/Search";
 import { FcPrint } from "react-icons/fc";
 import Unauthorized from "../components/Unauthorized";
 import LoadingOverlay from "../components/LoadingOverlay";
 
 const SearchCertificateOfRegistration = () => {
 
-  
-// Also put it at the very top
-const [userID, setUserID] = useState("");
-const [user, setUser] = useState("");
-const [userRole, setUserRole] = useState("");
 
-const [hasAccess, setHasAccess] = useState(null);
-const [loading, setLoading] = useState(false);
+  // Also put it at the very top
+  const [userID, setUserID] = useState("");
+  const [user, setUser] = useState("");
+  const [userRole, setUserRole] = useState("");
+
+  const [hasAccess, setHasAccess] = useState(null);
+  const [loading, setLoading] = useState(false);
 
 
-const pageId = 64;
+  const pageId = 64;
 
-//Put this After putting the code of the past code
-useEffect(() => {
-    
+  //Put this After putting the code of the past code
+  useEffect(() => {
+
     const storedUser = localStorage.getItem("email");
     const storedRole = localStorage.getItem("role");
     const storedID = localStorage.getItem("person_id");
@@ -44,23 +44,23 @@ useEffect(() => {
     }
   }, []);
 
-const checkAccess = async (userID) => {
+  const checkAccess = async (userID) => {
     try {
-        const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
-        if (response.data && response.data.page_privilege === 1) {
-          setHasAccess(true);
-        } else {
-          setHasAccess(false);
-        }
-    } catch (error) {
-        console.error('Error checking access:', error);
+      const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
+      if (response.data && response.data.page_privilege === 1) {
+        setHasAccess(true);
+      } else {
         setHasAccess(false);
-        if (error.response && error.response.data.message) {
-          console.log(error.response.data.message);
-        } else {
-          console.log("An unexpected error occurred.");
-        }
-        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Error checking access:', error);
+      setHasAccess(false);
+      if (error.response && error.response.data.message) {
+        console.log(error.response.data.message);
+      } else {
+        console.log("An unexpected error occurred.");
+      }
+      setLoading(false);
     }
   };
 
@@ -148,10 +148,10 @@ const checkAccess = async (userID) => {
 
 
 
-// Put this at the very bottom before the return 
-if (loading || hasAccess === null) {
-   return <LoadingOverlay open={loading} message="Check Access"/>;
-}
+  // Put this at the very bottom before the return 
+  if (loading || hasAccess === null) {
+    return <LoadingOverlay open={loading} message="Check Access" />;
+  }
 
   if (!hasAccess) {
     return (
@@ -167,9 +167,9 @@ if (loading || hasAccess === null) {
           justifyContent: "space-between",
           alignItems: "center",
           flexWrap: "wrap",
-        
+
           mb: 2,
-          
+
         }}
       >
         <Typography
@@ -180,7 +180,7 @@ if (loading || hasAccess === null) {
             fontSize: "36px",
           }}
         >
-          Search Certificate of Registration
+          SEARCH CERTIFICATE OF REGISTRATION
         </Typography>
 
         <TextField
@@ -190,8 +190,17 @@ if (loading || hasAccess === null) {
           value={studentNumber}
 
           onChange={(e) => setStudentNumber(e.target.value)}
-          InputProps={{ startAdornment: <Search sx={{ mr: 1 }} /> }}
-          sx={{ width: { xs: "100%", sm: "425px" }, mt: { xs: 2, sm: 0 } }}
+          sx={{
+            width: 450,
+            backgroundColor: "#fff",
+            borderRadius: 1,
+            "& .MuiOutlinedInput-root": {
+              borderRadius: "10px",
+            },
+          }}
+          InputProps={{
+            startAdornment: <SearchIcon sx={{ mr: 1, color: "gray" }} />,
+          }}
         />
       </Box>
 
@@ -223,7 +232,7 @@ if (loading || hasAccess === null) {
         </span>
       </button>
 
-      <CertificateOfRegistration ref={divToPrintRef} student_number={debouncedStudentNumber}/>
+      <CertificateOfRegistration ref={divToPrintRef} student_number={debouncedStudentNumber} />
     </Box>
   );
 };

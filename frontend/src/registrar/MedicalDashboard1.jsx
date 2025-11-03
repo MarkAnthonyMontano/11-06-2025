@@ -1,26 +1,27 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { Button, Box, TextField, Container, Typography, Card, TableContainer, Paper, Table, TableHead, TableRow, TableCell, FormHelperText, FormControl, InputLabel, Select, MenuItem, Modal, FormControlLabel, Checkbox, IconButton } from "@mui/material";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import PersonIcon from "@mui/icons-material/Person";
 import FamilyRestroomIcon from "@mui/icons-material/FamilyRestroom";
+import SchoolIcon from "@mui/icons-material/School";
 import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
 import InfoIcon from "@mui/icons-material/Info";
 import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import CloseIcon from "@mui/icons-material/Close";
 import ErrorIcon from "@mui/icons-material/Error";
-import Search from '@mui/icons-material/Search';
 import regions from "../data/region.json";
 import provinces from "../data/province.json";
 import cities from "../data/city.json";
 import barangays from "../data/barangay.json";
 import { useNavigate } from 'react-router-dom';
-import { useLocation } from "react-router-dom";
+import Search from '@mui/icons-material/Search';
 import { motion } from "framer-motion";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
-import PersonIcon from "@mui/icons-material/Person";
-import SchoolIcon from "@mui/icons-material/School";
+import { FaFileExcel } from "react-icons/fa";
 import ExamPermit from "../applicant/ExamPermit";
+import { Snackbar, Alert } from '@mui/material';
 import ListAltIcon from "@mui/icons-material/ListAlt";
 import DescriptionIcon from "@mui/icons-material/Description";
 import PsychologyIcon from "@mui/icons-material/Psychology";
@@ -28,6 +29,8 @@ import HowToRegIcon from '@mui/icons-material/HowToReg';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import Unauthorized from "../components/Unauthorized";
 import LoadingOverlay from "../components/LoadingOverlay";
+import SearchIcon from "@mui/icons-material/Search";
+
 
 const MedicalDashboard1 = () => {
     const stepsData = [
@@ -44,45 +47,13 @@ const MedicalDashboard1 = () => {
     const [visitedSteps, setVisitedSteps] = useState(Array(stepsData.length).fill(false));
 
 
+    const [snack, setSnack] = useState({ open: false, message: '', severity: 'info' });
     const navigate = useNavigate();
-    const [explicitSelection, setExplicitSelection] = useState(false);
-
-    const fetchByPersonId = async (personID) => {
-        try {
-            const res = await axios.get(`http://localhost:5000/api/person_with_applicant/${personID}`);
-            setPerson(res.data);
-            setSelectedPerson(res.data);
-            if (res.data?.applicant_number) {
-            }
-        } catch (err) {
-            console.error("❌ person_with_applicant failed:", err);
-        }
-    };
-
-
-
-    const handleNavigateStep = (index, to) => {
-        setCurrentStep(index);
-
-        const pid = sessionStorage.getItem("admin_edit_person_id");
-        if (pid) {
-            navigate(`${to}?person_id=${pid}`);
-        } else {
-            navigate(to);
-        }
-    };
-
-
-
-
     const [userID, setUserID] = useState("");
     const [user, setUser] = useState("");
-
-    const location = useLocation();
-    const [selectedPerson, setSelectedPerson] = useState(null);
-    const [persons, setPersons] = useState([]);
     const [userRole, setUserRole] = useState("");
     const [person, setPerson] = useState({
+        student_number: "",
         profile_img: "",
         campus: "",
         academicProgram: "",
@@ -131,8 +102,21 @@ const MedicalDashboard1 = () => {
         permanentDswdHouseholdNumber: "",
     });
 
+    const handleNavigateStep = (index, to) => {
+        setCurrentStep(index);
+
+        const pid = sessionStorage.getItem("admin_edit_person_id");
+        if (pid) {
+            navigate(`${to}?person_id=${pid}`);
+        } else {
+            navigate(to);
+        }
+    };
+
+
     const [hasAccess, setHasAccess] = useState(null);
     const [loading, setLoading] = useState(false);
+
 
     const pageId = 32;
 
@@ -179,12 +163,10 @@ const MedicalDashboard1 = () => {
     };
 
 
-
-
-
-
+    // do not alter
+    const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
-    const queryPersonId = queryParams.get("person_id")?.trim() || "";
+    const queryPersonId = queryParams.get("person_id");
 
     useEffect(() => {
         const storedUser = localStorage.getItem("email");
@@ -210,7 +192,7 @@ const MedicalDashboard1 = () => {
             sessionStorage.setItem("admin_edit_person_id", targetId);
 
             setUserID(targetId);
-
+            fetchByPersonId(targetId);
             return;
         }
 
@@ -218,84 +200,23 @@ const MedicalDashboard1 = () => {
     }, [queryPersonId]);
 
 
-    useEffect(() => {
-        let consumedFlag = false;
-
-        const tryLoad = async () => {
-            if (queryPersonId) {
-                await fetchByPersonId(queryPersonId);
-                setExplicitSelection(true);
-                consumedFlag = true;
-                return;
+    const fetchByPersonId = async (personID) => {
+        try {
+            const res = await axios.get(`http://localhost:5000/api/person/${personID}`);
+            setPerson(res.data);
+            setSelectedPerson(res.data);
+            if (res.data?.applicant_number) {
+                // optional: whatever logic you want
             }
-
-            // fallback only if it's a fresh selection from Applicant List
-            const source = sessionStorage.getItem("admin_edit_person_id_source");
-            const tsStr = sessionStorage.getItem("admin_edit_person_id_ts");
-            const id = sessionStorage.getItem("admin_edit_person_id");
-            const ts = tsStr ? parseInt(tsStr, 10) : 0;
-            const isFresh = source === "medical_applicant_list" && Date.now() - ts < 5 * 60 * 1000;
-
-            if (id && isFresh) {
-                await fetchByPersonId(id);
-                setExplicitSelection(true);
-                consumedFlag = true;
-            }
-        };
-
-        tryLoad().finally(() => {
-            // consume the freshness so it won't auto-load again later
-            if (consumedFlag) {
-                sessionStorage.removeItem("admin_edit_person_id_source");
-                sessionStorage.removeItem("admin_edit_person_id_ts");
-            }
-        });
-    }, [queryPersonId]);
+        } catch (err) {
+            console.error("❌ person (DB3) fetch failed:", err);
+        }
+    };
 
 
 
-    // Fetch person by ID (when navigating with ?person_id=... or sessionStorage)
-    useEffect(() => {
-        const fetchPersonById = async () => {
-            if (!userID) return;
-
-            try {
-                const res = await axios.get(`http://localhost:5000/api/person_with_applicant/${userID}`);
-                if (res.data) {
-                    setPerson(res.data);
-                    setSelectedPerson(res.data);
-                } else {
-                    console.warn("⚠️ No person found for ID:", userID);
-                }
-            } catch (err) {
-                console.error("❌ Failed to fetch person by ID:", err);
-            }
-        };
-
-        fetchPersonById();
-    }, [userID]);
-
-
-
-
-
-    useEffect(() => {
-        const fetchPersons = async () => {
-            try {
-                const res = await axios.get("http://localhost:5000/api/upload_documents");
-                setPersons(res.data);
-            } catch (err) {
-                console.error("❌ Failed to fetch persons list", err);
-            }
-        };
-
-        fetchPersons();
-    }, []);
-
-
-
-
-
+    const [activeStep, setActiveStep] = useState(0);
+    const [clickedSteps, setClickedSteps] = useState([]);
 
     const steps = person.person_id
         ? [
@@ -307,34 +228,19 @@ const MedicalDashboard1 = () => {
         ]
         : [];
 
-
-    const [activeStep, setActiveStep] = useState(0);
-    const [clickedSteps, setClickedSteps] = useState(Array(steps.length).fill(false));
-
-    const handleStepClick = (index, to) => {
+    const handleStepClick = (index) => {
         setActiveStep(index);
-
-        const pid = sessionStorage.getItem("admin_edit_person_id");
-        if (pid) {
-            navigate(`${to}?person_id=${pid}`);
-        } else {
-            navigate(to);
-        }
+        setClickedSteps((prev) => [...new Set([...prev, index])]);
+        navigate(steps[index].path); // Go to the clicked step’s page
     };
 
 
-    // dot not alter
-
-
-
-
-    // Do not alter
-    const handleUpdate = async (updatedData) => {
-        if (!person || !person.person_id) return;
-
+    // 🧠 Updates record in ENROLLMENT.person_table in real time
+    const handleUpdate = async (updatedPerson) => {
         try {
-            await axios.put(`http://localhost:5000/api/person/${person.person_id}`, updatedData);
-            console.log("✅ Auto-saved successfully");
+            // ✅ force the request to the enrollment route
+            await axios.put(`http://localhost:5000/api/enrollment/person/${userID}`, updatedPerson);
+            console.log("✅ Auto-saved to ENROLLMENT DB3");
         } catch (error) {
             console.error("❌ Auto-save failed:", error);
         }
@@ -409,31 +315,25 @@ const MedicalDashboard1 = () => {
         handleUpdate(updatedPerson); // real-time save
     };
 
-
-
-
-
-
+    // 🖱️ Triggered when input loses focus (safety net)
     const handleBlur = async () => {
         try {
-            const personIdToUpdate = selectedPerson?.person_id || userID;
-            await axios.put(`http://localhost:5000/api/person/${personIdToUpdate}`, person);
-            console.log("Auto-saved on blur");
+            await axios.put(`http://localhost:5000/api/enrollment/person/${userID}`, person);
+            console.log("✅ Auto-saved (on blur) to ENROLLMENT DB3");
         } catch (err) {
-            console.error("Auto-save failed", err);
+            console.error("❌ Auto-save failed (on blur):", err);
         }
     };
 
+    // 💾 Manual autosave (optional call)
     const autoSave = async () => {
         try {
-            const personIdToUpdate = selectedPerson?.person_id || userID;
-            await axios.put(`http://localhost:5000/api/person/${personIdToUpdate}`, person);
-            console.log("Auto-saved.");
+            await axios.put(`http://localhost:5000/api/enrollment/person/${userID}`, person);
+            console.log("✅ Auto-saved (manual trigger) to ENROLLMENT DB3");
         } catch (err) {
-            console.error("Auto-save failed.");
+            console.error("❌ Auto-save failed (manual):", err);
         }
     };
-
 
     const [uploadedImage, setUploadedImage] = useState(null);
     const [preview, setPreview] = useState(null);
@@ -454,32 +354,50 @@ const MedicalDashboard1 = () => {
         const validTypes = ["image/jpeg", "image/jpg", "image/png"];
         const maxSizeInBytes = 2 * 1024 * 1024; // 2MB
 
-        // Check file type
+        // ❌ Invalid file type
         if (!validTypes.includes(file.type)) {
-            alert("Invalid file type. Please select a JPEG or PNG file.");
+            setSnack({
+                open: true,
+                message: "Invalid file type. Please select a JPEG or PNG file.",
+                severity: "error",
+            });
             setSelectedFile(null);
             setPreview(null);
             return;
         }
 
-        // Check file size
+        // ❌ File too large
         if (file.size > maxSizeInBytes) {
-            alert("File is too large. Maximum allowed size is 2MB.");
+            setSnack({
+                open: true,
+                message: "File is too large. Maximum allowed size is 2MB.",
+                severity: "warning",
+            });
             setSelectedFile(null);
             setPreview(null);
             return;
         }
 
-        // If valid, set file and preview
+        // ✅ Valid file — set file and preview
         setSelectedFile(file);
         const reader = new FileReader();
         reader.onloadend = () => setPreview(reader.result);
         reader.readAsDataURL(file);
+
+        setSnack({
+            open: true,
+            message: "✅ File selected successfully.",
+            severity: "success",
+        });
     };
 
     const handleUpload = async () => {
         if (!selectedFile) {
-            alert("Please select a file first.");
+            setSnack({
+                open: true,
+                message: "⚠️ Please select a file first.",
+                severity: "warning",
+            });
             return;
         }
 
@@ -505,16 +423,26 @@ const MedicalDashboard1 = () => {
             };
 
             setPerson(updatedPerson);
-            await handleUpdate(updatedPerson); // ✅ this pushes the profile_img change into DB
-
+            await handleUpdate(updatedPerson); // push to DB
             setUploadedImage(`http://localhost:5000/uploads/${fileName}`);
-            alert("Upload successful!");
+
+            setSnack({
+                open: true,
+                message: "✅ Upload successful!",
+                severity: "success",
+            });
+
             handleClose();
         } catch (error) {
             console.error("Upload failed:", error);
-            alert("Upload failed.");
+            setSnack({
+                open: true,
+                message: "❌ Upload failed. Please try again.",
+                severity: "error",
+            });
         }
     };
+
 
     const [isLrnNA, setIsLrnNA] = useState(false);
 
@@ -669,97 +597,98 @@ const MedicalDashboard1 = () => {
 
 
     const [errors, setErrors] = useState({});
-
-    const isFormValid = () => {
-        const requiredFields = [
-            "campus", "academicProgram", "classifiedAs", "applyingAs", "program", "program2", "program3",
-            "yearLevel", "profile_img", "last_name", "first_name", "middle_name", "nickname",
-            "height", "weight", "gender", "birthOfDate", "age", "birthPlace",
-            "languageDialectSpoken", "citizenship", "religion", "civilStatus", "tribeEthnicGroup",
-            "cellphoneNumber", "emailAddress",
-            "presentStreet", "presentZipCode", "presentRegion", "presentProvince",
-            "presentMunicipality", "presentBarangay", "presentDswdHouseholdNumber",
-            "permanentStreet", "permanentZipCode", "permanentRegion", "permanentProvince",
-            "permanentMunicipality", "permanentBarangay", "permanentDswdHouseholdNumber"
-        ];
-
-        let newErrors = {};
-        let isValid = true;
-
-        // Generic required fields
-        requiredFields.forEach((field) => {
-            const value = person[field];
-            const stringValue = value?.toString().trim();
-
-            if (!stringValue) {
-                newErrors[field] = true;
-                isValid = false;
-            }
-        });
-
-        // ✅ LRN Number: required only if N/A is NOT checked
-        if (!isLrnNA) {
-            const lrnValue = person.lrnNumber?.toString().trim();
-            if (!lrnValue) {
-                newErrors.lrnNumber = true;
-                isValid = false;
-            }
-        }
-
-        // ✅ PWD fields: required only if PWD checkbox is checked
-        if (person.pwdMember === 1) {
-            const pwdTypeValue = person.pwdType?.toString().trim();
-            const pwdIdValue = person.pwdId?.toString().trim();
-
-            if (!pwdTypeValue) {
-                newErrors.pwdType = true;
-                isValid = false;
-            }
-
-            if (!pwdIdValue) {
-                newErrors.pwdId = true;
-                isValid = false;
-            }
-        }
-
-        setErrors(newErrors);
-        return isValid;
-    };
-
-
-
-
     const [searchQuery, setSearchQuery] = useState("");
     const [searchError, setSearchError] = useState("");
-
     useEffect(() => {
         const delayDebounce = setTimeout(async () => {
-            if (searchQuery.trim() === "") return; // Don't search empty
+            if (searchQuery.trim() === "") return;
 
             try {
-                const res = await axios.get("http://localhost:5000/api/search-person", {
+                const res = await axios.get("http://localhost:5000/api/search-person-student", {
                     params: { query: searchQuery }
                 });
 
-                if (res.data && res.data.person_id) {
-                    const details = await axios.get(`http://localhost:5000/api/person_with_applicant/${res.data.person_id}`);
-                    setPerson(details.data);
+                console.log("Search result data:", res.data);
+                setPerson(res.data);
 
-                    sessionStorage.setItem("admin_edit_person_id", details.data.person_id);
-                    setUserID(details.data.person_id);
-                    setSearchError("");
-                } else {
-                    console.error("No valid person ID found in search result");
+                const idToStore = res.data.person_id || res.data.id;
+                if (!idToStore) {
                     setSearchError("Invalid search result");
+                    return;
                 }
+
+                sessionStorage.setItem("admin_edit_person_id", idToStore);
+                sessionStorage.setItem("admin_edit_person_data", JSON.stringify(res.data)); // ✅ added
+                setUserID(idToStore);
+                setSearchError("");
             } catch (err) {
                 console.error("Search failed:", err);
                 setSearchError("Applicant not found");
             }
-        }, 500); // debounce
+        }, 500);
 
         return () => clearTimeout(delayDebounce);
     }, [searchQuery]);
+
+
+    const [selectedPerson, setSelectedPerson] = useState(null);
+    const [persons, setPersons] = useState([]);
+
+    useEffect(() => {
+        if (!searchQuery.trim()) {
+            // 🔹 If search is empty, clear everything
+            setSelectedPerson(null);
+            setPerson({
+                profile_img: "",
+                generalAverage1: "",
+                height: "",
+                applyingAs: "",
+                document_status: "",
+                last_name: "",
+                first_name: "",
+                middle_name: "",
+                extension: "",
+            });
+            return;
+        }
+
+        // 🔹 Try to find a matching applicant from the list
+        const match = persons.find((p) =>
+            `${p.first_name} ${p.middle_name} ${p.last_name} ${p.emailAddress} ${p.applicant_number || ''}`
+                .toLowerCase()
+                .includes(searchQuery.toLowerCase())
+        );
+
+        if (match) {
+            // ✅ If found, set this as the "selectedPerson"
+            setSelectedPerson(match);
+        } else {
+            // ❌ If not found, clear again
+            setSelectedPerson(null);
+            setPerson({
+                profile_img: "",
+                generalAverage1: "",
+                height: "",
+                applyingAs: "",
+                document_status: "",
+                last_name: "",
+                first_name: "",
+                middle_name: "",
+                extension: "",
+            });
+        }
+    }, [searchQuery, persons]);
+
+
+    // ✅ For Excel Import
+    const [excelFile, setExcelFile] = useState(null);
+
+
+
+    const handleSnackClose = (_, reason) => {
+        if (reason === 'clickaway') return;
+        setSnack({ ...snack, open: false });
+    };
 
     const divToPrintRef = useRef();
     const [showPrintView, setShowPrintView] = useState(false);
@@ -811,29 +740,6 @@ const MedicalDashboard1 = () => {
         setExamPermitError("");
     };
 
-    const handleExamPermitClick = async () => {
-        try {
-            const res = await axios.get("http://localhost:5000/api/verified-exam-applicants");
-            const verified = res.data.some(a => a.person_id === parseInt(userID));
-
-            if (!verified) {
-                setExamPermitError("❌ You cannot print the Exam Permit until all required documents are verified.");
-                setExamPermitModalOpen(true);
-                return;
-            }
-
-            // ✅ Render permit and print
-            setShowPrintView(true);
-            setTimeout(() => {
-                printDiv();
-                setShowPrintView(false);
-            }, 500);
-        } catch (err) {
-            console.error("Error verifying exam permit eligibility:", err);
-            setExamPermitError("⚠️ Unable to check document verification status right now.");
-            setExamPermitModalOpen(true);
-        }
-    };
 
 
     const links = [
@@ -842,7 +748,7 @@ const MedicalDashboard1 = () => {
         { to: `/admin_personal_data_form`, label: "Personal Data Form" },
         { to: `/admin_office_of_the_registrar`, label: "Application For EARIST College Admission" },
         { to: `/admission_services`, label: "Application/Student Satisfactory Survey" },
-        { label: "Examination Permit", onClick: handleExamPermitClick }, // ✅
+
     ];
 
 
@@ -856,9 +762,6 @@ const MedicalDashboard1 = () => {
                 setCanPrintPermit(verified);
             });
     }, [userID]);
-
-
-
 
 
 
@@ -876,7 +779,6 @@ const MedicalDashboard1 = () => {
     // dot not alter
     return (
         <Box sx={{ height: "calc(100vh - 150px)", overflowY: "auto", paddingRight: 1, backgroundColor: "transparent" }}>
-
             {showPrintView && (
                 <div ref={divToPrintRef} style={{ display: "block" }}>
                     <ExamPermit personId={userID} />   {/* ✅ pass the searched person_id */}
@@ -884,42 +786,87 @@ const MedicalDashboard1 = () => {
             )}
 
 
-            {/* Top header: DOCUMENTS SUBMITTED + Search */}
+            {/* Top header: DOCUMENTS SUBMITTED + Search + Import */}
             <Box
                 sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    flexWrap: 'wrap',
-                  
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    flexWrap: "wrap",
+
                     mb: 2,
-                   
+
                 }}
             >
                 <Typography
                     variant="h4"
                     sx={{
-                        fontWeight: 'bold',
-                        color: 'maroon',
-                        fontSize: '36px',
+                        fontWeight: "bold",
+                        color: "maroon",
+                        fontSize: "36px",
                     }}
                 >
-                   MEDICAL - PERSONAL INFORMATION
+                    MEDICAL - PERSONAL INFORMATION
                 </Typography>
 
-                <TextField
-                    size="small"
+                {/* ✅ Right side: Search + Excel Import side by side */}
+                <Box display="flex" alignItems="center" gap={2}>
+                    <TextField
+                        size="small"
+                        placeholder="Search Student Name / Email / Student Number"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        sx={{
+                            width: 450,
+                            backgroundColor: "#fff",
+                            borderRadius: 1,
+                            "& .MuiOutlinedInput-root": {
+                                borderRadius: "10px",
+                            },
+                        }}
+                        InputProps={{
+                            startAdornment: <SearchIcon sx={{ mr: 1, color: "gray" }} />,
+                        }}
+                    />
 
-                    placeholder="Search Applicant Name / Email / Applicant ID"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    InputProps={{ startAdornment: <Search sx={{ mr: 1 }} /> }}
-                    sx={{ width: { xs: '100%', sm: '425px' }, mt: { xs: 2, sm: 0 } }}
-                />
+
+                </Box>
             </Box>
+
             {searchError && <Typography color="error">{searchError}</Typography>}
+
             <hr style={{ border: "1px solid #ccc", width: "100%" }} />
             <br />
+
+            <TableContainer component={Paper} sx={{ width: '100%', mb: 1 }}>
+                <Table>
+                    <TableHead sx={{ backgroundColor: '#6D2323' }}>
+                        <TableRow>
+                            {/* Left cell: Student Number */}
+                            <TableCell sx={{ color: 'white', fontSize: '20px', fontFamily: 'Arial Black', border: 'none' }}>
+                                Student Number:&nbsp;
+                                <span style={{ fontFamily: "Arial", fontWeight: "normal", textDecoration: "underline" }}>
+                                    {person?.student_number || "N/A"}
+                                </span>
+                            </TableCell>
+
+                            {/* Right cell: Student Name */}
+                            <TableCell
+                                align="right"
+                                sx={{ color: 'white', fontSize: '20px', fontFamily: 'Arial Black', border: 'none' }}
+                            >
+                                Student Name:&nbsp;
+                                <span style={{ fontFamily: "Arial", fontWeight: "normal", textDecoration: "underline" }}>
+                                    {person?.last_name?.toUpperCase()}, {person?.first_name?.toUpperCase()}{" "}
+                                    {person?.middle_name?.toUpperCase()} {person?.extension?.toUpperCase() || ""}
+                                </span>
+                            </TableCell>
+                        </TableRow>
+                    </TableHead>
+                </Table>
+            </TableContainer>
+
+
 
             <Box
                 sx={{
@@ -993,40 +940,17 @@ const MedicalDashboard1 = () => {
             <br />
 
 
+            <Container>
 
-            <TableContainer component={Paper} sx={{ width: '100%', mb: 1 }}>
-                <Table>
-                    <TableHead sx={{ backgroundColor: '#6D2323' }}>
-                        <TableRow>
-                            {/* Left cell: Applicant ID */}
-                            <TableCell sx={{ color: 'white', fontSize: '20px', fontFamily: 'Arial Black', border: 'none' }}>
-                                Applicant ID:&nbsp;
-                                <span style={{ fontFamily: "Arial", fontWeight: "normal", textDecoration: "underline" }}>
-                                    {person?.applicant_number || "N/A"}
-
-                                </span>
-                            </TableCell>
-
-                            {/* Right cell: Applicant Name */}
-                            <TableCell
-                                align="right"
-                                sx={{ color: 'white', fontSize: '20px', fontFamily: 'Arial Black', border: 'none' }}
-                            >
-                                Applicant Name:&nbsp;
-                                <span style={{ fontFamily: "Arial", fontWeight: "normal", textDecoration: "underline" }}>
-                                    {person?.last_name?.toUpperCase()}, {person?.first_name?.toUpperCase()}{" "}
-                                    {person?.middle_name?.toUpperCase()} {person?.extension?.toUpperCase() || ""}
-                                </span>
-                            </TableCell>
-                        </TableRow>
-                    </TableHead>
-                </Table>
-            </TableContainer>
-
-
-            <Box sx={{ display: "flex", width: "100%" }}>
-                {/* Left side: Notice */}
-                <Box sx={{ width: "100%", padding: "10px" }}>
+                <Box
+                    sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: "100%",
+                        mt: 2,
+                    }}
+                >
                     <Box
                         sx={{
                             display: "flex",
@@ -1037,7 +961,7 @@ const MedicalDashboard1 = () => {
                             backgroundColor: "#fffaf5",
                             border: "1px solid #6D2323",
                             boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.05)",
-                            whiteSpace: "nowrap", // Keep all in one row
+                            whiteSpace: "nowrap", // Prevent text wrapping
                         }}
                     >
                         {/* Icon */}
@@ -1048,15 +972,15 @@ const MedicalDashboard1 = () => {
                                 justifyContent: "center",
                                 backgroundColor: "#6D2323",
                                 borderRadius: "8px",
-                                width: 40,
-                                height: 40,
+                                width: 50,
+                                height: 50,
                                 flexShrink: 0,
                             }}
                         >
-                            <ErrorIcon sx={{ color: "white", fontSize: 28 }} />
+                            <ErrorIcon sx={{ color: "white", fontSize: 40 }} />
                         </Box>
 
-                        {/* Notice Text */}
+                        {/* Text */}
                         <Typography
                             sx={{
                                 fontSize: "15px",
@@ -1065,96 +989,92 @@ const MedicalDashboard1 = () => {
                             }}
                         >
                             <strong style={{ color: "maroon" }}>Notice:</strong> &nbsp;
+
                             <strong>1.</strong> Kindly type <strong>'NA'</strong> in boxes where there are no possible answers to the information being requested. &nbsp; | &nbsp;
                             <strong>2.</strong> To use the letter <strong>'Ñ'</strong>, press <kbd>ALT</kbd> + <kbd>165</kbd>; for <strong>'ñ'</strong>, press <kbd>ALT</kbd> + <kbd>164</kbd>. &nbsp; | &nbsp;
-                            <strong>3.</strong> This is the list of all printable files.
+                            <strong>3.</strong> List of all printable files
                         </Typography>
                     </Box>
                 </Box>
-            </Box>
 
-
-
-            {/* Cards Section */}
-            <Box
-                sx={{
-                    display: "flex",
-                    flexWrap: "wrap",
-                    gap: 2,
-                    mt: 2,
-                    pb: 1,
-                    justifyContent: "center", // Centers all cards horizontally
-                }}
-            >
-                {links.map((lnk, i) => (
-                    <motion.div
-                        key={i}
-                        style={{ flex: "0 0 calc(30% - 16px)" }}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.1, duration: 0.4 }}
-                    >
-                        <Card
-                            sx={{
-                                minHeight: 60,
-                                borderRadius: 2,
-                                border: "2px solid #6D2323",
-                                backgroundColor: "#fff",
-                                display: "flex",
-                                flexDirection: "row",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                textAlign: "center",
-                                p: 1.5,
-                                cursor: "pointer",
-                                transition: "all 0.3s ease-in-out",
-                                "&:hover": {
-                                    transform: "scale(1.05)",
-                                    backgroundColor: "#6D2323", // ✅ background becomes maroon
-                                    "& .card-text": {
-                                        color: "#fff", // ✅ text becomes white
-                                    },
-                                    "& .card-icon": {
-                                        color: "#fff", // ✅ icon becomes white
-                                    },
-                                },
-                            }}
-                            onClick={() => {
-                                if (lnk.onClick) {
-                                    lnk.onClick(); // run handler
-                                } else if (lnk.to) {
-                                    navigate(lnk.to); // navigate if it has a `to`
-                                }
-                            }}
+                {/* Cards Section */}
+                <Box
+                    sx={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: 2,
+                        mt: 2,
+                        pb: 1,
+                        justifyContent: "center", // Centers all cards horizontally
+                    }}
+                >
+                    {links.map((lnk, i) => (
+                        <motion.div
+                            key={i}
+                            style={{ flex: "0 0 calc(30% - 16px)" }}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: i * 0.1, duration: 0.4 }}
                         >
-                            {/* Icon */}
-                            <PictureAsPdfIcon
-                                className="card-icon"
-                                sx={{ fontSize: 35, color: "#6D2323", mr: 1.5 }}
-                            />
-
-                            {/* Label */}
-                            <Typography
-                                className="card-text"
+                            <Card
                                 sx={{
-                                    color: "#6D2323",
-                                    fontFamily: "Arial",
-                                    fontWeight: "bold",
-                                    fontSize: "0.85rem",
+                                    minHeight: 60,
+                                    borderRadius: 2,
+                                    border: "2px solid #6D2323",
+                                    backgroundColor: "#fff",
+                                    display: "flex",
+                                    flexDirection: "row",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    textAlign: "center",
+                                    p: 1.5,
+                                    cursor: "pointer",
+                                    transition: "all 0.3s ease-in-out",
+                                    "&:hover": {
+                                        transform: "scale(1.05)",
+                                        backgroundColor: "#6D2323", // ✅ background becomes maroon
+                                        "& .card-text": {
+                                            color: "#fff", // ✅ text becomes white
+                                        },
+                                        "& .card-icon": {
+                                            color: "#fff", // ✅ icon becomes white
+                                        },
+                                    },
+                                }}
+                                onClick={() => {
+                                    if (lnk.onClick) {
+                                        lnk.onClick(); // run handler
+                                    } else if (lnk.to) {
+                                        navigate(lnk.to); // navigate if it has a `to`
+                                    }
                                 }}
                             >
-                                {lnk.label}
-                            </Typography>
-                        </Card>
-                    </motion.div>
-                ))}
-            </Box>
+                                {/* Icon */}
+                                <PictureAsPdfIcon
+                                    className="card-icon"
+                                    sx={{ fontSize: 35, color: "#6D2323", mr: 1.5 }}
+                                />
+
+                                {/* Label */}
+                                <Typography
+                                    className="card-text"
+                                    sx={{
+                                        color: "#6D2323",
+                                        fontFamily: "Arial",
+                                        fontWeight: "bold",
+                                        fontSize: "0.85rem",
+                                    }}
+                                >
+                                    {lnk.label}
+                                </Typography>
+                            </Card>
+                        </motion.div>
+                    ))}
+                </Box>
 
 
 
 
-
-            <Container>
 
                 <Container>
                     <h1 style={{ fontSize: "50px", fontWeight: "bold", textAlign: "center", color: "maroon", marginTop: "25px" }}>APPLICANT FORM</h1>
@@ -1163,67 +1083,57 @@ const MedicalDashboard1 = () => {
 
                 <br />
 
-                {person.person_id && (
-                    <Box sx={{ display: "flex", justifyContent: "center", width: "100%", px: 4 }}>
-                        {steps.map((step, index) => (
-                            <React.Fragment key={index}>
-                                {/* Wrap the step with Link for routing */}
-                                <Link to={step.path} style={{ textDecoration: "none" }}>
-                                    <Box
-                                        sx={{
-                                            display: "flex",
-                                            flexDirection: "column",
-                                            alignItems: "center",
-                                            cursor: "pointer",
-                                        }}
-                                        onClick={() => handleStepClick(index)}
-                                    >
-                                        {/* Step Icon */}
-                                        <Box
-                                            sx={{
-                                                width: 50,
-                                                height: 50,
-                                                borderRadius: "50%",
-                                                backgroundColor: activeStep === index ? "#6D2323" : "#E8C999",
-                                                color: activeStep === index ? "#fff" : "#000",
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                            }}
-                                        >
-                                            {step.icon}
-                                        </Box>
-
-                                        {/* Step Label */}
-                                        <Typography
-                                            sx={{
-                                                mt: 1,
-                                                color: activeStep === index ? "#6D2323" : "#000",
-                                                fontWeight: activeStep === index ? "bold" : "normal",
-                                                fontSize: 14,
-                                            }}
-                                        >
-                                            {step.label}
-                                        </Typography>
-                                    </Box>
-                                </Link>
-
-                                {/* Connector Line */}
-                                {index < steps.length - 1 && (
-                                    <Box
-                                        sx={{
-                                            height: "2px",
-                                            backgroundColor: "#6D2323",
-                                            flex: 1,
-                                            alignSelf: "center",
-                                            mx: 2,
-                                        }}
-                                    />
-                                )}
-                            </React.Fragment>
-                        ))}
-                    </Box>
-                )}
+                <Box sx={{ display: "flex", justifyContent: "center", width: "100%", px: 4 }}>
+                    {steps.map((step, index) => (
+                        <React.Fragment key={index}>
+                            <Box
+                                sx={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    alignItems: "center",
+                                    cursor: "pointer",
+                                }}
+                                onClick={() => handleStepClick(index)}
+                            >
+                                <Box
+                                    sx={{
+                                        width: 50,
+                                        height: 50,
+                                        borderRadius: "50%",
+                                        backgroundColor: activeStep === index ? "#6D2323" : "#E8C999",
+                                        color: activeStep === index ? "#fff" : "#000",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                    }}
+                                >
+                                    {step.icon}
+                                </Box>
+                                <Typography
+                                    sx={{
+                                        mt: 1,
+                                        color: activeStep === index ? "#6D2323" : "#000",
+                                        fontWeight: activeStep === index ? "bold" : "normal",
+                                        fontSize: 14,
+                                    }}
+                                >
+                                    {step.label}
+                                </Typography>
+                            </Box>
+                            {index < steps.length - 1 && (
+                                <Box
+                                    sx={{
+                                        height: "2px",
+                                        backgroundColor: "#6D2323",
+                                        flex: 1,
+                                        alignSelf: "center",
+                                        mx: 2,
+                                    }}
+                                />
+                            )}
+                        </React.Fragment>
+                    ))}
+                </Box>
 
                 <br />
 
@@ -1249,17 +1159,21 @@ const MedicalDashboard1 = () => {
                     <Container maxWidth="100%" sx={{ backgroundColor: "#f1f1f1", border: "2px solid black", padding: 4, borderRadius: 2, boxShadow: 3 }}>
                         <Typography style={{ fontSize: "20px", color: "#6D2323", fontWeight: "bold" }}>Personal Information:</Typography>
                         <hr style={{ border: "1px solid #ccc", width: "100%" }} />
+
                         <br />
+
+
+
 
                         <div className="flex items-center mb-4 gap-4">
                             <label className="w-40 font-medium">Campus:</label>
                             <FormControl fullWidth size="small" required error={!!errors.campus} className="mb-4">
                                 <InputLabel id="campus-label">Campus (Manila/Cavite)</InputLabel>
                                 <Select
+                                    readOnly
                                     labelId="campus-label"
                                     id="campus-select"
                                     name="campus"
-                                    readOnly
                                     value={person.campus == null ? "" : String(person.campus)}
                                     label="Campus (Manila/Cavite)"
                                     onChange={(e) => {
@@ -1290,11 +1204,11 @@ const MedicalDashboard1 = () => {
                             <FormControl fullWidth size="small" required error={!!errors.academicProgram} className="mb-4">
                                 <InputLabel id="academic-program-label">Academic Program</InputLabel>
                                 <Select
+                                    readOnly
                                     labelId="academic-program-label"
                                     id="academic-program-select"
                                     name="academicProgram"
-                                    readOnly
-                                    value={person.academicProgram || ""}
+                                    value={person.academicProgram ?? ""}
                                     label="Academic Program"
                                     onChange={handleChange}
                                     onBlur={handleBlur}
@@ -1315,11 +1229,11 @@ const MedicalDashboard1 = () => {
                             <FormControl fullWidth size="small" required error={!!errors.classifiedAs} className="mb-4">
                                 <InputLabel id="classified-as-label">Classified As</InputLabel>
                                 <Select
+                                    readOnly
                                     labelId="classified-as-label"
                                     id="classified-as-select"
                                     name="classifiedAs"
-                                    readOnly
-                                    value={person.classifiedAs || ""}
+                                    value={person.classifiedAs ?? ""}
                                     label="Classified As"
                                     onChange={handleChange}
                                     onBlur={handleBlur}
@@ -1343,11 +1257,11 @@ const MedicalDashboard1 = () => {
                             <FormControl fullWidth size="small" required error={!!errors.applyingAs} className="mb-4">
                                 <InputLabel id="applying-as-label">Applying As</InputLabel>
                                 <Select
+                                    readOnly
                                     labelId="applying-as-label"
                                     id="applying-as-select"
                                     name="applyingAs"
-                                    readOnly
-                                    value={person.applyingAs || ""}
+                                    value={person.applyingAs ?? ""}
                                     label="Applying As"
                                     onChange={handleChange}
                                     onBlur={handleBlur}
@@ -1387,8 +1301,9 @@ const MedicalDashboard1 = () => {
                                             <InputLabel>Program</InputLabel>
                                             <Select
                                                 readOnly
+
                                                 name="program"
-                                                value={person.program || ""}
+                                                value={person.program ?? ""}
                                                 onBlur={handleBlur}
                                                 onChange={handleChange}
                                                 label="Program"
@@ -1414,7 +1329,7 @@ const MedicalDashboard1 = () => {
                                             <Select
                                                 readOnly
                                                 name="program2"
-                                                value={person.program2 || ""}
+                                                value={person.program2 ?? ""}
                                                 onBlur={handleBlur}
                                                 onChange={handleChange}
                                                 label="Program 2"
@@ -1440,7 +1355,7 @@ const MedicalDashboard1 = () => {
                                             <Select
                                                 readOnly
                                                 name="program3"
-                                                value={person.program3 || ""}
+                                                value={person.program3 ?? ""}
                                                 onBlur={handleBlur}
                                                 onChange={handleChange}
                                                 label="Program 3"
@@ -1470,7 +1385,6 @@ const MedicalDashboard1 = () => {
                                     width: "5.08cm",
                                     height: "5.08cm",
                                     display: "flex",
-
                                     justifyContent: "center",
                                     alignItems: "center",
                                     flexDirection: "column",
@@ -1483,7 +1397,6 @@ const MedicalDashboard1 = () => {
                                         alt="Profile"
                                         style={{
                                             width: "100%",
-
                                             height: "100%",
                                             objectFit: "cover",
                                         }}
@@ -1511,11 +1424,11 @@ const MedicalDashboard1 = () => {
                             <FormControl fullWidth size="small" required error={!!errors.yearLevel}>
                                 <InputLabel id="year-level-label">Year Level</InputLabel>
                                 <Select
+                                    readOnly
                                     labelId="year-level-label"
                                     id="year-level-select"
                                     name="yearLevel"
-                                    readOnly
-                                    value={person.yearLevel || ""}
+                                    value={person.yearLevel ?? ""}
                                     label="Year Level"
                                     onChange={handleChange}
                                     onBlur={handleBlur}
@@ -1542,13 +1455,13 @@ const MedicalDashboard1 = () => {
                             <Box flex="1 1 20%">
                                 <Typography mb={1} fontWeight="medium">Last Name</Typography>
                                 <TextField
+                                    InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     name="last_name"
                                     required
-                                    InputProps={{ readOnly: true }}
-
-                                    value={person.last_name}
+                                    value={person.last_name ?? ""}
                                     onChange={handleChange}
                                     onBlur={handleBlur}
                                     placeholder="Enter your Last Name"
@@ -1562,13 +1475,13 @@ const MedicalDashboard1 = () => {
                             <Box flex="1 1 20%">
                                 <Typography mb={1} fontWeight="medium">First Name</Typography>
                                 <TextField
+                                    InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     name="first_name"
                                     required
-                                    InputProps={{ readOnly: true }}
-
-                                    value={person.first_name}
+                                    value={person.first_name ?? ""}
                                     onChange={handleChange}
                                     onBlur={handleBlur}
                                     placeholder="Enter your First Name"
@@ -1581,13 +1494,13 @@ const MedicalDashboard1 = () => {
                             <Box flex="1 1 20%">
                                 <Typography mb={1} fontWeight="medium">Middle Name</Typography>
                                 <TextField
+                                    InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     name="middle_name"
                                     required
-                                    InputProps={{ readOnly: true }}
-
-                                    value={person.middle_name}
+                                    value={person.middle_name ?? ""}
                                     onChange={handleChange}
                                     onBlur={handleBlur}
                                     placeholder="Enter your Middle Name"
@@ -1602,11 +1515,11 @@ const MedicalDashboard1 = () => {
                                 <FormControl fullWidth size="small" error={errors.extension}>
                                     <InputLabel id="extension-label">Extension</InputLabel>
                                     <Select
+                                        readOnly
                                         labelId="extension-label"
                                         id="extension-select"
-                                        readOnly
                                         name="extension"
-                                        value={person.extension || ""}
+                                        value={person.extension ?? ""}
                                         label="Extension"
                                         onChange={handleChange}
                                         onBlur={handleBlur}
@@ -1630,14 +1543,14 @@ const MedicalDashboard1 = () => {
                             <Box flex="1 1 20%">
                                 <Typography mb={1} fontWeight="medium">Nickname</Typography>
                                 <TextField
+                                    InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     name="nickname"
-                                    InputProps={{ readOnly: true }}
-
-                                    value={person.nickname}
+                                    required
+                                    value={person.nickname ?? ""}
                                     onChange={handleChange}
-                                    readOnly
                                     onBlur={handleBlur}
                                     placeholder="Enter your Nickname"
                                     error={errors.nickname}
@@ -1653,11 +1566,11 @@ const MedicalDashboard1 = () => {
                                         Height:
                                     </Typography>
                                     <TextField
-                                        size="small"
-                                        name="height"
-                                        value={person.height}
                                         InputProps={{ readOnly: true }}
 
+                                        size="small"
+                                        name="height"
+                                        value={person.height ?? ""}
                                         onChange={handleChange}
                                         onBlur={handleBlur}
                                         placeholder="Enter your Height"
@@ -1680,11 +1593,11 @@ const MedicalDashboard1 = () => {
                                         Weight:
                                     </Typography>
                                     <TextField
-                                        size="small"
-                                        name="weight"
-                                        value={person.weight}
                                         InputProps={{ readOnly: true }}
 
+                                        size="small"
+                                        name="weight"
+                                        value={person.weight ?? ""}
                                         onChange={handleChange}
                                         onBlur={handleBlur}
                                         placeholder="Enter your Weight"
@@ -1709,15 +1622,15 @@ const MedicalDashboard1 = () => {
 
                             {/* LRN Input */}
                             <TextField
+                                disabled
                                 id="lrnNumber"
                                 name="lrnNumber"
                                 required={person.lrnNumber !== "No LRN Number"}
                                 label="Enter your LRN Number"
-                                value={person.lrnNumber === "No LRN Number" ? "" : person.lrnNumber || ""}
+                                value={person.lrnNumber === "No LRN Number" ? "" : person.lrnNumber ?? ""}
                                 onChange={handleChange}
-                                readOnly
                                 onBlur={handleBlur}
-                                disabled={person.lrnNumber === "No LRN Number"}
+                               
                                 size="small"
                                 sx={{ width: 220 }}
                                 InputProps={{ sx: { height: 40, readOnly: true } }}
@@ -1730,6 +1643,7 @@ const MedicalDashboard1 = () => {
                             <FormControlLabel
                                 control={
                                     <Checkbox
+                                        disabled
                                         name="lrn_na"
                                         checked={person.lrnNumber === "No LRN Number"}
                                         onChange={(e) => {
@@ -1754,11 +1668,11 @@ const MedicalDashboard1 = () => {
 
                             {/* Gender */}
                             <TextField
+                                readOnly
                                 select
                                 size="small"
                                 label="Gender"
                                 name="gender"
-                                readOnly
                                 required
                                 value={person.gender == null ? "" : String(person.gender)}
                                 onChange={(e) => {
@@ -1773,7 +1687,7 @@ const MedicalDashboard1 = () => {
                                 onBlur={handleBlur}
                                 error={Boolean(errors.gender)}
                                 sx={{ width: 150 }}
-                                InputProps={{ sx: { height: 40 } }}
+                                InputProps={{ sx: { height: 40, } }}
                                 inputProps={{ style: { height: 40 } }}
                             >
                                 <MenuItem value=""><em>Select Gender</em></MenuItem>
@@ -1792,6 +1706,7 @@ const MedicalDashboard1 = () => {
                             <FormControlLabel
                                 control={
                                     <Checkbox
+                                        disabled
                                         checked={person.pwdMember === 1}
                                         onChange={handlePwdCheck}
                                         inputProps={{ "aria-label": "PWD Checkbox" }}
@@ -1805,12 +1720,12 @@ const MedicalDashboard1 = () => {
                                 <>
                                     {/* PWD Type */}
                                     <TextField
+                                        readOnly
                                         select
                                         size="small"
                                         label="PWD Type"
-                                        readOnly
                                         name="pwdType"
-                                        value={person.pwdType || ""}
+                                        value={person.pwdType ?? ""}
                                         onChange={handleChange}
                                         onBlur={handleBlur}
                                         required={person.pwdMember === 1}
@@ -1848,11 +1763,11 @@ const MedicalDashboard1 = () => {
 
                                     {/* PWD ID */}
                                     <TextField
+                                 disabled
                                         size="small"
                                         label="PWD ID"
                                         name="pwdId"
-                                        disabled
-                                        value={person.pwdId || ""}
+                                        value={person.pwdId ?? ""}
                                         onChange={handleChange}
                                         onBlur={handleBlur}
                                         required={person.pwdMember === 1}
@@ -1872,6 +1787,7 @@ const MedicalDashboard1 = () => {
 
                         </Box>
 
+                        {/* Row 1: Birth Place + Citizenship */}
 
 
                         <Box display="flex" gap={2} mb={2}>
@@ -1901,6 +1817,7 @@ const MedicalDashboard1 = () => {
                                     Age
                                 </Typography>
                                 <TextField
+
                                     fullWidth
                                     size="small"
                                     name="age"
@@ -1918,16 +1835,16 @@ const MedicalDashboard1 = () => {
                                 <Typography mb={1} fontWeight="medium">
                                     Birth Place
                                 </Typography>
-                                <TextField fullWidth size="small" name="birthPlace" InputProps={{ readOnly: true }}
-                                    placeholder="Enter your Birth Place" value={person.birthPlace} required onBlur={handleBlur} onChange={handleChange} error={!!errors.birthPlace}
+                                <TextField InputProps={{ readOnly: true }}
+                                    fullWidth size="small" name="birthPlace" placeholder="Enter your Birth Place" value={person.birthPlace ?? ""} required onBlur={handleBlur} onChange={handleChange} error={!!errors.birthPlace}
                                     helperText={errors.birthPlace ? "This field is required." : ""} />
                             </Box>
                             <Box flex={1} >
                                 <Typography mb={1} fontWeight="medium">
                                     Language/Dialect Spoken
                                 </Typography>
-                                <TextField fullWidth size="small" InputProps={{ readOnly: true }}
-                                    name="languageDialectSpoken" placeholder="Enter your Language Spoken" value={person.languageDialectSpoken || ""} required onBlur={handleBlur} onChange={handleChange} error={!!errors.languageDialectSpoken}
+                                <TextField InputProps={{ readOnly: true }}
+                                    fullWidth size="small" name="languageDialectSpoken" placeholder="Enter your Language Spoken" value={person.languageDialectSpoken ?? ""} required onBlur={handleBlur} onChange={handleChange} error={!!errors.languageDialectSpoken}
                                     helperText={errors.languageDialectSpoken ? "This field is required." : ""}
                                 />
                             </Box>
@@ -1944,11 +1861,11 @@ const MedicalDashboard1 = () => {
                                 <FormControl fullWidth size="small" required error={!!errors.citizenship}>
                                     <InputLabel id="citizenship-label">Citizenship</InputLabel>
                                     <Select
+                                        readOnly
                                         labelId="citizenship-label"
                                         id="citizenship"
                                         name="citizenship"
-                                        readOnly
-                                        value={person.citizenship || ""}
+                                        value={person.citizenship ?? ""}
                                         onChange={handleChange}
                                         onBlur={handleBlur}
                                         label="Citizenship" // Required for floating label
@@ -2086,11 +2003,11 @@ const MedicalDashboard1 = () => {
                                 <FormControl fullWidth size="small" required error={!!errors.religion}>
                                     <InputLabel id="religion-label">Religion</InputLabel>
                                     <Select
+                                        readOnly
                                         labelId="religion-label"
                                         id="religion"
-                                        readOnly
                                         name="religion"
-                                        value={person.religion || ""}
+                                        value={person.religion ?? ""}
                                         onChange={handleChange}
                                         onBlur={handleBlur}
                                         label="Religion" // Enables floating label
@@ -2135,11 +2052,11 @@ const MedicalDashboard1 = () => {
                                 <FormControl fullWidth size="small" required error={!!errors.civilStatus}>
                                     <InputLabel id="civil-status-label">Civil Status</InputLabel>
                                     <Select
+                                        readOnly
                                         labelId="civil-status-label"
                                         id="civilStatus"
-                                        readOnly
                                         name="civilStatus"
-                                        value={person.civilStatus || ""}
+                                        value={person.civilStatus ?? ""}
                                         onChange={handleChange}
                                         onBlur={handleBlur}
                                         label="Civil Status"
@@ -2166,11 +2083,11 @@ const MedicalDashboard1 = () => {
                                 <FormControl fullWidth size="small" required error={!!errors.tribeEthnicGroup}>
                                     <InputLabel id="tribe-label">Tribe/Ethnic Group</InputLabel>
                                     <Select
+                                        readOnly
                                         labelId="tribe-label"
                                         id="tribeEthnicGroup"
-                                        readOnly
                                         name="tribeEthnicGroup"
-                                        value={person.tribeEthnicGroup || ""}
+                                        value={person.tribeEthnicGroup ?? ""}
                                         onChange={handleChange}
                                         onBlur={handleBlur}
                                         label="Tribe/Ethnic Group"
@@ -2245,14 +2162,14 @@ const MedicalDashboard1 = () => {
                                     Cellphone Number:
                                 </Typography>
                                 <TextField
+                                    InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     name="cellphoneNumber"
                                     placeholder="Enter your Cellphone Number +63"
                                     required
-                                    InputProps={{ readOnly: true }}
-
-                                    value={person.cellphoneNumber}
+                                    value={person.cellphoneNumber ?? ""}
                                     onBlur={handleBlur}
                                     onChange={handleChange}
                                     error={!!errors.cellphoneNumber}
@@ -2266,13 +2183,13 @@ const MedicalDashboard1 = () => {
                                     Email Address:
                                 </Typography>
                                 <TextField
+                                    InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     name="emailAddress"
-                                    InputProps={{ readOnly: true }}
-
                                     required
-                                    value={person.emailAddress}
+                                    value={person.emailAddress ?? ""}
                                     placeholder="Enter your Email Address (e.g., username@gmail.com)"
                                     onBlur={handleBlur}
                                     onChange={handleChange}
@@ -2294,12 +2211,12 @@ const MedicalDashboard1 = () => {
                             <Box flex={1}>
                                 <Typography mb={1} fontWeight="medium">Present Street</Typography>
                                 <TextField
-                                    fullWidth
-                                    size="small"
                                     InputProps={{ readOnly: true }}
 
+                                    fullWidth
+                                    size="small"
                                     name="presentStreet"
-                                    value={person.presentStreet}
+                                    value={person.presentStreet ?? ""}
                                     onBlur={handleBlur}
                                     placeholder="Enter your Present Street"
                                     onChange={handleChange}
@@ -2311,13 +2228,13 @@ const MedicalDashboard1 = () => {
                             <Box flex={1}>
                                 <Typography mb={1} fontWeight="medium">Present Zip Code</Typography>
                                 <TextField
-                                    fullWidth
-                                    size="small"
                                     InputProps={{ readOnly: true }}
 
+                                    fullWidth
+                                    size="small"
                                     name="presentZipCode"
                                     placeholder="Enter your Zip Code"
-                                    value={person.presentZipCode}
+                                    value={person.presentZipCode ?? ""}
                                     onBlur={handleBlur}
                                     onChange={handleChange}
                                     error={!!errors.presentZipCode}
@@ -2332,10 +2249,10 @@ const MedicalDashboard1 = () => {
                             <FormControl fullWidth size="small" required error={!!errors.presentRegion}>
                                 <InputLabel id="present-region-label">Region</InputLabel>
                                 <Select
+                                    readOnly
                                     labelId="present-region-label"
                                     name="presentRegion"
-                                    readOnly
-                                    value={person.presentRegion || ""}
+                                    value={person.presentRegion ?? ""}
                                     onBlur={handleBlur}
                                     onChange={(e) => {
                                         handleChange(e);
@@ -2368,10 +2285,10 @@ const MedicalDashboard1 = () => {
                             <FormControl fullWidth size="small" required error={!!errors.presentProvince}>
                                 <InputLabel id="present-province-label">Province</InputLabel>
                                 <Select
+                                    readOnly
                                     labelId="present-province-label"
                                     name="presentProvince"
-                                    readOnly
-                                    value={person.presentProvince || ""}
+                                    value={person.presentProvince ?? ""}
                                     onBlur={handleBlur}
                                     onChange={(e) => {
                                         handleChange(e);
@@ -2408,8 +2325,7 @@ const MedicalDashboard1 = () => {
                                 <Select
                                     labelId="present-municipality-label"
                                     name="presentMunicipality"
-                                    readOnly
-                                    value={person.presentMunicipality || ""}
+                                    value={person.presentMunicipality ?? ""}
                                     onBlur={handleBlur}
                                     onChange={(e) => {
                                         handleChange(e);
@@ -2441,8 +2357,7 @@ const MedicalDashboard1 = () => {
                                 <Select
                                     labelId="present-barangay-label"
                                     name="presentBarangay"
-                                    readOnly
-                                    value={person.presentBarangay || ""}
+                                    value={person.presentBarangay ?? ""}
                                     onBlur={handleBlur}
                                     onChange={(e) => {
                                         handleChange(e);
@@ -2472,12 +2387,12 @@ const MedicalDashboard1 = () => {
                         <Box mb={2}>
                             <Typography mb={1} fontWeight="medium">Present DSWD Household Number</Typography>
                             <TextField
+                                InputProps={{ readOnly: true }}
+
                                 fullWidth
                                 size="small"
                                 name="presentDswdHouseholdNumber"
-                                InputProps={{ readOnly: true }}
-
-                                value={person.presentDswdHouseholdNumber}
+                                value={person.presentDswdHouseholdNumber ?? ""}
                                 onBlur={handleBlur}
                                 onChange={handleChange}
                                 placeholder="Enter your Present DSWD Household Number"
@@ -2492,8 +2407,8 @@ const MedicalDashboard1 = () => {
                         <FormControlLabel
                             control={
                                 <Checkbox
-                                    name="same_as_present_address"
                                     disabled
+                                    name="same_as_present_address"
                                     checked={person.same_as_present_address === 1}
                                     onChange={(e) => {
                                         const checked = e.target.checked;
@@ -2533,13 +2448,13 @@ const MedicalDashboard1 = () => {
                             <Box flex={1}>
                                 <Typography mb={1} fontWeight="medium">Permanent Street</Typography>
                                 <TextField
+                                    InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     name="permanentStreet"
-                                    InputProps={{ readOnly: true }}
-
                                     placeholder="Enter your Permanent Street"
-                                    value={person.permanentStreet}
+                                    value={person.permanentStreet ?? ""}
                                     onBlur={handleBlur}
                                     onChange={handleChange}
                                     error={!!errors.permanentStreet}
@@ -2550,13 +2465,13 @@ const MedicalDashboard1 = () => {
                             <Box flex={1}>
                                 <Typography mb={1} fontWeight="medium">Permanent Zip Code</Typography>
                                 <TextField
+                                    InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     name="permanentZipCode"
-                                    InputProps={{ readOnly: true }}
-
                                     placeholder="Enter your Permanent Zip Code"
-                                    value={person.permanentZipCode}
+                                    value={person.permanentZipCode ?? ""}
                                     onBlur={handleBlur}
                                     onChange={handleChange}
                                     error={!!errors.permanentZipCode}
@@ -2572,11 +2487,11 @@ const MedicalDashboard1 = () => {
                                 <FormControl fullWidth size="small" required error={!!errors.permanentRegion}>
                                     <InputLabel id="permanent-region-label">Select Region</InputLabel>
                                     <Select
+                                        readOnly
                                         labelId="permanent-region-label"
                                         id="permanentRegion"
-                                        readOnly
                                         name="permanentRegion"
-                                        value={person.permanentRegion || ""}
+                                        value={person.permanentRegion ?? ""}
                                         label="Select Region"
                                         onBlur={handleBlur}
                                         onChange={(e) => {
@@ -2612,11 +2527,11 @@ const MedicalDashboard1 = () => {
                                 <FormControl fullWidth size="small" required error={!!errors.permanentProvince}>
                                     <InputLabel id="permanent-province-label">Select Province</InputLabel>
                                     <Select
+                                        readOnly
                                         labelId="permanent-province-label"
                                         id="permanentProvince"
-                                        readOnly
                                         name="permanentProvince"
-                                        value={person.permanentProvince || ""}
+                                        value={person.permanentProvince ?? ""}
                                         label="Select Province"
                                         onBlur={handleBlur}
                                         onChange={(e) => {
@@ -2654,11 +2569,11 @@ const MedicalDashboard1 = () => {
                                 <FormControl fullWidth size="small" required error={!!errors.permanentMunicipality}>
                                     <InputLabel id="permanent-municipality-label">Select Municipality</InputLabel>
                                     <Select
+                                        readOnly
                                         labelId="permanent-municipality-label"
                                         id="permanentMunicipality"
-                                        readOnly
                                         name="permanentMunicipality"
-                                        value={person.permanentMunicipality || ""}
+                                        value={person.permanentMunicipality ?? ""}
                                         label="Select Municipality"
                                         onBlur={handleBlur}
                                         onChange={(e) => {
@@ -2691,11 +2606,11 @@ const MedicalDashboard1 = () => {
                                 <FormControl fullWidth size="small" required error={!!errors.permanentBarangay}>
                                     <InputLabel id="permanent-barangay-label">Select Barangay</InputLabel>
                                     <Select
+                                        readOnly
                                         labelId="permanent-barangay-label"
                                         id="permanentBarangay"
-                                        readOnly
                                         name="permanentBarangay"
-                                        value={person.permanentBarangay || ""}
+                                        value={person.permanentBarangay ?? ""}
                                         label="Select Barangay"
                                         onBlur={handleBlur}
                                         onChange={(e) => {
@@ -2726,14 +2641,14 @@ const MedicalDashboard1 = () => {
                         <Box mb={2}>
                             <Typography mb={1} fontWeight="medium">Permanent DSWD Household Number</Typography>
                             <TextField
+                                InputProps={{ readOnly: true }}
+
                                 fullWidth
                                 size="small"
                                 variant="outlined"
                                 placeholder="Enter your Permanent DSWD Household Number"
                                 name="permanentDswdHouseholdNumber"
-                                InputProps={{ readOnly: true }}
-
-                                value={person.permanentDswdHouseholdNumber || ""}
+                                value={person.permanentDswdHouseholdNumber ?? ""}
                                 onBlur={handleBlur}
                                 onChange={handleChange}
                                 error={!!errors.permanentDswdHouseholdNumber}
@@ -2893,7 +2808,6 @@ const MedicalDashboard1 = () => {
                                         Select Your Image:
                                     </Typography>
                                     <input
-                                        disabled
                                         type="file"
                                         accept=".jpg,.jpeg,.png"
                                         onClick={(e) => (e.target.value = null)}
@@ -2910,6 +2824,7 @@ const MedicalDashboard1 = () => {
 
                                     {/* Upload Button */}
                                     <Button
+                                        disabled
                                         variant="contained"
                                         fullWidth
                                         onClick={handleUpload}
@@ -2927,6 +2842,7 @@ const MedicalDashboard1 = () => {
                                 </Box>
                             </Box>
                         </Modal>
+
 
                         <Modal
                             open={examPermitModalOpen}
@@ -2991,31 +2907,26 @@ const MedicalDashboard1 = () => {
                             </Button>
                             <Button
                                 variant="contained"
-                                onClick={(e) => {
+                                onClick={() => {
                                     handleUpdate();
-
-                                    if (isFormValid()) {
-                                        navigate("/medical_dashboard2");
-                                    } else {
-                                        alert("Please complete all required fields before proceeding.");
-                                    }
+                                    navigate("/medical_dashboard2");
                                 }}
                                 endIcon={
                                     <ArrowForwardIcon
                                         sx={{
-                                            color: '#fff',
-                                            transition: 'color 0.3s',
+                                            color: "#fff",
+                                            transition: "color 0.3s",
                                         }}
                                     />
                                 }
                                 sx={{
-                                    backgroundColor: '#6D2323',
-                                    color: '#fff',
-                                    '&:hover': {
-                                        backgroundColor: '#E8C999',
-                                        color: '#000',
-                                        '& .MuiSvgIcon-root': {
-                                            color: '#000',
+                                    backgroundColor: "#6D2323",
+                                    color: "#fff",
+                                    "&:hover": {
+                                        backgroundColor: "#E8C999",
+                                        color: "#000",
+                                        "& .MuiSvgIcon-root": {
+                                            color: "#000",
                                         },
                                     },
                                 }}
@@ -3024,10 +2935,21 @@ const MedicalDashboard1 = () => {
                             </Button>
                         </Box>
 
-
                     </Container>
                 </form>
             </Container >
+
+            <Snackbar
+                open={snack.open}
+
+                onClose={handleSnackClose}
+                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+            >
+                <Alert onClose={handleSnackClose} severity={snack.severity} sx={{ width: '100%' }}>
+                    {snack.message}
+                </Alert>
+            </Snackbar>
+
         </Box >
     );
 };

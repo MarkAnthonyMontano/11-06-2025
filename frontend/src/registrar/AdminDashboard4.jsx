@@ -229,15 +229,73 @@ const AdminDashboard4 = () => {
 
 
 
+  // ✅ Triggered when user leaves an input
   const handleBlur = async () => {
     try {
-      await axios.put(`http://localhost:5000/api/person/${userID}`, person);
-      console.log("Auto-saved");
+      const targetId = selectedPerson?.person_id || queryPersonId || person.person_id;
+      if (!targetId) return;
+
+      // Filter only allowed fields before sending
+      const allowedFields = [
+        "person_id", "profile_img", "campus", "academicProgram", "classifiedAs", "applyingAs",
+        "program", "program2", "program3", "yearLevel",
+        "last_name", "first_name", "middle_name", "extension", "nickname",
+        "height", "weight", "lrnNumber", "nolrnNumber", "gender",
+        "pwdMember", "pwdType", "pwdId",
+        "birthOfDate", "age", "birthPlace", "languageDialectSpoken",
+        "citizenship", "religion", "civilStatus", "tribeEthnicGroup",
+        "cellphoneNumber", "emailAddress",
+        "presentStreet", "presentBarangay", "presentZipCode", "presentRegion",
+        "presentProvince", "presentMunicipality", "presentDswdHouseholdNumber",
+        "sameAsPresentAddress",
+        "permanentStreet", "permanentBarangay", "permanentZipCode",
+        "permanentRegion", "permanentProvince", "permanentMunicipality",
+        "permanentDswdHouseholdNumber",
+        "solo_parent",
+        "father_deceased", "father_family_name", "father_given_name", "father_middle_name",
+        "father_ext", "father_nickname", "father_education", "father_education_level",
+        "father_last_school", "father_course", "father_year_graduated", "father_school_address",
+        "father_contact", "father_occupation", "father_employer", "father_income", "father_email",
+        "mother_deceased", "mother_family_name", "mother_given_name", "mother_middle_name",
+        "mother_ext", "mother_nickname", "mother_education", "mother_education_level",
+        "mother_last_school", "mother_course", "mother_year_graduated", "mother_school_address",
+        "mother_contact", "mother_occupation", "mother_employer", "mother_income", "mother_email",
+        "guardian", "guardian_family_name", "guardian_given_name", "guardian_middle_name",
+        "guardian_ext", "guardian_nickname", "guardian_address", "guardian_contact", "guardian_email",
+        "annual_income",
+        "schoolLevel", "schoolLastAttended", "schoolAddress", "courseProgram",
+        "honor", "generalAverage", "yearGraduated",
+        "schoolLevel1", "schoolLastAttended1", "schoolAddress1", "courseProgram1",
+        "honor1", "generalAverage1", "yearGraduated1",
+        "strand",
+        // 🩺 Health and medical
+        "cough", "colds", "fever", "asthma", "faintingSpells", "heartDisease",
+        "tuberculosis", "frequentHeadaches", "hernia", "chronicCough", "headNeckInjury",
+        "hiv", "highBloodPressure", "diabetesMellitus", "allergies", "cancer",
+        "smokingCigarette", "alcoholDrinking", "hospitalized", "hospitalizationDetails",
+        "medications",
+        // 🧬 Covid / Vaccination
+        "hadCovid", "covidDate",
+        "vaccine1Brand", "vaccine1Date", "vaccine2Brand", "vaccine2Date",
+        "booster1Brand", "booster1Date", "booster2Brand", "booster2Date",
+        // 🧪 Lab results / medical findings
+        "chestXray", "cbc", "urinalysis", "otherworkups",
+        // 🧍 Additional fields
+        "symptomsToday", "remarks",
+        // ✅ Agreement / Meta
+        "termsOfAgreement", "created_at", "current_step"
+      ];
+
+      const cleanedData = Object.fromEntries(
+        Object.entries(person).filter(([key]) => allowedFields.includes(key))
+      );
+
+      await axios.put(`http://localhost:5000/api/person/${targetId}`, cleanedData);
+      console.log("💾 Auto-saved on blur");
     } catch (err) {
-      console.error("Auto-save failed", err);
+      console.error("❌ Auto-save failed (blur):", err);
     }
   };
-
 
 
   const steps = person.person_id
@@ -768,11 +826,11 @@ const AdminDashboard4 = () => {
             <FormGroup row sx={{ ml: 2 }}>
               {["cough", "colds", "fever"].map((symptom) => (
                 <FormControlLabel
+                  disabled
                   key={symptom}
                   control={
                     <Checkbox
                       name={symptom}
-                      disabled
                       checked={person[symptom] === 1}
                       onChange={(e) => {
                         const { name, checked } = e.target;
@@ -851,8 +909,8 @@ const AdminDashboard4 = () => {
                                 {/* YES */}
                                 <div style={{ display: "flex", alignItems: "center", gap: "1px", }}>
                                   <Checkbox
-                                    name={key}
                                     disabled
+                                    name={key}
                                     checked={person[key] === 1}
                                     onChange={() => {
                                       const updatedPerson = {
@@ -870,8 +928,8 @@ const AdminDashboard4 = () => {
                                 {/* NO */}
                                 <div style={{ display: "flex", alignItems: "center", gap: "1px" }}>
                                   <Checkbox
-                                    name={key}
                                     disabled
+                                    name={key}
                                     checked={person[key] === 0}
                                     onChange={() => {
                                       const updatedPerson = {
@@ -911,8 +969,8 @@ const AdminDashboard4 = () => {
                     <FormControlLabel
                       control={
                         <Checkbox
-                          name="hospitalized"
                           disabled
+                          name="hospitalized"
                           checked={person.hospitalized === 1}
                           onChange={() => {
                             const updatedPerson = {
@@ -932,8 +990,8 @@ const AdminDashboard4 = () => {
                     <FormControlLabel
                       control={
                         <Checkbox
-                          name="hospitalized"
                           disabled
+                          name="hospitalized"
                           checked={person.hospitalized === 0}
                           onChange={() => {
                             const updatedPerson = {
@@ -963,10 +1021,10 @@ const AdminDashboard4 = () => {
                 IF YES, PLEASE SPECIFY:
               </Typography>
               <TextField
+                InputProps={{ readOnly: true }}
+
                 fullWidth
                 name="hospitalizationDetails"
-                disabled
-
                 placeholder=""
                 variant="outlined"
                 size="small"
@@ -994,12 +1052,12 @@ const AdminDashboard4 = () => {
 
             <Box mb={2}>
               <TextField
+                InputProps={{ readOnly: true }}
+
                 fullWidth
                 multiline
                 minRows={3}
                 name="medications"
-                disabled
-
                 variant="outlined"
                 size="small"
                 value={person.medications || ""}
@@ -1050,9 +1108,9 @@ const AdminDashboard4 = () => {
                         {/* YES */}
                         <Box display="flex" alignItems="center" gap="1px">
                           <Checkbox
+                            disabled
                             name="hadCovid"
                             checked={person.hadCovid === 1}
-                            disabled
                             onChange={() => {
                               const updatedPerson = {
                                 ...person,
@@ -1069,9 +1127,9 @@ const AdminDashboard4 = () => {
                         {/* NO */}
                         <Box display="flex" alignItems="center" gap="1px">
                           <Checkbox
+                            disabled
                             name="hadCovid"
                             checked={person.hadCovid === 0}
-                            disabled
                             onChange={() => {
                               const updatedPerson = {
                                 ...person,
@@ -1091,9 +1149,9 @@ const AdminDashboard4 = () => {
                       {/* IF YES, WHEN */}
                       <span>IF YES, WHEN:</span>
                       <input
+                        readOnly
                         type="date"
                         name="covidDate"
-                        readOnly
                         value={person.covidDate || ""}
                         onChange={(e) => {
                           const updatedPerson = {
@@ -1154,10 +1212,9 @@ const AdminDashboard4 = () => {
                           {["vaccine1Brand", "vaccine2Brand", "booster1Brand", "booster2Brand"].map((field) => (
                             <td key={field} style={{ padding: "4px" }}>
                               <input
+                                disabled
                                 type="text"
                                 name={field}
-                                disabled
-
                                 value={person[field] || ""}
                                 onChange={(e) => {
                                   const updatedPerson = {
@@ -1181,9 +1238,9 @@ const AdminDashboard4 = () => {
                           {["vaccine1Date", "vaccine2Date", "booster1Date", "booster2Date"].map((field) => (
                             <td key={field} style={{ padding: "4px" }}>
                               <input
+                                readOnly
                                 type="date"
                                 name={field}
-                                readOnly
                                 value={person[field] || ""}
                                 onChange={(e) => {
                                   const updatedPerson = {
@@ -1222,11 +1279,10 @@ const AdminDashboard4 = () => {
                   <td className="border border-black p-2 w-1/3 font-medium">Chest X-ray:</td>
                   <td className="border border-black p-2 w-2/3">
                     <input
+                      readOnly
                       type="text"
                       name="chestXray"
                       value={person.chestXray || ""}
-                      disabled
-
                       onChange={(e) => {
                         const { name, value } = e.target;
                         const updatedPerson = { ...person, [name]: value };
@@ -1244,11 +1300,10 @@ const AdminDashboard4 = () => {
                   <td className="border border-black p-2 font-medium">CBC:</td>
                   <td className="border border-black p-2">
                     <input
+                      readOnly
                       type="text"
                       name="cbc"
                       value={person.cbc || ""}
-                      disabled
-
                       onChange={(e) => {
                         const { name, value } = e.target;
                         const updatedPerson = { ...person, [name]: value };
@@ -1266,11 +1321,10 @@ const AdminDashboard4 = () => {
                   <td className="border border-black p-2 font-medium">Urinalysis:</td>
                   <td className="border border-black p-2">
                     <input
+                      readOnly
                       type="text"
                       name="urinalysis"
                       value={person.urinalysis || ""}
-                      disabled
-
                       onChange={(e) => {
                         const { name, value } = e.target;
                         const updatedPerson = { ...person, [name]: value };
@@ -1288,11 +1342,10 @@ const AdminDashboard4 = () => {
                   <td className="border border-black p-2 font-medium">Other Workups:</td>
                   <td className="border border-black p-2">
                     <input
+                      readOnly
                       type="text"
                       name="otherworkups"
                       value={person.otherworkups || ""}
-                      disabled
-
                       onChange={(e) => {
                         const { name, value } = e.target;
                         const updatedPerson = { ...person, [name]: value };
@@ -1343,9 +1396,9 @@ const AdminDashboard4 = () => {
                         {/* Physically Fit (0) */}
                         <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
                           <Checkbox
+                            disabled
                             name="symptomsToday"
                             checked={person.symptomsToday === 0}
-                            disabled
                             onChange={() => {
                               const updatedPerson = {
                                 ...person,
@@ -1362,9 +1415,9 @@ const AdminDashboard4 = () => {
                         {/* For Compliance (1) */}
                         <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
                           <Checkbox
+                            disabled
                             name="symptomsToday"
                             checked={person.symptomsToday === 1}
-                            disabled
                             onChange={() => {
                               const updatedPerson = {
                                 ...person,
@@ -1402,12 +1455,11 @@ const AdminDashboard4 = () => {
                   <TableRow>
                     <TableCell sx={{ border: "1px solid black", p: 1 }}>
                       <TextField
+                        disabled
                         name="remarks"
                         multiline
                         minRows={2}
                         fullWidth
-                        disabled
-
                         size="small"
                         value={person.remarks || ""}
                         onChange={(e) => {
@@ -1476,12 +1528,16 @@ const AdminDashboard4 = () => {
 
 
 
+
+
+
+
             <Box display="flex" justifyContent="space-between" alignItems="center" mt={4}>
               {/* Previous Page Button */}
               <Button
                 variant="contained"
                 component={Link}
-                to="/admin_dashboard3"
+                to="/medical_dashboard3"
                 startIcon={
                   <ArrowBackIcon
                     sx={{
@@ -1510,7 +1566,7 @@ const AdminDashboard4 = () => {
                 variant="contained"
                 onClick={(e) => {
                   handleUpdate();
-                  navigate("/admin_dashboard5");
+                  navigate("/admin_dashboard4");
 
                 }}
                 endIcon={

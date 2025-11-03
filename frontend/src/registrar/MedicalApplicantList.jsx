@@ -40,6 +40,7 @@ import SchoolIcon from '@mui/icons-material/School';        // For Entrance Exam
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import Unauthorized from "../components/Unauthorized";
 import LoadingOverlay from "../components/LoadingOverlay";
+import SearchIcon from "@mui/icons-material/Search";
 
 const socket = io("http://localhost:5000");
 
@@ -86,7 +87,7 @@ const MedicalApplicantList = () => {
         setActiveStep(index);
         const pid = sessionStorage.getItem("admin_edit_person_id");
 
-        if (pid && to !== "/applicant_list") {
+        if (pid && to !== "/medical_applicant_list") {
             navigate(`${to}?person_id=${pid}`);
         } else {
             navigate(to);
@@ -142,7 +143,7 @@ const MedicalApplicantList = () => {
 
     useEffect(() => {
         if (location.search.includes("person_id")) {
-            navigate("/applicant_list", { replace: true });
+            navigate("/medical_applicant_list", { replace: true });
         }
     }, [location, navigate]);
 
@@ -768,15 +769,23 @@ const MedicalApplicantList = () => {
                         variant="outlined"
                         placeholder="Search Student Name / Email / Student"
                         size="small"
-                        style={{ width: '450px' }}
+
                         value={searchQuery}
                         onChange={(e) => {
                             setSearchQuery(e.target.value);
                             setCurrentPage(1); // Corrected
                         }}
 
+                        sx={{
+                            width: 450,
+                            backgroundColor: "#fff",
+                            borderRadius: 1,
+                            "& .MuiOutlinedInput-root": {
+                                borderRadius: "10px",
+                            },
+                        }}
                         InputProps={{
-                            startAdornment: <Search sx={{ mr: 1 }} />,
+                            startAdornment: <SearchIcon sx={{ mr: 1, color: "gray" }} />,
                         }}
                     />
                 </Box>

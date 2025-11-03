@@ -30,6 +30,8 @@ import PeopleIcon from "@mui/icons-material/People";
 import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
 import Unauthorized from "../components/Unauthorized";
 import LoadingOverlay from "../components/LoadingOverlay";
+import SearchIcon from "@mui/icons-material/Search";
+
 
 
 const RegistrarDashboard1 = () => {
@@ -136,56 +138,56 @@ const RegistrarDashboard1 = () => {
         permanentDswdHouseholdNumber: "",
     });
 
-    
 
 
-const [hasAccess, setHasAccess] = useState(null);
-const [loading, setLoading] = useState(false);
+
+    const [hasAccess, setHasAccess] = useState(null);
+    const [loading, setLoading] = useState(false);
 
 
-const pageId = 50;
+    const pageId = 50;
 
-//Put this After putting the code of the past code
-useEffect(() => {
-    
-    const storedUser = localStorage.getItem("email");
-    const storedRole = localStorage.getItem("role");
-    const storedID = localStorage.getItem("person_id");
+    //Put this After putting the code of the past code
+    useEffect(() => {
 
-    if (storedUser && storedRole && storedID) {
-      setUser(storedUser);
-      setUserRole(storedRole);
-      setUserID(storedID);
+        const storedUser = localStorage.getItem("email");
+        const storedRole = localStorage.getItem("role");
+        const storedID = localStorage.getItem("person_id");
 
-      if (storedRole === "registrar") {
-        checkAccess(storedID);
-      } else {
-        window.location.href = "/login";
-      }
-    } else {
-      window.location.href = "/login";
-    }
-  }, []);
+        if (storedUser && storedRole && storedID) {
+            setUser(storedUser);
+            setUserRole(storedRole);
+            setUserID(storedID);
 
-const checkAccess = async (userID) => {
-    try {
-        const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
-        if (response.data && response.data.page_privilege === 1) {
-          setHasAccess(true);
+            if (storedRole === "registrar") {
+                checkAccess(storedID);
+            } else {
+                window.location.href = "/login";
+            }
         } else {
-          setHasAccess(false);
+            window.location.href = "/login";
         }
-    } catch (error) {
-        console.error('Error checking access:', error);
-        setHasAccess(false);
-        if (error.response && error.response.data.message) {
-          console.log(error.response.data.message);
-        } else {
-          console.log("An unexpected error occurred.");
+    }, []);
+
+    const checkAccess = async (userID) => {
+        try {
+            const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
+            if (response.data && response.data.page_privilege === 1) {
+                setHasAccess(true);
+            } else {
+                setHasAccess(false);
+            }
+        } catch (error) {
+            console.error('Error checking access:', error);
+            setHasAccess(false);
+            if (error.response && error.response.data.message) {
+                console.log(error.response.data.message);
+            } else {
+                console.log("An unexpected error occurred.");
+            }
+            setLoading(false);
         }
-        setLoading(false);
-    }
-  };
+    };
 
 
 
@@ -869,16 +871,16 @@ const checkAccess = async (userID) => {
 
 
 
-// Put this at the very bottom before the return 
-if (loading || hasAccess === null) {
-   return <LoadingOverlay open={loading} message="Check Access"/>;
-}
+    // Put this at the very bottom before the return 
+    if (loading || hasAccess === null) {
+        return <LoadingOverlay open={loading} message="Check Access" />;
+    }
 
-  if (!hasAccess) {
-    return (
-      <Unauthorized />
-    );
-  }
+    if (!hasAccess) {
+        return (
+            <Unauthorized />
+        );
+    }
 
     // dot not alter
     return (
@@ -898,9 +900,9 @@ if (loading || hasAccess === null) {
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     flexWrap: 'wrap',
-                    mt: 2,
+
                     mb: 2,
-                    px: 2,
+
                 }}
             >
                 <Typography
@@ -920,8 +922,17 @@ if (loading || hasAccess === null) {
                     placeholder="Search Applicant Name / Email / Applicant ID"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    InputProps={{ startAdornment: <Search sx={{ mr: 1 }} /> }}
-                    sx={{ width: { xs: '100%', sm: '425px' }, mt: { xs: 2, sm: 0 } }}
+                    sx={{
+                        width: 450,
+                        backgroundColor: "#fff",
+                        borderRadius: 1,
+                        "& .MuiOutlinedInput-root": {
+                            borderRadius: "10px",
+                        },
+                    }}
+                    InputProps={{
+                        startAdornment: <SearchIcon sx={{ mr: 1, color: "gray" }} />,
+                    }}
                 />
             </Box>
             {searchError && <Typography color="error">{searchError}</Typography>}
@@ -1256,17 +1267,21 @@ if (loading || hasAccess === null) {
                     <Container maxWidth="100%" sx={{ backgroundColor: "#f1f1f1", border: "2px solid black", padding: 4, borderRadius: 2, boxShadow: 3 }}>
                         <Typography style={{ fontSize: "20px", color: "#6D2323", fontWeight: "bold" }}>Personal Information:</Typography>
                         <hr style={{ border: "1px solid #ccc", width: "100%" }} />
+
                         <br />
+
+
+
 
                         <div className="flex items-center mb-4 gap-4">
                             <label className="w-40 font-medium">Campus:</label>
                             <FormControl fullWidth size="small" required error={!!errors.campus} className="mb-4">
                                 <InputLabel id="campus-label">Campus (Manila/Cavite)</InputLabel>
                                 <Select
+                                    readOnly
                                     labelId="campus-label"
                                     id="campus-select"
                                     name="campus"
-                                    readOnly
                                     value={person.campus == null ? "" : String(person.campus)}
                                     label="Campus (Manila/Cavite)"
                                     onChange={(e) => {
@@ -1297,11 +1312,11 @@ if (loading || hasAccess === null) {
                             <FormControl fullWidth size="small" required error={!!errors.academicProgram} className="mb-4">
                                 <InputLabel id="academic-program-label">Academic Program</InputLabel>
                                 <Select
+                                    readOnly
                                     labelId="academic-program-label"
                                     id="academic-program-select"
                                     name="academicProgram"
-                                    readOnly
-                                    value={person.academicProgram || ""}
+                                    value={person.academicProgram ?? ""}
                                     label="Academic Program"
                                     onChange={handleChange}
                                     onBlur={handleBlur}
@@ -1322,11 +1337,11 @@ if (loading || hasAccess === null) {
                             <FormControl fullWidth size="small" required error={!!errors.classifiedAs} className="mb-4">
                                 <InputLabel id="classified-as-label">Classified As</InputLabel>
                                 <Select
+                                    readOnly
                                     labelId="classified-as-label"
                                     id="classified-as-select"
                                     name="classifiedAs"
-                                    readOnly
-                                    value={person.classifiedAs || ""}
+                                    value={person.classifiedAs ?? ""}
                                     label="Classified As"
                                     onChange={handleChange}
                                     onBlur={handleBlur}
@@ -1350,11 +1365,11 @@ if (loading || hasAccess === null) {
                             <FormControl fullWidth size="small" required error={!!errors.applyingAs} className="mb-4">
                                 <InputLabel id="applying-as-label">Applying As</InputLabel>
                                 <Select
+                                    readOnly
                                     labelId="applying-as-label"
                                     id="applying-as-select"
                                     name="applyingAs"
-                                    readOnly
-                                    value={person.applyingAs || ""}
+                                    value={person.applyingAs ?? ""}
                                     label="Applying As"
                                     onChange={handleChange}
                                     onBlur={handleBlur}
@@ -1394,8 +1409,9 @@ if (loading || hasAccess === null) {
                                             <InputLabel>Program</InputLabel>
                                             <Select
                                                 readOnly
+
                                                 name="program"
-                                                value={person.program || ""}
+                                                value={person.program ?? ""}
                                                 onBlur={handleBlur}
                                                 onChange={handleChange}
                                                 label="Program"
@@ -1421,7 +1437,7 @@ if (loading || hasAccess === null) {
                                             <Select
                                                 readOnly
                                                 name="program2"
-                                                value={person.program2 || ""}
+                                                value={person.program2 ?? ""}
                                                 onBlur={handleBlur}
                                                 onChange={handleChange}
                                                 label="Program 2"
@@ -1447,7 +1463,7 @@ if (loading || hasAccess === null) {
                                             <Select
                                                 readOnly
                                                 name="program3"
-                                                value={person.program3 || ""}
+                                                value={person.program3 ?? ""}
                                                 onBlur={handleBlur}
                                                 onChange={handleChange}
                                                 label="Program 3"
@@ -1477,7 +1493,6 @@ if (loading || hasAccess === null) {
                                     width: "5.08cm",
                                     height: "5.08cm",
                                     display: "flex",
-
                                     justifyContent: "center",
                                     alignItems: "center",
                                     flexDirection: "column",
@@ -1490,7 +1505,6 @@ if (loading || hasAccess === null) {
                                         alt="Profile"
                                         style={{
                                             width: "100%",
-
                                             height: "100%",
                                             objectFit: "cover",
                                         }}
@@ -1518,11 +1532,11 @@ if (loading || hasAccess === null) {
                             <FormControl fullWidth size="small" required error={!!errors.yearLevel}>
                                 <InputLabel id="year-level-label">Year Level</InputLabel>
                                 <Select
+                                    readOnly
                                     labelId="year-level-label"
                                     id="year-level-select"
                                     name="yearLevel"
-                                    readOnly
-                                    value={person.yearLevel || ""}
+                                    value={person.yearLevel ?? ""}
                                     label="Year Level"
                                     onChange={handleChange}
                                     onBlur={handleBlur}
@@ -1549,13 +1563,13 @@ if (loading || hasAccess === null) {
                             <Box flex="1 1 20%">
                                 <Typography mb={1} fontWeight="medium">Last Name</Typography>
                                 <TextField
+                                    InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     name="last_name"
                                     required
-                                    InputProps={{ readOnly: true }}
-
-                                    value={person.last_name}
+                                    value={person.last_name ?? ""}
                                     onChange={handleChange}
                                     onBlur={handleBlur}
                                     placeholder="Enter your Last Name"
@@ -1569,13 +1583,13 @@ if (loading || hasAccess === null) {
                             <Box flex="1 1 20%">
                                 <Typography mb={1} fontWeight="medium">First Name</Typography>
                                 <TextField
+                                    InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     name="first_name"
                                     required
-                                    InputProps={{ readOnly: true }}
-
-                                    value={person.first_name}
+                                    value={person.first_name ?? ""}
                                     onChange={handleChange}
                                     onBlur={handleBlur}
                                     placeholder="Enter your First Name"
@@ -1588,13 +1602,13 @@ if (loading || hasAccess === null) {
                             <Box flex="1 1 20%">
                                 <Typography mb={1} fontWeight="medium">Middle Name</Typography>
                                 <TextField
+                                    InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     name="middle_name"
                                     required
-                                    InputProps={{ readOnly: true }}
-
-                                    value={person.middle_name}
+                                    value={person.middle_name ?? ""}
                                     onChange={handleChange}
                                     onBlur={handleBlur}
                                     placeholder="Enter your Middle Name"
@@ -1609,11 +1623,11 @@ if (loading || hasAccess === null) {
                                 <FormControl fullWidth size="small" error={errors.extension}>
                                     <InputLabel id="extension-label">Extension</InputLabel>
                                     <Select
+                                        readOnly
                                         labelId="extension-label"
                                         id="extension-select"
-                                        readOnly
                                         name="extension"
-                                        value={person.extension || ""}
+                                        value={person.extension ?? ""}
                                         label="Extension"
                                         onChange={handleChange}
                                         onBlur={handleBlur}
@@ -1637,14 +1651,14 @@ if (loading || hasAccess === null) {
                             <Box flex="1 1 20%">
                                 <Typography mb={1} fontWeight="medium">Nickname</Typography>
                                 <TextField
+                                    InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     name="nickname"
-                                    InputProps={{ readOnly: true }}
-
-                                    value={person.nickname}
+                                    required
+                                    value={person.nickname ?? ""}
                                     onChange={handleChange}
-                                    readOnly
                                     onBlur={handleBlur}
                                     placeholder="Enter your Nickname"
                                     error={errors.nickname}
@@ -1660,11 +1674,11 @@ if (loading || hasAccess === null) {
                                         Height:
                                     </Typography>
                                     <TextField
-                                        size="small"
-                                        name="height"
-                                        value={person.height}
                                         InputProps={{ readOnly: true }}
 
+                                        size="small"
+                                        name="height"
+                                        value={person.height ?? ""}
                                         onChange={handleChange}
                                         onBlur={handleBlur}
                                         placeholder="Enter your Height"
@@ -1687,11 +1701,11 @@ if (loading || hasAccess === null) {
                                         Weight:
                                     </Typography>
                                     <TextField
-                                        size="small"
-                                        name="weight"
-                                        value={person.weight}
                                         InputProps={{ readOnly: true }}
 
+                                        size="small"
+                                        name="weight"
+                                        value={person.weight ?? ""}
                                         onChange={handleChange}
                                         onBlur={handleBlur}
                                         placeholder="Enter your Weight"
@@ -1716,15 +1730,15 @@ if (loading || hasAccess === null) {
 
                             {/* LRN Input */}
                             <TextField
+                                disabled
                                 id="lrnNumber"
                                 name="lrnNumber"
                                 required={person.lrnNumber !== "No LRN Number"}
                                 label="Enter your LRN Number"
-                                value={person.lrnNumber === "No LRN Number" ? "" : person.lrnNumber || ""}
+                                value={person.lrnNumber === "No LRN Number" ? "" : person.lrnNumber ?? ""}
                                 onChange={handleChange}
-                                readOnly
                                 onBlur={handleBlur}
-                                disabled={person.lrnNumber === "No LRN Number"}
+
                                 size="small"
                                 sx={{ width: 220 }}
                                 InputProps={{ sx: { height: 40, readOnly: true } }}
@@ -1737,6 +1751,7 @@ if (loading || hasAccess === null) {
                             <FormControlLabel
                                 control={
                                     <Checkbox
+                                        disabled
                                         name="lrn_na"
                                         checked={person.lrnNumber === "No LRN Number"}
                                         onChange={(e) => {
@@ -1761,11 +1776,11 @@ if (loading || hasAccess === null) {
 
                             {/* Gender */}
                             <TextField
+                                readOnly
                                 select
                                 size="small"
                                 label="Gender"
                                 name="gender"
-                                readOnly
                                 required
                                 value={person.gender == null ? "" : String(person.gender)}
                                 onChange={(e) => {
@@ -1780,7 +1795,7 @@ if (loading || hasAccess === null) {
                                 onBlur={handleBlur}
                                 error={Boolean(errors.gender)}
                                 sx={{ width: 150 }}
-                                InputProps={{ sx: { height: 40 } }}
+                                InputProps={{ sx: { height: 40, } }}
                                 inputProps={{ style: { height: 40 } }}
                             >
                                 <MenuItem value=""><em>Select Gender</em></MenuItem>
@@ -1799,6 +1814,7 @@ if (loading || hasAccess === null) {
                             <FormControlLabel
                                 control={
                                     <Checkbox
+                                        disabled
                                         checked={person.pwdMember === 1}
                                         onChange={handlePwdCheck}
                                         inputProps={{ "aria-label": "PWD Checkbox" }}
@@ -1812,12 +1828,12 @@ if (loading || hasAccess === null) {
                                 <>
                                     {/* PWD Type */}
                                     <TextField
+                                        readOnly
                                         select
                                         size="small"
                                         label="PWD Type"
-                                        readOnly
                                         name="pwdType"
-                                        value={person.pwdType || ""}
+                                        value={person.pwdType ?? ""}
                                         onChange={handleChange}
                                         onBlur={handleBlur}
                                         required={person.pwdMember === 1}
@@ -1855,11 +1871,11 @@ if (loading || hasAccess === null) {
 
                                     {/* PWD ID */}
                                     <TextField
+                                        disabled
                                         size="small"
                                         label="PWD ID"
                                         name="pwdId"
-                                        disabled
-                                        value={person.pwdId || ""}
+                                        value={person.pwdId ?? ""}
                                         onChange={handleChange}
                                         onBlur={handleBlur}
                                         required={person.pwdMember === 1}
@@ -1879,6 +1895,7 @@ if (loading || hasAccess === null) {
 
                         </Box>
 
+                        {/* Row 1: Birth Place + Citizenship */}
 
 
                         <Box display="flex" gap={2} mb={2}>
@@ -1908,6 +1925,7 @@ if (loading || hasAccess === null) {
                                     Age
                                 </Typography>
                                 <TextField
+
                                     fullWidth
                                     size="small"
                                     name="age"
@@ -1925,16 +1943,16 @@ if (loading || hasAccess === null) {
                                 <Typography mb={1} fontWeight="medium">
                                     Birth Place
                                 </Typography>
-                                <TextField fullWidth size="small" name="birthPlace" InputProps={{ readOnly: true }}
-                                    placeholder="Enter your Birth Place" value={person.birthPlace} required onBlur={handleBlur} onChange={handleChange} error={!!errors.birthPlace}
+                                <TextField InputProps={{ readOnly: true }}
+                                    fullWidth size="small" name="birthPlace" placeholder="Enter your Birth Place" value={person.birthPlace ?? ""} required onBlur={handleBlur} onChange={handleChange} error={!!errors.birthPlace}
                                     helperText={errors.birthPlace ? "This field is required." : ""} />
                             </Box>
                             <Box flex={1} >
                                 <Typography mb={1} fontWeight="medium">
                                     Language/Dialect Spoken
                                 </Typography>
-                                <TextField fullWidth size="small" InputProps={{ readOnly: true }}
-                                    name="languageDialectSpoken" placeholder="Enter your Language Spoken" value={person.languageDialectSpoken || ""} required onBlur={handleBlur} onChange={handleChange} error={!!errors.languageDialectSpoken}
+                                <TextField InputProps={{ readOnly: true }}
+                                    fullWidth size="small" name="languageDialectSpoken" placeholder="Enter your Language Spoken" value={person.languageDialectSpoken ?? ""} required onBlur={handleBlur} onChange={handleChange} error={!!errors.languageDialectSpoken}
                                     helperText={errors.languageDialectSpoken ? "This field is required." : ""}
                                 />
                             </Box>
@@ -1951,11 +1969,11 @@ if (loading || hasAccess === null) {
                                 <FormControl fullWidth size="small" required error={!!errors.citizenship}>
                                     <InputLabel id="citizenship-label">Citizenship</InputLabel>
                                     <Select
+                                        readOnly
                                         labelId="citizenship-label"
                                         id="citizenship"
                                         name="citizenship"
-                                        readOnly
-                                        value={person.citizenship || ""}
+                                        value={person.citizenship ?? ""}
                                         onChange={handleChange}
                                         onBlur={handleBlur}
                                         label="Citizenship" // Required for floating label
@@ -2093,11 +2111,11 @@ if (loading || hasAccess === null) {
                                 <FormControl fullWidth size="small" required error={!!errors.religion}>
                                     <InputLabel id="religion-label">Religion</InputLabel>
                                     <Select
+                                        readOnly
                                         labelId="religion-label"
                                         id="religion"
-                                        readOnly
                                         name="religion"
-                                        value={person.religion || ""}
+                                        value={person.religion ?? ""}
                                         onChange={handleChange}
                                         onBlur={handleBlur}
                                         label="Religion" // Enables floating label
@@ -2142,11 +2160,11 @@ if (loading || hasAccess === null) {
                                 <FormControl fullWidth size="small" required error={!!errors.civilStatus}>
                                     <InputLabel id="civil-status-label">Civil Status</InputLabel>
                                     <Select
+                                        readOnly
                                         labelId="civil-status-label"
                                         id="civilStatus"
-                                        readOnly
                                         name="civilStatus"
-                                        value={person.civilStatus || ""}
+                                        value={person.civilStatus ?? ""}
                                         onChange={handleChange}
                                         onBlur={handleBlur}
                                         label="Civil Status"
@@ -2173,11 +2191,11 @@ if (loading || hasAccess === null) {
                                 <FormControl fullWidth size="small" required error={!!errors.tribeEthnicGroup}>
                                     <InputLabel id="tribe-label">Tribe/Ethnic Group</InputLabel>
                                     <Select
+                                        readOnly
                                         labelId="tribe-label"
                                         id="tribeEthnicGroup"
-                                        readOnly
                                         name="tribeEthnicGroup"
-                                        value={person.tribeEthnicGroup || ""}
+                                        value={person.tribeEthnicGroup ?? ""}
                                         onChange={handleChange}
                                         onBlur={handleBlur}
                                         label="Tribe/Ethnic Group"
@@ -2252,14 +2270,14 @@ if (loading || hasAccess === null) {
                                     Cellphone Number:
                                 </Typography>
                                 <TextField
+                                    InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     name="cellphoneNumber"
                                     placeholder="Enter your Cellphone Number +63"
                                     required
-                                    InputProps={{ readOnly: true }}
-
-                                    value={person.cellphoneNumber}
+                                    value={person.cellphoneNumber ?? ""}
                                     onBlur={handleBlur}
                                     onChange={handleChange}
                                     error={!!errors.cellphoneNumber}
@@ -2273,13 +2291,13 @@ if (loading || hasAccess === null) {
                                     Email Address:
                                 </Typography>
                                 <TextField
+                                    InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     name="emailAddress"
-                                    InputProps={{ readOnly: true }}
-
                                     required
-                                    value={person.emailAddress}
+                                    value={person.emailAddress ?? ""}
                                     placeholder="Enter your Email Address (e.g., username@gmail.com)"
                                     onBlur={handleBlur}
                                     onChange={handleChange}
@@ -2301,12 +2319,12 @@ if (loading || hasAccess === null) {
                             <Box flex={1}>
                                 <Typography mb={1} fontWeight="medium">Present Street</Typography>
                                 <TextField
-                                    fullWidth
-                                    size="small"
                                     InputProps={{ readOnly: true }}
 
+                                    fullWidth
+                                    size="small"
                                     name="presentStreet"
-                                    value={person.presentStreet}
+                                    value={person.presentStreet ?? ""}
                                     onBlur={handleBlur}
                                     placeholder="Enter your Present Street"
                                     onChange={handleChange}
@@ -2318,13 +2336,13 @@ if (loading || hasAccess === null) {
                             <Box flex={1}>
                                 <Typography mb={1} fontWeight="medium">Present Zip Code</Typography>
                                 <TextField
-                                    fullWidth
-                                    size="small"
                                     InputProps={{ readOnly: true }}
 
+                                    fullWidth
+                                    size="small"
                                     name="presentZipCode"
                                     placeholder="Enter your Zip Code"
-                                    value={person.presentZipCode}
+                                    value={person.presentZipCode ?? ""}
                                     onBlur={handleBlur}
                                     onChange={handleChange}
                                     error={!!errors.presentZipCode}
@@ -2339,10 +2357,10 @@ if (loading || hasAccess === null) {
                             <FormControl fullWidth size="small" required error={!!errors.presentRegion}>
                                 <InputLabel id="present-region-label">Region</InputLabel>
                                 <Select
+                                    readOnly
                                     labelId="present-region-label"
                                     name="presentRegion"
-                                    readOnly
-                                    value={person.presentRegion || ""}
+                                    value={person.presentRegion ?? ""}
                                     onBlur={handleBlur}
                                     onChange={(e) => {
                                         handleChange(e);
@@ -2375,10 +2393,10 @@ if (loading || hasAccess === null) {
                             <FormControl fullWidth size="small" required error={!!errors.presentProvince}>
                                 <InputLabel id="present-province-label">Province</InputLabel>
                                 <Select
+                                    readOnly
                                     labelId="present-province-label"
                                     name="presentProvince"
-                                    readOnly
-                                    value={person.presentProvince || ""}
+                                    value={person.presentProvince ?? ""}
                                     onBlur={handleBlur}
                                     onChange={(e) => {
                                         handleChange(e);
@@ -2415,8 +2433,7 @@ if (loading || hasAccess === null) {
                                 <Select
                                     labelId="present-municipality-label"
                                     name="presentMunicipality"
-                                    readOnly
-                                    value={person.presentMunicipality || ""}
+                                    value={person.presentMunicipality ?? ""}
                                     onBlur={handleBlur}
                                     onChange={(e) => {
                                         handleChange(e);
@@ -2448,8 +2465,7 @@ if (loading || hasAccess === null) {
                                 <Select
                                     labelId="present-barangay-label"
                                     name="presentBarangay"
-                                    readOnly
-                                    value={person.presentBarangay || ""}
+                                    value={person.presentBarangay ?? ""}
                                     onBlur={handleBlur}
                                     onChange={(e) => {
                                         handleChange(e);
@@ -2479,12 +2495,12 @@ if (loading || hasAccess === null) {
                         <Box mb={2}>
                             <Typography mb={1} fontWeight="medium">Present DSWD Household Number</Typography>
                             <TextField
+                                InputProps={{ readOnly: true }}
+
                                 fullWidth
                                 size="small"
                                 name="presentDswdHouseholdNumber"
-                                InputProps={{ readOnly: true }}
-
-                                value={person.presentDswdHouseholdNumber}
+                                value={person.presentDswdHouseholdNumber ?? ""}
                                 onBlur={handleBlur}
                                 onChange={handleChange}
                                 placeholder="Enter your Present DSWD Household Number"
@@ -2499,8 +2515,8 @@ if (loading || hasAccess === null) {
                         <FormControlLabel
                             control={
                                 <Checkbox
-                                    name="same_as_present_address"
                                     disabled
+                                    name="same_as_present_address"
                                     checked={person.same_as_present_address === 1}
                                     onChange={(e) => {
                                         const checked = e.target.checked;
@@ -2540,13 +2556,13 @@ if (loading || hasAccess === null) {
                             <Box flex={1}>
                                 <Typography mb={1} fontWeight="medium">Permanent Street</Typography>
                                 <TextField
+                                    InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     name="permanentStreet"
-                                    InputProps={{ readOnly: true }}
-
                                     placeholder="Enter your Permanent Street"
-                                    value={person.permanentStreet}
+                                    value={person.permanentStreet ?? ""}
                                     onBlur={handleBlur}
                                     onChange={handleChange}
                                     error={!!errors.permanentStreet}
@@ -2557,13 +2573,13 @@ if (loading || hasAccess === null) {
                             <Box flex={1}>
                                 <Typography mb={1} fontWeight="medium">Permanent Zip Code</Typography>
                                 <TextField
+                                    InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     name="permanentZipCode"
-                                    InputProps={{ readOnly: true }}
-
                                     placeholder="Enter your Permanent Zip Code"
-                                    value={person.permanentZipCode}
+                                    value={person.permanentZipCode ?? ""}
                                     onBlur={handleBlur}
                                     onChange={handleChange}
                                     error={!!errors.permanentZipCode}
@@ -2579,11 +2595,11 @@ if (loading || hasAccess === null) {
                                 <FormControl fullWidth size="small" required error={!!errors.permanentRegion}>
                                     <InputLabel id="permanent-region-label">Select Region</InputLabel>
                                     <Select
+                                        readOnly
                                         labelId="permanent-region-label"
                                         id="permanentRegion"
-                                        readOnly
                                         name="permanentRegion"
-                                        value={person.permanentRegion || ""}
+                                        value={person.permanentRegion ?? ""}
                                         label="Select Region"
                                         onBlur={handleBlur}
                                         onChange={(e) => {
@@ -2619,11 +2635,11 @@ if (loading || hasAccess === null) {
                                 <FormControl fullWidth size="small" required error={!!errors.permanentProvince}>
                                     <InputLabel id="permanent-province-label">Select Province</InputLabel>
                                     <Select
+                                        readOnly
                                         labelId="permanent-province-label"
                                         id="permanentProvince"
-                                        readOnly
                                         name="permanentProvince"
-                                        value={person.permanentProvince || ""}
+                                        value={person.permanentProvince ?? ""}
                                         label="Select Province"
                                         onBlur={handleBlur}
                                         onChange={(e) => {
@@ -2661,11 +2677,11 @@ if (loading || hasAccess === null) {
                                 <FormControl fullWidth size="small" required error={!!errors.permanentMunicipality}>
                                     <InputLabel id="permanent-municipality-label">Select Municipality</InputLabel>
                                     <Select
+                                        readOnly
                                         labelId="permanent-municipality-label"
                                         id="permanentMunicipality"
-                                        readOnly
                                         name="permanentMunicipality"
-                                        value={person.permanentMunicipality || ""}
+                                        value={person.permanentMunicipality ?? ""}
                                         label="Select Municipality"
                                         onBlur={handleBlur}
                                         onChange={(e) => {
@@ -2698,11 +2714,11 @@ if (loading || hasAccess === null) {
                                 <FormControl fullWidth size="small" required error={!!errors.permanentBarangay}>
                                     <InputLabel id="permanent-barangay-label">Select Barangay</InputLabel>
                                     <Select
+                                        readOnly
                                         labelId="permanent-barangay-label"
                                         id="permanentBarangay"
-                                        readOnly
                                         name="permanentBarangay"
-                                        value={person.permanentBarangay || ""}
+                                        value={person.permanentBarangay ?? ""}
                                         label="Select Barangay"
                                         onBlur={handleBlur}
                                         onChange={(e) => {
@@ -2733,14 +2749,14 @@ if (loading || hasAccess === null) {
                         <Box mb={2}>
                             <Typography mb={1} fontWeight="medium">Permanent DSWD Household Number</Typography>
                             <TextField
+                                InputProps={{ readOnly: true }}
+
                                 fullWidth
                                 size="small"
                                 variant="outlined"
                                 placeholder="Enter your Permanent DSWD Household Number"
                                 name="permanentDswdHouseholdNumber"
-                                InputProps={{ readOnly: true }}
-
-                                value={person.permanentDswdHouseholdNumber || ""}
+                                value={person.permanentDswdHouseholdNumber ?? ""}
                                 onBlur={handleBlur}
                                 onChange={handleChange}
                                 error={!!errors.permanentDswdHouseholdNumber}
@@ -2900,7 +2916,6 @@ if (loading || hasAccess === null) {
                                         Select Your Image:
                                     </Typography>
                                     <input
-                                    disabled
                                         type="file"
                                         accept=".jpg,.jpeg,.png"
                                         onClick={(e) => (e.target.value = null)}
@@ -2917,6 +2932,7 @@ if (loading || hasAccess === null) {
 
                                     {/* Upload Button */}
                                     <Button
+                                        disabled
                                         variant="contained"
                                         fullWidth
                                         onClick={handleUpload}
@@ -2934,6 +2950,7 @@ if (loading || hasAccess === null) {
                                 </Box>
                             </Box>
                         </Modal>
+
 
                         <Modal
                             open={examPermitModalOpen}
@@ -2998,31 +3015,26 @@ if (loading || hasAccess === null) {
                             </Button>
                             <Button
                                 variant="contained"
-                                onClick={(e) => {
+                                onClick={() => {
                                     handleUpdate();
-
-                                    if (isFormValid()) {
-                                        navigate("/registrar_dashboard2");
-                                    } else {
-                                        alert("Please complete all required fields before proceeding.");
-                                    }
+                                    navigate("/medical_dashboard2");
                                 }}
                                 endIcon={
                                     <ArrowForwardIcon
                                         sx={{
-                                            color: '#fff',
-                                            transition: 'color 0.3s',
+                                            color: "#fff",
+                                            transition: "color 0.3s",
                                         }}
                                     />
                                 }
                                 sx={{
-                                    backgroundColor: '#6D2323',
-                                    color: '#fff',
-                                    '&:hover': {
-                                        backgroundColor: '#E8C999',
-                                        color: '#000',
-                                        '& .MuiSvgIcon-root': {
-                                            color: '#000',
+                                    backgroundColor: "#6D2323",
+                                    color: "#fff",
+                                    "&:hover": {
+                                        backgroundColor: "#E8C999",
+                                        color: "#000",
+                                        "& .MuiSvgIcon-root": {
+                                            color: "#000",
                                         },
                                     },
                                 }}
@@ -3030,7 +3042,6 @@ if (loading || hasAccess === null) {
                                 Next Step
                             </Button>
                         </Box>
-
 
                     </Container>
                 </form>

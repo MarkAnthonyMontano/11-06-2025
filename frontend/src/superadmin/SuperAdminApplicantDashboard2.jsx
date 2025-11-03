@@ -192,12 +192,87 @@ const SuperAdminApplicantDashboard2 = () => {
 
 
     // Do not alter
-    const handleUpdate = async (updatedPerson) => {
+    // ✅ Universal update for SuperAdmin (edits any applicant safely)
+    const handleUpdate = async (updatedData) => {
+        if (!person) return;
+
         try {
-            await axios.put(`http://localhost:5000/api/person/${userID}`, updatedPerson);
-            console.log("Auto-saved");
+            // ✅ Get correct applicant ID
+            const targetId = selectedPerson?.person_id || queryPersonId || person.person_id;
+            if (!targetId) {
+                console.warn("⚠️ No valid applicant ID found — skipping update.");
+                return;
+            }
+
+            const allowedFields = [
+                "person_id", "profile_img", "campus", "academicProgram", "classifiedAs", "applyingAs",
+                "program", "program2", "program3", "yearLevel",
+                "last_name", "first_name", "middle_name", "extension", "nickname",
+                "height", "weight", "lrnNumber", "nolrnNumber", "gender",
+                "pwdMember", "pwdType", "pwdId",
+                "birthOfDate", "age", "birthPlace", "languageDialectSpoken",
+                "citizenship", "religion", "civilStatus", "tribeEthnicGroup",
+                "cellphoneNumber", "emailAddress",
+                "presentStreet", "presentBarangay", "presentZipCode", "presentRegion",
+                "presentProvince", "presentMunicipality", "presentDswdHouseholdNumber",
+                "sameAsPresentAddress",
+                "permanentStreet", "permanentBarangay", "permanentZipCode",
+                "permanentRegion", "permanentProvince", "permanentMunicipality",
+                "permanentDswdHouseholdNumber",
+                "solo_parent",
+                "father_deceased", "father_family_name", "father_given_name", "father_middle_name",
+                "father_ext", "father_nickname", "father_education", "father_education_level",
+                "father_last_school", "father_course", "father_year_graduated", "father_school_address",
+                "father_contact", "father_occupation", "father_employer", "father_income", "father_email",
+                "mother_deceased", "mother_family_name", "mother_given_name", "mother_middle_name",
+                "mother_ext", "mother_nickname", "mother_education", "mother_education_level",
+                "mother_last_school", "mother_course", "mother_year_graduated", "mother_school_address",
+                "mother_contact", "mother_occupation", "mother_employer", "mother_income", "mother_email",
+                "guardian", "guardian_family_name", "guardian_given_name", "guardian_middle_name",
+                "guardian_ext", "guardian_nickname", "guardian_address", "guardian_contact", "guardian_email",
+                "annual_income",
+                "schoolLevel", "schoolLastAttended", "schoolAddress", "courseProgram",
+                "honor", "generalAverage", "yearGraduated",
+                "schoolLevel1", "schoolLastAttended1", "schoolAddress1", "courseProgram1",
+                "honor1", "generalAverage1", "yearGraduated1",
+                "strand",
+                // 🩺 Health and medical
+                "cough", "colds", "fever", "asthma", "faintingSpells", "heartDisease",
+                "tuberculosis", "frequentHeadaches", "hernia", "chronicCough", "headNeckInjury",
+                "hiv", "highBloodPressure", "diabetesMellitus", "allergies", "cancer",
+                "smokingCigarette", "alcoholDrinking", "hospitalized", "hospitalizationDetails",
+                "medications",
+                // 🧬 Covid / Vaccination
+                "hadCovid", "covidDate",
+                "vaccine1Brand", "vaccine1Date", "vaccine2Brand", "vaccine2Date",
+                "booster1Brand", "booster1Date", "booster2Brand", "booster2Date",
+                // 🧪 Lab results / medical findings
+                "chestXray", "cbc", "urinalysis", "otherworkups",
+                // 🧍 Additional fields
+                "symptomsToday", "remarks",
+                // ✅ Agreement / Meta
+                "termsOfAgreement", "created_at", "current_step"
+            ];
+            // ✅ Clean the payload
+            const cleanedData = Object.fromEntries(
+                Object.entries(updatedData).filter(([key]) => allowedFields.includes(key))
+            );
+
+            if (Object.keys(cleanedData).length === 0) {
+                console.warn("⚠️ No valid fields to update — skipping request.");
+                return;
+            }
+
+            // ✅ Send update request
+            await axios.put(`http://localhost:5000/api/person/${targetId}`, cleanedData);
+
+            console.log(`✅ SuperAdmin updated person_id: ${targetId} successfully.`);
         } catch (error) {
-            console.error("Auto-save failed:", error);
+            console.error("❌ SuperAdmin update failed:", {
+                message: error.message,
+                status: error.response?.status,
+                details: error.response?.data || error,
+            });
         }
     };
 
@@ -239,15 +314,89 @@ const SuperAdminApplicantDashboard2 = () => {
     };
 
 
-
+    // ✅ Safe handleBlur for SuperAdmin — updates correct applicant only
     const handleBlur = async () => {
         try {
-            await axios.put(`http://localhost:5000/api/person/${userID}`, person);
-            console.log("Auto-saved");
+            // ✅ Determine correct applicant/person_id
+            const targetId = selectedPerson?.person_id || queryPersonId || person.person_id;
+            if (!targetId) {
+                console.warn("⚠️ No valid applicant ID found — skipping update.");
+                return;
+            }
+
+            const allowedFields = [
+                "person_id", "profile_img", "campus", "academicProgram", "classifiedAs", "applyingAs",
+                "program", "program2", "program3", "yearLevel",
+                "last_name", "first_name", "middle_name", "extension", "nickname",
+                "height", "weight", "lrnNumber", "nolrnNumber", "gender",
+                "pwdMember", "pwdType", "pwdId",
+                "birthOfDate", "age", "birthPlace", "languageDialectSpoken",
+                "citizenship", "religion", "civilStatus", "tribeEthnicGroup",
+                "cellphoneNumber", "emailAddress",
+                "presentStreet", "presentBarangay", "presentZipCode", "presentRegion",
+                "presentProvince", "presentMunicipality", "presentDswdHouseholdNumber",
+                "sameAsPresentAddress",
+                "permanentStreet", "permanentBarangay", "permanentZipCode",
+                "permanentRegion", "permanentProvince", "permanentMunicipality",
+                "permanentDswdHouseholdNumber",
+                "solo_parent",
+                "father_deceased", "father_family_name", "father_given_name", "father_middle_name",
+                "father_ext", "father_nickname", "father_education", "father_education_level",
+                "father_last_school", "father_course", "father_year_graduated", "father_school_address",
+                "father_contact", "father_occupation", "father_employer", "father_income", "father_email",
+                "mother_deceased", "mother_family_name", "mother_given_name", "mother_middle_name",
+                "mother_ext", "mother_nickname", "mother_education", "mother_education_level",
+                "mother_last_school", "mother_course", "mother_year_graduated", "mother_school_address",
+                "mother_contact", "mother_occupation", "mother_employer", "mother_income", "mother_email",
+                "guardian", "guardian_family_name", "guardian_given_name", "guardian_middle_name",
+                "guardian_ext", "guardian_nickname", "guardian_address", "guardian_contact", "guardian_email",
+                "annual_income",
+                "schoolLevel", "schoolLastAttended", "schoolAddress", "courseProgram",
+                "honor", "generalAverage", "yearGraduated",
+                "schoolLevel1", "schoolLastAttended1", "schoolAddress1", "courseProgram1",
+                "honor1", "generalAverage1", "yearGraduated1",
+                "strand",
+                // 🩺 Health and medical
+                "cough", "colds", "fever", "asthma", "faintingSpells", "heartDisease",
+                "tuberculosis", "frequentHeadaches", "hernia", "chronicCough", "headNeckInjury",
+                "hiv", "highBloodPressure", "diabetesMellitus", "allergies", "cancer",
+                "smokingCigarette", "alcoholDrinking", "hospitalized", "hospitalizationDetails",
+                "medications",
+                // 🧬 Covid / Vaccination
+                "hadCovid", "covidDate",
+                "vaccine1Brand", "vaccine1Date", "vaccine2Brand", "vaccine2Date",
+                "booster1Brand", "booster1Date", "booster2Brand", "booster2Date",
+                // 🧪 Lab results / medical findings
+                "chestXray", "cbc", "urinalysis", "otherworkups",
+                // 🧍 Additional fields
+                "symptomsToday", "remarks",
+                // ✅ Agreement / Meta
+                "termsOfAgreement", "created_at", "current_step"
+            ];
+
+            // ✅ Clean payload before sending
+            const cleanedData = Object.fromEntries(
+                Object.entries(person).filter(([key]) => allowedFields.includes(key))
+            );
+
+            if (Object.keys(cleanedData).length === 0) {
+                console.warn("⚠️ No valid fields to update — skipping blur save.");
+                return;
+            }
+
+            // ✅ Execute safe update
+            await axios.put(`http://localhost:5000/api/person/${targetId}`, cleanedData);
+            console.log(`💾 Auto-saved (on blur) for person_id: ${targetId}`);
         } catch (err) {
-            console.error("Auto-save failed", err);
+            console.error("❌ Auto-save (on blur) failed:", {
+                message: err.message,
+                status: err.response?.status,
+                details: err.response?.data || err,
+            });
         }
     };
+
+
 
     const [isFatherDeceased, setIsFatherDeceased] = useState(false);
     const [isMotherDeceased, setIsMotherDeceased] = useState(false);
@@ -417,9 +566,9 @@ const SuperAdminApplicantDashboard2 = () => {
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     flexWrap: 'wrap',
-                 
+
                     mb: 2,
-               
+
                 }}
             >
                 <Typography

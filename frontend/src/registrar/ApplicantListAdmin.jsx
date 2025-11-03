@@ -26,7 +26,6 @@ import {
     FormControlLabel,
     DialogActions
 } from '@mui/material';
-import { Search } from '@mui/icons-material';
 import { io } from "socket.io-client";
 import { Snackbar, Alert } from '@mui/material';
 import { useNavigate, useLocation } from "react-router-dom";
@@ -43,8 +42,8 @@ import PersonSearchIcon from "@mui/icons-material/PersonSearch";
 import PeopleIcon from "@mui/icons-material/People";
 import FactCheckIcon from "@mui/icons-material/FactCheck";
 import Unauthorized from "../components/Unauthorized";
-
-
+import LoadingOverlay from "../components/LoadingOverlay";
+import SearchIcon from "@mui/icons-material/Search";
 
 const socket = io("http://localhost:5000");
 
@@ -101,7 +100,7 @@ const AdminApplicantList = () => {
         if (!person_id) return;
 
         sessionStorage.setItem("admin_edit_person_id", String(person_id));
-        sessionStorage.setItem("admin_edit_person_id_source", "applicant_list");
+        sessionStorage.setItem("admin_edit_person_id_source", "/applicant_list_admin");
         sessionStorage.setItem("admin_edit_person_id_ts", String(Date.now()));
 
         // ✅ Always pass person_id in the URL
@@ -178,7 +177,7 @@ const AdminApplicantList = () => {
         setActiveStep(index);
         const pid = sessionStorage.getItem("admin_edit_person_id");
 
-        if (pid && to !== "/applicant_list") {
+        if (pid && to !== "/applicant_list_admin") {
             navigate(`${to}?person_id=${pid}`);
         } else {
             navigate(to);
@@ -188,7 +187,7 @@ const AdminApplicantList = () => {
 
     useEffect(() => {
         if (location.search.includes("person_id")) {
-            navigate("/applicant_list", { replace: true });
+            navigate("/applicant_list_admin", { replace: true });
         }
     }, [location, navigate]);
 
@@ -890,24 +889,6 @@ const AdminApplicantList = () => {
     };
 
 
-    // 🔒 Disable right-click
-    document.addEventListener('contextmenu', (e) => e.preventDefault());
-
-    // 🔒 Block DevTools shortcuts + Ctrl+P silently
-    document.addEventListener('keydown', (e) => {
-        const isBlockedKey =
-            e.key === 'F12' || // DevTools
-            e.key === 'F11' || // Fullscreen
-            (e.ctrlKey && e.shiftKey && (e.key.toLowerCase() === 'i' || e.key.toLowerCase() === 'j')) || // Ctrl+Shift+I/J
-            (e.ctrlKey && e.key.toLowerCase() === 'u') || // Ctrl+U (View Source)
-            (e.ctrlKey && e.key.toLowerCase() === 'p');   // Ctrl+P (Print)
-
-        if (isBlockedKey) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-    });
-
 
 
     // Put this at the very bottom before the return 
@@ -979,15 +960,17 @@ const AdminApplicantList = () => {
                         variant="outlined"
                         placeholder="Search Applicant Name / Email / Applicant ID"
                         size="small"
-                        style={{ width: '450px' }}
                         value={searchQuery}
-                        onChange={(e) => {
-                            setSearchQuery(e.target.value);
-                            setCurrentPage(1); // Corrected
+                        sx={{
+                            width: 450,
+                            backgroundColor: "#fff",
+                            borderRadius: 1,
+                            "& .MuiOutlinedInput-root": {
+                                borderRadius: "10px",
+                            },
                         }}
-
                         InputProps={{
-                            startAdornment: <Search sx={{ mr: 1 }} />,
+                            startAdornment: <SearchIcon sx={{ mr: 1, color: "gray" }} />,
                         }}
                     />
                 </Box>

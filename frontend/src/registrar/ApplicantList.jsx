@@ -26,7 +26,6 @@ import {
     FormControlLabel,
     DialogActions
 } from '@mui/material';
-import { Search } from '@mui/icons-material';
 import { io } from "socket.io-client";
 import { Snackbar, Alert } from '@mui/material';
 import { useNavigate, useLocation } from "react-router-dom";
@@ -44,6 +43,7 @@ import PeopleIcon from "@mui/icons-material/People";
 import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
 import Unauthorized from "../components/Unauthorized";
 import LoadingOverlay from "../components/LoadingOverlay";
+import SearchIcon from "@mui/icons-material/Search";
 
 
 
@@ -977,15 +977,23 @@ th {
                         variant="outlined"
                         placeholder="Search Applicant Name / Email / Applicant ID"
                         size="small"
-                        style={{ width: '450px' }}
+                      
                         value={searchQuery}
                         onChange={(e) => {
                             setSearchQuery(e.target.value);
                             setCurrentPage(1); // Corrected
                         }}
 
+                        sx={{
+                            width: 450,
+                            backgroundColor: "#fff",
+                            borderRadius: 1,
+                            "& .MuiOutlinedInput-root": {
+                                borderRadius: "10px",
+                            },
+                        }}
                         InputProps={{
-                            startAdornment: <Search sx={{ mr: 1 }} />,
+                            startAdornment: <SearchIcon sx={{ mr: 1, color: "gray" }} />,
                         }}
                     />
                 </Box>

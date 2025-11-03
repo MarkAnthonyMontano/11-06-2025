@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import { Button, Box, TextField, Container, Card, Modal, TableContainer, Paper, Table, TableHead, TableRow, TableCell, Typography, FormControl, FormHelperText, InputLabel, Select, MenuItem, Checkbox, FormControlLabel } from "@mui/material";
-import { Link } from "react-router-dom";
+import { Button, Box, TextField, Container, Typography, Card, TableContainer, Paper, Table, TableHead, TableRow, TableCell, FormHelperText, FormControl, InputLabel, Select, MenuItem, Modal, FormControlLabel, Checkbox, IconButton } from "@mui/material";
+import { Link, useLocation } from "react-router-dom";
 import PersonIcon from "@mui/icons-material/Person";
 import FamilyRestroomIcon from "@mui/icons-material/FamilyRestroom";
 import SchoolIcon from "@mui/icons-material/School";
@@ -10,19 +10,22 @@ import InfoIcon from "@mui/icons-material/Info";
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import ErrorIcon from '@mui/icons-material/Error';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { motion } from "framer-motion";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
+import ExamPermit from "../applicant/ExamPermit";
 import ListAltIcon from "@mui/icons-material/ListAlt";
 import DescriptionIcon from "@mui/icons-material/Description";
 import PsychologyIcon from "@mui/icons-material/Psychology";
 import HowToRegIcon from '@mui/icons-material/HowToReg';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
-import ExamPermit from "../applicant/ExamPermit";
 import Unauthorized from "../components/Unauthorized";
 import LoadingOverlay from "../components/LoadingOverlay";
 
+
 const MedicalDashboard3 = () => {
+
+
     const stepsData = [
         { label: "Medical Applicant List", to: "/medical_applicant_list", icon: <ListAltIcon /> },
         { label: "Applicant Form", to: "/medical_dashboard1", icon: <HowToRegIcon /> },
@@ -30,21 +33,8 @@ const MedicalDashboard3 = () => {
         { label: "Medical History", to: "/medical_requirements_form", icon: <PersonIcon /> },
         { label: "Dental Assessment", to: "/dental_assessment", icon: <DescriptionIcon /> },
         { label: "Physical and Neurological Examination", to: "/physical_neuro_exam", icon: <SchoolIcon /> },
-    ];
-    const [currentStep, setCurrentStep] = useState(1);
-    const [visitedSteps, setVisitedSteps] = useState(Array(stepsData.length).fill(false));
 
-    const fetchByPersonId = async (personID) => {
-        try {
-            const res = await axios.get(`http://localhost:5000/api/person_with_applicant/${personID}`);
-            setPerson(res.data);
-            setSelectedPerson(res.data);
-            if (res.data?.applicant_number) {
-            }
-        } catch (err) {
-            console.error("❌ person_with_applicant failed:", err);
-        }
-    };
+    ];
 
     const handleNavigateStep = (index, to) => {
         setCurrentStep(index);
@@ -58,10 +48,11 @@ const MedicalDashboard3 = () => {
     };
 
 
-    const navigate = useNavigate();
-    const [explicitSelection, setExplicitSelection] = useState(false);
+    const [currentStep, setCurrentStep] = useState(1);
+    const [visitedSteps, setVisitedSteps] = useState(Array(stepsData.length).fill(false));
 
-    const [selectedPerson, setSelectedPerson] = useState(null);
+
+    const navigate = useNavigate();
     const [userID, setUserID] = useState("");
     const [user, setUser] = useState("");
     const [userRole, setUserRole] = useState("");
@@ -82,14 +73,11 @@ const MedicalDashboard3 = () => {
         yearGraduated1: "",
         strand: "",
     });
-    const location = useLocation();
-    const queryParams = new URLSearchParams(location.search);
-    const queryPersonId = queryParams.get("person_id");
+
 
 
     const [hasAccess, setHasAccess] = useState(null);
     const [loading, setLoading] = useState(false);
-
 
     const pageId = 34;
 
@@ -137,6 +125,17 @@ const MedicalDashboard3 = () => {
 
 
 
+
+
+
+
+    // do not alter
+    const location = useLocation();
+    const queryParams = new URLSearchParams(location.search);
+    const queryPersonId = queryParams.get("person_id")?.trim() || "";
+
+
+
     useEffect(() => {
         const storedUser = localStorage.getItem("email");
         const storedRole = localStorage.getItem("role");
@@ -161,78 +160,66 @@ const MedicalDashboard3 = () => {
             sessionStorage.setItem("admin_edit_person_id", targetId);
 
             setUserID(targetId);
-            fetchPersonData(targetId);
+            fetchByPersonId(targetId);
             return;
         }
 
         window.location.href = "/login";
     }, [queryPersonId]);
 
-    useEffect(() => {
-        let consumedFlag = false;
+    const [selectedPerson, setSelectedPerson] = useState(null);
 
-        const tryLoad = async () => {
-            if (queryPersonId) {
-                await fetchByPersonId(queryPersonId);
-                setExplicitSelection(true);
-                consumedFlag = true;
-                return;
-            }
-
-            // fallback only if it's a fresh selection from Applicant List
-            const source = sessionStorage.getItem("admin_edit_person_id_source");
-            const tsStr = sessionStorage.getItem("admin_edit_person_id_ts");
-            const id = sessionStorage.getItem("admin_edit_person_id");
-            const ts = tsStr ? parseInt(tsStr, 10) : 0;
-            const isFresh = source === "applicant_list" && Date.now() - ts < 5 * 60 * 1000;
-
-            if (id && isFresh) {
-                await fetchByPersonId(id);
-                setExplicitSelection(true);
-                consumedFlag = true;
-            }
-        };
-
-        tryLoad().finally(() => {
-            // consume the freshness so it won't auto-load again later
-            if (consumedFlag) {
-                sessionStorage.removeItem("admin_edit_person_id_source");
-                sessionStorage.removeItem("admin_edit_person_id_ts");
-            }
-        });
-    }, [queryPersonId]);
-
-
-
-
-    const fetchPersonData = async (id) => {
+    const fetchByPersonId = async (personID) => {
         try {
-            const res = await axios.get(`http://localhost:5000/api/person/${id}`);
-            const sanitizedData = Object.fromEntries(
-                Object.entries(res.data).map(([key, value]) => [key, value ?? ""])
-            );
-            setPerson(sanitizedData);
-        } catch (error) {
-            console.error(error);
+            const res = await axios.get(`http://localhost:5000/api/person/${personID}`);
+            setPerson(res.data);
+            setSelectedPerson(res.data);
+            if (res.data?.applicant_number) {
+                // optional: whatever logic you want
+            }
+        } catch (err) {
+            console.error("❌ person (DB3) fetch failed:", err);
         }
     };
 
 
 
 
-    // Do not alter
-    const handleUpdate = async (updatedData) => {
-        if (!person || !person.person_id) return;
-
+    // 🧠 Updates record in ENROLLMENT.person_table in real time
+    const handleUpdate = async (updatedPerson) => {
         try {
-            await axios.put(`http://localhost:5000/api/person/${person.person_id}`, updatedData);
-            console.log("✅ Auto-saved successfully");
+            // ✅ force the request to the enrollment route
+            await axios.put(`http://localhost:5000/api/enrollment/person/${userID}`, updatedPerson);
+            console.log("✅ Auto-saved to ENROLLMENT DB3");
         } catch (error) {
             console.error("❌ Auto-save failed:", error);
         }
     };
+    // Real-time save on every character typed
+    const handleChange = (e) => {
+        const { name, type, checked, value } = e.target;
+        const updatedPerson = {
+            ...person,
+            [name]: type === "checkbox" ? (checked ? 1 : 0) : value,
+        };
+        setPerson(updatedPerson);
+        handleUpdate(updatedPerson); // No delay, real-time save
+    };
 
 
+    const handleBlur = async () => {
+        try {
+            await axios.put(`http://localhost:5000/api/enrollment/person/${userID}`, person);
+            console.log("✅ Auto-saved (on blur) to ENROLLMENT DB3");
+        } catch (err) {
+            console.error("❌ Auto-save failed (on blur):", err);
+        }
+    };
+
+
+
+    const [activeStep, setActiveStep] = useState(2);
+    const [clickedSteps, setClickedSteps] = useState([]);
 
 
     const steps = person.person_id
@@ -248,47 +235,16 @@ const MedicalDashboard3 = () => {
 
 
 
-    const [activeStep, setActiveStep] = useState(2);
+    const handleStepClick = (index) => {
+        setActiveStep(index);
+        setClickedSteps((prev) => [...new Set([...prev, index])]);
+        navigate(steps[index].path); // Go to the clicked step’s page
+    };
 
 
     const [errors, setErrors] = useState({});
 
-    const isFormValid = () => {
-        const requiredFields = [
-            // Original fields
-            "schoolLevel", "schoolLastAttended", "schoolAddress", "courseProgram",
-            "honor", "generalAverage", "yearGraduated", "strand",
 
-            // Newly added fields
-            "schoolLevel1", "schoolLastAttended1", "schoolAddress1", "courseProgram1",
-            "honor1", "generalAverage1", "yearGraduated1"
-        ];
-
-        let newErrors = {};
-        let isValid = true;
-
-        requiredFields.forEach((field) => {
-            const value = person[field];
-            const stringValue = value?.toString().trim();
-
-            if (!stringValue) {
-                newErrors[field] = true;
-                isValid = false;
-            }
-        });
-
-        setErrors(newErrors);
-        return isValid;
-    };
-
-    const [clickedSteps, setClickedSteps] = useState(Array(steps.length).fill(false));
-
-    const handleStepClick = (index) => {
-        setActiveStep(index);
-        const newClickedSteps = [...clickedSteps];
-        newClickedSteps[index] = true;
-        setClickedSteps(newClickedSteps);
-    };
 
 
     const divToPrintRef = useRef();
@@ -341,29 +297,6 @@ const MedicalDashboard3 = () => {
         setExamPermitError("");
     };
 
-    const handleExamPermitClick = async () => {
-        try {
-            const res = await axios.get("http://localhost:5000/api/verified-exam-applicants");
-            const verified = res.data.some(a => a.person_id === parseInt(userID));
-
-            if (!verified) {
-                setExamPermitError("❌ You cannot print the Exam Permit until all required documents are verified.");
-                setExamPermitModalOpen(true);
-                return;
-            }
-
-            // ✅ Render permit and print
-            setShowPrintView(true);
-            setTimeout(() => {
-                printDiv();
-                setShowPrintView(false);
-            }, 500);
-        } catch (err) {
-            console.error("Error verifying exam permit eligibility:", err);
-            setExamPermitError("⚠️ Unable to check document verification status right now.");
-            setExamPermitModalOpen(true);
-        }
-    };
 
 
     const links = [
@@ -372,10 +305,8 @@ const MedicalDashboard3 = () => {
         { to: `/admin_personal_data_form`, label: "Personal Data Form" },
         { to: `/admin_office_of_the_registrar`, label: "Application For EARIST College Admission" },
         { to: `/admission_services`, label: "Application/Student Satisfactory Survey" },
-        { label: "Examination Permit", onClick: handleExamPermitClick }, // ✅
+
     ];
-
-
 
     const [canPrintPermit, setCanPrintPermit] = useState(false);
 
@@ -390,25 +321,39 @@ const MedicalDashboard3 = () => {
 
 
 
+    const [searchQuery, setSearchQuery] = useState("");
+    const [searchError, setSearchError] = useState("");
+
+    useEffect(() => {
+        const savedPerson = sessionStorage.getItem("admin_edit_person_data");
+        if (savedPerson) {
+            try {
+                const parsed = JSON.parse(savedPerson);
+                setPerson(parsed);
+            } catch (err) {
+                console.error("Failed to parse saved person:", err);
+            }
+        }
+    }, []);
+
     return (
         <Box sx={{ height: "calc(100vh - 150px)", overflowY: "auto", paddingRight: 1, backgroundColor: "transparent" }}>
-
             {showPrintView && (
                 <div ref={divToPrintRef} style={{ display: "block" }}>
                     <ExamPermit personId={userID} />   {/* ✅ pass the searched person_id */}
                 </div>
             )}
 
-
+            {/* Top header: DOCUMENTS SUBMITTED + Search */}
             <Box
                 sx={{
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     flexWrap: 'wrap',
-                   
+
                     mb: 2,
-                  
+
                 }}
             >
                 <Typography
@@ -421,9 +366,15 @@ const MedicalDashboard3 = () => {
                 >
                     MEDICAL - EDUCATIONAL ATTAINMENT
                 </Typography>
+
+
             </Box>
+
             <hr style={{ border: "1px solid #ccc", width: "100%" }} />
             <br />
+
+
+
 
             <Box
                 sx={{
@@ -494,7 +445,6 @@ const MedicalDashboard3 = () => {
                 ))}
             </Box>
 
-
             <br />
 
 
@@ -503,21 +453,20 @@ const MedicalDashboard3 = () => {
                 <Table>
                     <TableHead sx={{ backgroundColor: '#6D2323' }}>
                         <TableRow>
-                            {/* Left cell: Applicant ID */}
+                            {/* Left cell: Student Number */}
                             <TableCell sx={{ color: 'white', fontSize: '20px', fontFamily: 'Arial Black', border: 'none' }}>
-                                Applicant ID:&nbsp;
+                                Student Number:&nbsp;
                                 <span style={{ fontFamily: "Arial", fontWeight: "normal", textDecoration: "underline" }}>
-                                    {person?.applicant_number || "N/A"}
-
+                                    {person?.student_number || "N/A"}
                                 </span>
                             </TableCell>
 
-                            {/* Right cell: Applicant Name */}
+                            {/* Right cell: Student Name */}
                             <TableCell
                                 align="right"
                                 sx={{ color: 'white', fontSize: '20px', fontFamily: 'Arial Black', border: 'none' }}
                             >
-                                Applicant Name:&nbsp;
+                                Student Name:&nbsp;
                                 <span style={{ fontFamily: "Arial", fontWeight: "normal", textDecoration: "underline" }}>
                                     {person?.last_name?.toUpperCase()}, {person?.first_name?.toUpperCase()}{" "}
                                     {person?.middle_name?.toUpperCase()} {person?.extension?.toUpperCase() || ""}
@@ -528,56 +477,58 @@ const MedicalDashboard3 = () => {
                 </Table>
             </TableContainer>
 
-
-            <Box sx={{ display: "flex", width: "100%" }}>
-                {/* Left side: Notice */}
-                <Box sx={{ width: "100%", padding: "10px" }}>
+            <Box
+                sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "100%",
+                    mt: 2,
+                }}
+            >
+                <Box
+                    sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 2,
+                        p: 2,
+                        borderRadius: "10px",
+                        backgroundColor: "#fffaf5",
+                        border: "1px solid #6D2323",
+                        boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.05)",
+                        whiteSpace: "nowrap", // Prevent text wrapping
+                    }}
+                >
+                    {/* Icon */}
                     <Box
                         sx={{
                             display: "flex",
                             alignItems: "center",
-                            gap: 2,
-                            p: 2,
-                            borderRadius: "10px",
-                            backgroundColor: "#fffaf5",
-                            border: "1px solid #6D2323",
-                            boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.05)",
-                            whiteSpace: "nowrap", // Keep all in one row
+                            justifyContent: "center",
+                            backgroundColor: "#6D2323",
+                            borderRadius: "8px",
+                            width: 40,
+                            height: 40,
+                            flexShrink: 0,
                         }}
                     >
-                        {/* Icon */}
-                        <Box
-                            sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                backgroundColor: "#6D2323",
-                                borderRadius: "8px",
-                                width: 40,
-                                height: 40,
-                                flexShrink: 0,
-                            }}
-                        >
-                            <ErrorIcon sx={{ color: "white", fontSize: 28 }} />
-                        </Box>
-
-                        {/* Notice Text */}
-                        <Typography
-                            sx={{
-                                fontSize: "15px",
-                                fontFamily: "Arial",
-                                color: "#3e3e3e",
-                            }}
-                        >
-                            <strong style={{ color: "maroon" }}>Notice:</strong> &nbsp;
-                            <strong>1.</strong> Kindly type <strong>'NA'</strong> in boxes where there are no possible answers to the information being requested. &nbsp; | &nbsp;
-                            <strong>2.</strong> To use the letter <strong>'Ñ'</strong>, press <kbd>ALT</kbd> + <kbd>165</kbd>; for <strong>'ñ'</strong>, press <kbd>ALT</kbd> + <kbd>164</kbd>. &nbsp; | &nbsp;
-                            <strong>3.</strong> This is the list of all printable files.
-                        </Typography>
+                        <ErrorIcon sx={{ color: "white", fontSize: 28 }} />
                     </Box>
+
+                    {/* Text in one row */}
+                    <Typography
+                        sx={{
+                            fontSize: "15px",
+                            fontFamily: "Arial",
+                            color: "#3e3e3e",
+                        }}
+                    >
+                        <strong style={{ color: "maroon" }}>Notice:</strong> &nbsp;
+                        <strong>1.</strong> Kindly type <strong>'NA'</strong> in boxes where there are no possible answers to the information being requested. &nbsp; | &nbsp;
+                        <strong>2.</strong> To use the letter <strong>'Ñ'</strong>, press <kbd>ALT</kbd> + <kbd>165</kbd>; for <strong>'ñ'</strong>, press <kbd>ALT</kbd> + <kbd>164</kbd>. &nbsp; | &nbsp;
+                        <strong>3.</strong> This is the list of all printable files.
+                    </Typography>
                 </Box>
-
-
             </Box>
 
             {/* Cards Section */}
@@ -657,75 +608,69 @@ const MedicalDashboard3 = () => {
 
 
 
-            <Container>
 
+
+
+            <Container>
 
                 <Container>
                     <h1 style={{ fontSize: "50px", fontWeight: "bold", textAlign: "center", color: "maroon", marginTop: "25px" }}>APPLICANT FORM</h1>
                     <div style={{ textAlign: "center" }}>Complete the applicant form to secure your place for the upcoming academic year at EARIST.</div>
                 </Container>
                 <br />
-                {person.person_id && (
-                    <Box sx={{ display: "flex", justifyContent: "center", width: "100%", px: 4 }}>
-                        {steps.map((step, index) => (
-                            <React.Fragment key={index}>
-                                {/* Wrap the step with Link for routing */}
-                                <Link to={step.path} style={{ textDecoration: "none" }}>
-                                    <Box
-                                        sx={{
-                                            display: "flex",
-                                            flexDirection: "column",
-                                            alignItems: "center",
-                                            cursor: "pointer",
-                                        }}
-                                        onClick={() => handleStepClick(index)}
-                                    >
-                                        {/* Step Icon */}
-                                        <Box
-                                            sx={{
-                                                width: 50,
-                                                height: 50,
-                                                borderRadius: "50%",
-                                                backgroundColor: activeStep === index ? "#6D2323" : "#E8C999",
-                                                color: activeStep === index ? "#fff" : "#000",
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                            }}
-                                        >
-                                            {step.icon}
-                                        </Box>
 
-                                        {/* Step Label */}
-                                        <Typography
-                                            sx={{
-                                                mt: 1,
-                                                color: activeStep === index ? "#6D2323" : "#000",
-                                                fontWeight: activeStep === index ? "bold" : "normal",
-                                                fontSize: 14,
-                                            }}
-                                        >
-                                            {step.label}
-                                        </Typography>
-                                    </Box>
-                                </Link>
+                <Box sx={{ display: "flex", justifyContent: "center", width: "100%", px: 4 }}>
+                    {steps.map((step, index) => (
+                        <React.Fragment key={index}>
+                            <Box
+                                sx={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    alignItems: "center",
+                                    cursor: "pointer",
+                                }}
+                                onClick={() => handleStepClick(index)}
+                            >
+                                <Box
+                                    sx={{
+                                        width: 50,
+                                        height: 50,
+                                        borderRadius: "50%",
+                                        backgroundColor: activeStep === index ? "#6D2323" : "#E8C999",
+                                        color: activeStep === index ? "#fff" : "#000",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                    }}
+                                >
+                                    {step.icon}
+                                </Box>
+                                <Typography
+                                    sx={{
+                                        mt: 1,
+                                        color: activeStep === index ? "#6D2323" : "#000",
+                                        fontWeight: activeStep === index ? "bold" : "normal",
+                                        fontSize: 14,
+                                    }}
+                                >
+                                    {step.label}
+                                </Typography>
+                            </Box>
+                            {index < steps.length - 1 && (
+                                <Box
+                                    sx={{
+                                        height: "2px",
+                                        backgroundColor: "#6D2323",
+                                        flex: 1,
+                                        alignSelf: "center",
+                                        mx: 2,
+                                    }}
+                                />
+                            )}
+                        </React.Fragment>
+                    ))}
+                </Box>
 
-                                {/* Connector Line */}
-                                {index < steps.length - 1 && (
-                                    <Box
-                                        sx={{
-                                            height: "2px",
-                                            backgroundColor: "#6D2323",
-                                            flex: 1,
-                                            alignSelf: "center",
-                                            mx: 2,
-                                        }}
-                                    />
-                                )}
-                            </React.Fragment>
-                        ))}
-                    </Box>
-                )}
                 <br />
 
                 <form>
@@ -769,13 +714,14 @@ const MedicalDashboard3 = () => {
                                     <FormControl fullWidth size="small" required error={!!errors.schoolLevel}>
                                         <InputLabel id="schoolLevel-label">School Level</InputLabel>
                                         <Select
+                                            readOnly
                                             labelId="schoolLevel-label"
                                             id="schoolLevel"
-                                            readOnly
                                             name="schoolLevel"
                                             value={person.schoolLevel ?? ""}
                                             label="School Level"
-
+                                            onChange={handleChange}
+                                            onBlur={handleBlur}
                                         >
                                             <MenuItem value="">
                                                 <em>Select School Level</em>
@@ -801,15 +747,16 @@ const MedicalDashboard3 = () => {
                                     School Last Attended
                                 </Typography>
                                 <TextField
-                                    fullWidth
-                                    size="small"
                                     InputProps={{ readOnly: true }}
 
+                                    fullWidth
+                                    size="small"
                                     required
                                     name="schoolLastAttended"
                                     placeholder="Enter School Last Attended"
-                                    value={person.schoolLastAttended}
-
+                                    value={person.schoolLastAttended ?? ""}
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
                                     error={errors.schoolLastAttended}
                                     helperText={errors.schoolLastAttended ? "This field is required." : ""}
                                 />
@@ -820,16 +767,16 @@ const MedicalDashboard3 = () => {
                                     School Address
                                 </Typography>
                                 <TextField
+                                              InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
-                                    InputProps={{ readOnly: true }}
-
                                     required
                                     name="schoolAddress"
-                                    value={person.schoolAddress}
-
+                                    value={person.schoolAddress ?? ""}
+                                    onChange={handleChange}
                                     placeholder="Enter your School Address"
-
+                                    onBlur={handleBlur}
                                     error={errors.schoolAddress}
                                     helperText={errors.schoolAddress ? "This field is required." : ""}
                                 />
@@ -840,15 +787,16 @@ const MedicalDashboard3 = () => {
                                     Course Program
                                 </Typography>
                                 <TextField
+                                            InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
-                                    InputProps={{ readOnly: true }}
-
                                     name="courseProgram"
                                     required
-                                    value={person.courseProgram}
+                                    value={person.courseProgram ?? ""}
                                     placeholder="Enter your Course Program"
-
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
                                     error={errors.courseProgram}
                                     helperText={errors.courseProgram ? "This field is required." : ""}
                                 />
@@ -867,15 +815,16 @@ const MedicalDashboard3 = () => {
                                     Honor
                                 </Typography>
                                 <TextField
+                                             InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
-                                    InputProps={{ readOnly: true }}
-
                                     name="honor"
                                     required
-                                    value={person.honor}
+                                    value={person.honor ?? ""}
                                     placeholder="Enter your Honor"
-
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
                                     error={errors.honor}
                                     helperText={errors.honor ? "This field is required." : ""}
                                 />
@@ -886,15 +835,16 @@ const MedicalDashboard3 = () => {
                                     General Average
                                 </Typography>
                                 <TextField
+                                            InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
-                                    InputProps={{ readOnly: true }}
-
                                     required
                                     name="generalAverage"
-                                    value={person.generalAverage}
+                                    value={person.generalAverage ?? ""}
                                     placeholder="Enter your General Average"
-
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
                                     error={errors.generalAverage}
                                     helperText={errors.generalAverage ? "This field is required." : ""}
                                 />
@@ -905,15 +855,16 @@ const MedicalDashboard3 = () => {
                                     Year Graduated
                                 </Typography>
                                 <TextField
+                                              InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     required
-                                    InputProps={{ readOnly: true }}
-
                                     name="yearGraduated"
                                     placeholder="Enter your Year Graduated"
-                                    value={person.yearGraduated}
-
+                                    value={person.yearGraduated ?? ""}
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
                                     error={errors.yearGraduated}
                                     helperText={errors.yearGraduated ? "This field is required." : ""}
                                 />
@@ -943,13 +894,14 @@ const MedicalDashboard3 = () => {
                                 <FormControl fullWidth size="small" required error={!!errors.schoolLevel1}>
                                     <InputLabel id="schoolLevel1-label">School Level</InputLabel>
                                     <Select
+                                        readOnly
                                         labelId="schoolLevel1-label"
                                         id="schoolLevel1"
-                                        readOnly
                                         name="schoolLevel1"
                                         value={person.schoolLevel1 ?? ""}
                                         label="School Level"
-
+                                        onChange={handleChange}
+                                        onBlur={handleBlur}
                                     >
                                         <MenuItem value=""><em>Select School Level</em></MenuItem>
                                         <MenuItem value="High School/Junior High School">High School/Junior High School</MenuItem>
@@ -971,15 +923,16 @@ const MedicalDashboard3 = () => {
                                     School Last Attended
                                 </Typography>
                                 <TextField
+                                             InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     required
-                                    InputProps={{ readOnly: true }}
-
                                     name="schoolLastAttended1"
                                     placeholder="Enter School Last Attended"
-                                    value={person.schoolLastAttended1}
-
+                                    value={person.schoolLastAttended1 ?? ""}
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
                                     error={errors.schoolLastAttended1}
                                     helperText={errors.schoolLastAttended1 ? "This field is required." : ""}
                                 />
@@ -991,15 +944,16 @@ const MedicalDashboard3 = () => {
                                     School Address
                                 </Typography>
                                 <TextField
+                                             InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     required
                                     name="schoolAddress1"
-                                    InputProps={{ readOnly: true }}
-
                                     placeholder="Enter your School Address"
-                                    value={person.schoolAddress1}
-
+                                    value={person.schoolAddress1 ?? ""}
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
                                     error={errors.schoolAddress1}
                                     helperText={errors.schoolAddress1 ? "This field is required." : ""}
                                 />
@@ -1011,15 +965,16 @@ const MedicalDashboard3 = () => {
                                     Course Program
                                 </Typography>
                                 <TextField
+                                              InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     required
-                                    InputProps={{ readOnly: true }}
-
                                     name="courseProgram1"
                                     placeholder="Enter your Course Program"
-                                    value={person.courseProgram1}
-
+                                    value={person.courseProgram1 ?? ""}
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
                                     error={errors.courseProgram1}
                                     helperText={errors.courseProgram1 ? "This field is required." : ""}
                                 />
@@ -1039,15 +994,16 @@ const MedicalDashboard3 = () => {
                                     Honor
                                 </Typography>
                                 <TextField
+                                          InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     required
                                     name="honor1"
-                                    InputProps={{ readOnly: true }}
-
                                     placeholder="Enter your Honor"
-                                    value={person.honor1}
-
+                                    value={person.honor1 ?? ""}
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
                                     error={errors.honor1}
                                     helperText={errors.honor1 ? "This field is required." : ""}
                                 />
@@ -1059,15 +1015,16 @@ const MedicalDashboard3 = () => {
                                     General Average
                                 </Typography>
                                 <TextField
+                                          InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     required
-                                    InputProps={{ readOnly: true }}
-
                                     name="generalAverage1"
                                     placeholder="Enter your General Average"
-                                    value={person.generalAverage1}
-
+                                    value={person.generalAverage1 ?? ""}
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
                                     error={errors.generalAverage1}
                                     helperText={errors.generalAverage1 ? "This field is required." : ""}
                                 />
@@ -1079,15 +1036,16 @@ const MedicalDashboard3 = () => {
                                     Year Graduated
                                 </Typography>
                                 <TextField
+                                              InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     required
-                                    InputProps={{ readOnly: true }}
-
                                     name="yearGraduated1"
                                     placeholder="Enter your Year Graduated"
-                                    value={person.yearGraduated1}
-
+                                    value={person.yearGraduated1 ?? ""}
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
                                     error={errors.yearGraduated1}
                                     helperText={errors.yearGraduated1 ? "This field is required." : ""}
                                 />
@@ -1104,13 +1062,14 @@ const MedicalDashboard3 = () => {
                         <FormControl fullWidth size="small" required error={!!errors.strand} className="mb-4">
                             <InputLabel id="strand-label">Strand</InputLabel>
                             <Select
+                                readOnly
                                 labelId="strand-label"
                                 id="strand-select"
                                 name="strand"
-                                readOnly
                                 value={person.strand ?? ""}
                                 label="Strand"
-
+                                onChange={handleChange}
+                                onBlur={handleBlur}
                             >
                                 <MenuItem value="">
                                     <em>Select Strand</em>
@@ -1138,7 +1097,6 @@ const MedicalDashboard3 = () => {
                                 <FormHelperText>This field is required.</FormHelperText>
                             )}
                         </FormControl>
-
 
                         <Modal
                             open={examPermitModalOpen}
@@ -1189,7 +1147,7 @@ const MedicalDashboard3 = () => {
                             <Button
                                 variant="contained"
                                 component={Link}
-                                to="/medical_dashboard2"
+                                to="/medical_dashboard3"
                                 startIcon={
                                     <ArrowBackIcon
                                         sx={{
@@ -1216,31 +1174,26 @@ const MedicalDashboard3 = () => {
                             {/* Next Step Button */}
                             <Button
                                 variant="contained"
-                                onClick={(e) => {
-
-
-                                    if (isFormValid()) {
-                                        navigate("/medical_dashboard4");
-                                    } else {
-                                        alert("Please complete all required fields before proceeding.");
-                                    }
+                                onClick={() => {
+                                    handleUpdate();
+                                    navigate("/medical_dashboard4");
                                 }}
                                 endIcon={
                                     <ArrowForwardIcon
                                         sx={{
-                                            color: '#fff',
-                                            transition: 'color 0.3s',
+                                            color: "#fff",
+                                            transition: "color 0.3s",
                                         }}
                                     />
                                 }
                                 sx={{
-                                    backgroundColor: '#6D2323',
-                                    color: '#fff',
-                                    '&:hover': {
-                                        backgroundColor: '#E8C999',
-                                        color: '#000',
-                                        '& .MuiSvgIcon-root': {
-                                            color: '#000',
+                                    backgroundColor: "#6D2323",
+                                    color: "#fff",
+                                    "&:hover": {
+                                        backgroundColor: "#E8C999",
+                                        color: "#000",
+                                        "& .MuiSvgIcon-root": {
+                                            color: "#000",
                                         },
                                     },
                                 }}
@@ -1248,7 +1201,6 @@ const MedicalDashboard3 = () => {
                                 Next Step
                             </Button>
                         </Box>
-
 
 
                     </Container>

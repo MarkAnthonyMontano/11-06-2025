@@ -197,7 +197,7 @@ const StudentDashboard1 = () => {
             if (!userID) return;
 
             try {
-                const res = await axios.get(`http://localhost:5000/api/person_with_applicant/${userID}`);
+                const res = await axios.get(`http://localhost:5000/api/student_data_as_applicant/${userID}`);
                 if (res.data) {
                     setPerson(res.data);
                     setSelectedPerson(res.data);
@@ -683,7 +683,7 @@ const StudentDashboard1 = () => {
                 });
 
                 if (res.data && res.data.person_id) {
-                    const details = await axios.get(`http://localhost:5000/api/person_with_applicant/${res.data.person_id}`);
+                    const details = await axios.get(`http://localhost:5000/api/student_data_as_applicant/${res.data.person_id}`);
                     setPerson(details.data);
 
                     sessionStorage.setItem("student_edit_person_id", details.data.person_id);

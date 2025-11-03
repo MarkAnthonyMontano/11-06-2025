@@ -37,6 +37,7 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
 import Unauthorized from "../components/Unauthorized";
 import LoadingOverlay from "../components/LoadingOverlay";
+import SearchIcon from "@mui/icons-material/Search";
 
 
 
@@ -529,14 +530,22 @@ const StudentNumbering = () => {
                     variant="outlined"
                     placeholder="Search Applicant Name / Email / Applicant ID"
                     size="small"
-                    style={{ width: '425px' }}
+
                     value={searchQuery}
                     onChange={(e) => {
                         setSearchQuery(e.target.value);
                         setCurrentPage(1);
                     }}
+                    sx={{
+                        width: 450,
+                        backgroundColor: "#fff",
+                        borderRadius: 1,
+                        "& .MuiOutlinedInput-root": {
+                            borderRadius: "10px",
+                        },
+                    }}
                     InputProps={{
-                        startAdornment: <Search sx={{ mr: 1 }} />,
+                        startAdornment: <SearchIcon sx={{ mr: 1, color: "gray" }} />,
                     }}
                 />
             </Box>

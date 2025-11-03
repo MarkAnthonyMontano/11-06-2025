@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import { Button, Box, TextField, Container, Modal, Card, TableContainer, Paper, Table, TableHead, TableRow, TableCell, Typography, FormControl, FormHelperText, InputLabel, Select, MenuItem, Checkbox, FormControlLabel, FormGroup, TableBody } from "@mui/material";
-import { Link } from "react-router-dom";
+import { Button, Box, TextField, Container, Typography, Card, TableContainer, Paper, Table, TableHead, TableRow, TableCell, FormHelperText, FormControl, InputLabel, Select, MenuItem, Modal, FormControlLabel, Checkbox, FormGroup, TableBody, } from "@mui/material";
+import { Link, useLocation } from "react-router-dom";
 import PersonIcon from "@mui/icons-material/Person";
 import FamilyRestroomIcon from "@mui/icons-material/FamilyRestroom";
 import SchoolIcon from "@mui/icons-material/School";
@@ -10,43 +10,33 @@ import InfoIcon from "@mui/icons-material/Info";
 import ErrorIcon from '@mui/icons-material/Error';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { motion } from "framer-motion";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
+import ExamPermit from "../applicant/ExamPermit";
 import ListAltIcon from "@mui/icons-material/ListAlt";
 import DescriptionIcon from "@mui/icons-material/Description";
 import PsychologyIcon from "@mui/icons-material/Psychology";
 import HowToRegIcon from '@mui/icons-material/HowToReg';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
-import ExamPermit from "../applicant/ExamPermit";
 import Unauthorized from "../components/Unauthorized";
 import LoadingOverlay from "../components/LoadingOverlay";
 
+
 const MedicalDashboard4 = () => {
-    const stepsData = [
+    
+
+ const stepsData = [
         { label: "Medical Applicant List", to: "/medical_applicant_list", icon: <ListAltIcon /> },
         { label: "Applicant Form", to: "/medical_dashboard1", icon: <HowToRegIcon /> },
         { label: "Submitted Documents", to: "/medical_requirements", icon: <UploadFileIcon /> }, // updated icon
         { label: "Medical History", to: "/medical_requirements_form", icon: <PersonIcon /> },
         { label: "Dental Assessment", to: "/dental_assessment", icon: <DescriptionIcon /> },
         { label: "Physical and Neurological Examination", to: "/physical_neuro_exam", icon: <SchoolIcon /> },
+
     ];
-    const [currentStep, setCurrentStep] = useState(1);
-    const [visitedSteps, setVisitedSteps] = useState(Array(stepsData.length).fill(false));
 
-    const fetchByPersonId = async (personID) => {
-        try {
-            const res = await axios.get(`http://localhost:5000/api/person_with_applicant/${personID}`);
-            setPerson(res.data);
-            setSelectedPerson(res.data);
-            if (res.data?.applicant_number) {
-            }
-        } catch (err) {
-            console.error("❌ person_with_applicant failed:", err);
-        }
-    };
-
-    const handleNavigateStep = (index, to) => {
+       const handleNavigateStep = (index, to) => {
         setCurrentStep(index);
 
         const pid = sessionStorage.getItem("admin_edit_person_id");
@@ -58,9 +48,11 @@ const MedicalDashboard4 = () => {
     };
 
 
-    const navigate = useNavigate();
-    const [explicitSelection, setExplicitSelection] = useState(false);
+    const [currentStep, setCurrentStep] = useState(1);
+    const [visitedSteps, setVisitedSteps] = useState(Array(stepsData.length).fill(false));
 
+
+    const navigate = useNavigate();
     const [userID, setUserID] = useState("");
     const [user, setUser] = useState("");
     const [userRole, setUserRole] = useState("");
@@ -73,7 +65,7 @@ const MedicalDashboard4 = () => {
         booster1Brand: "", booster1Date: "", booster2Brand: "", booster2Date: "",
         chestXray: "", cbc: "", urinalysis: "", otherworkups: "", symptomsToday: "", remarks: ""
     });
-    const [selectedPerson, setSelectedPerson] = useState(null);
+
 
     const [hasAccess, setHasAccess] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -124,10 +116,10 @@ const MedicalDashboard4 = () => {
     };
 
 
-
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
-    const queryPersonId = queryParams.get("person_id");
+    const queryPersonId = queryParams.get("person_id")?.trim() || "";
+
 
 
     useEffect(() => {
@@ -154,64 +146,40 @@ const MedicalDashboard4 = () => {
             sessionStorage.setItem("admin_edit_person_id", targetId);
 
             setUserID(targetId);
-            fetchPersonData(targetId);
+            fetchByPersonId(targetId);
             return;
         }
 
         window.location.href = "/login";
     }, [queryPersonId]);
 
-    useEffect(() => {
-        let consumedFlag = false;
+    const [selectedPerson, setSelectedPerson] = useState(null);
 
-        const tryLoad = async () => {
-            if (queryPersonId) {
-                await fetchByPersonId(queryPersonId);
-                setExplicitSelection(true);
-                consumedFlag = true;
-                return;
-            }
-
-            // fallback only if it's a fresh selection from Applicant List
-            const source = sessionStorage.getItem("admin_edit_person_id_source");
-            const tsStr = sessionStorage.getItem("admin_edit_person_id_ts");
-            const id = sessionStorage.getItem("admin_edit_person_id");
-            const ts = tsStr ? parseInt(tsStr, 10) : 0;
-            const isFresh = source === "applicant_list" && Date.now() - ts < 5 * 60 * 1000;
-
-            if (id && isFresh) {
-                await fetchByPersonId(id);
-                setExplicitSelection(true);
-                consumedFlag = true;
-            }
-        };
-
-        tryLoad().finally(() => {
-            // consume the freshness so it won't auto-load again later
-            if (consumedFlag) {
-                sessionStorage.removeItem("admin_edit_person_id_source");
-                sessionStorage.removeItem("admin_edit_person_id_ts");
-            }
-        });
-    }, [queryPersonId]);
-
-
-    // Do not alter
-    const fetchPersonData = async (id) => {
+    const fetchByPersonId = async (personID) => {
         try {
-            const res = await axios.get(`http://localhost:5000/api/person/${id}`);
+            const res = await axios.get(`http://localhost:5000/api/person/${personID}`);
             setPerson(res.data);
-        } catch (error) { }
+            setSelectedPerson(res.data);
+            if (res.data?.applicant_number) {
+                // optional: whatever logic you want
+            }
+        } catch (err) {
+            console.error("❌ person (DB3) fetch failed:", err);
+        }
     };
 
 
-    // Do not alter
-    const handleUpdate = async (updatedData) => {
-        if (!person || !person.person_id) return;
 
+
+
+
+
+    // 🧠 Updates record in ENROLLMENT.person_table in real time
+    const handleUpdate = async (updatedPerson) => {
         try {
-            await axios.put(`http://localhost:5000/api/person/${person.person_id}`, updatedData);
-            console.log("✅ Auto-saved successfully");
+            // ✅ force the request to the enrollment route
+            await axios.put(`http://localhost:5000/api/enrollment/person/${userID}`, updatedPerson);
+            console.log("✅ Auto-saved to ENROLLMENT DB3");
         } catch (error) {
             console.error("❌ Auto-save failed:", error);
         }
@@ -230,15 +198,18 @@ const MedicalDashboard4 = () => {
 
 
 
+    // 🖱️ Triggered when input loses focus (safety net)
     const handleBlur = async () => {
         try {
-            await axios.put(`http://localhost:5000/api/person/${userID}`, person);
-            console.log("Auto-saved");
+            await axios.put(`http://localhost:5000/api/enrollment/person/${userID}`, person);
+            console.log("✅ Auto-saved (on blur) to ENROLLMENT DB3");
         } catch (err) {
-            console.error("Auto-save failed", err);
+            console.error("❌ Auto-save failed (on blur):", err);
         }
     };
 
+    const [activeStep, setActiveStep] = useState(3);
+    const [clickedSteps, setClickedSteps] = useState([]);
 
 
     const steps = person.person_id
@@ -252,9 +223,11 @@ const MedicalDashboard4 = () => {
         : [];
 
 
-
-    const [activeStep, setActiveStep] = useState(3);
-
+    const handleStepClick = (index) => {
+        setActiveStep(index);
+        setClickedSteps((prev) => [...new Set([...prev, index])]);
+        navigate(steps[index].path); // Go to the clicked step’s page
+    };
     const inputStyle = {
         width: "100%",
         border: "1px solid #ccc",
@@ -263,16 +236,6 @@ const MedicalDashboard4 = () => {
         boxSizing: "border-box",
         backgroundColor: "white",
         color: "black",
-    };
-
-
-    const [clickedSteps, setClickedSteps] = useState(Array(steps.length).fill(false));
-
-    const handleStepClick = (index) => {
-        setActiveStep(index);
-        const newClickedSteps = [...clickedSteps];
-        newClickedSteps[index] = true;
-        setClickedSteps(newClickedSteps);
     };
 
 
@@ -326,29 +289,6 @@ const MedicalDashboard4 = () => {
         setExamPermitError("");
     };
 
-    const handleExamPermitClick = async () => {
-        try {
-            const res = await axios.get("http://localhost:5000/api/verified-exam-applicants");
-            const verified = res.data.some(a => a.person_id === parseInt(userID));
-
-            if (!verified) {
-                setExamPermitError("❌ You cannot print the Exam Permit until all required documents are verified.");
-                setExamPermitModalOpen(true);
-                return;
-            }
-
-            // ✅ Render permit and print
-            setShowPrintView(true);
-            setTimeout(() => {
-                printDiv();
-                setShowPrintView(false);
-            }, 500);
-        } catch (err) {
-            console.error("Error verifying exam permit eligibility:", err);
-            setExamPermitError("⚠️ Unable to check document verification status right now.");
-            setExamPermitModalOpen(true);
-        }
-    };
 
 
     const links = [
@@ -357,9 +297,8 @@ const MedicalDashboard4 = () => {
         { to: `/admin_personal_data_form`, label: "Personal Data Form" },
         { to: `/admin_office_of_the_registrar`, label: "Application For EARIST College Admission" },
         { to: `/admission_services`, label: "Application/Student Satisfactory Survey" },
-        { label: "Examination Permit", onClick: handleExamPermitClick }, // ✅
-    ];
 
+    ];
 
 
     const [canPrintPermit, setCanPrintPermit] = useState(false);
@@ -375,6 +314,20 @@ const MedicalDashboard4 = () => {
 
 
 
+    const [searchQuery, setSearchQuery] = useState("");
+    const [searchError, setSearchError] = useState("");
+    useEffect(() => {
+        const savedPerson = sessionStorage.getItem("admin_edit_person_data");
+        if (savedPerson) {
+            try {
+                const parsed = JSON.parse(savedPerson);
+                setPerson(parsed);
+            } catch (err) {
+                console.error("Failed to parse saved person:", err);
+            }
+        }
+    }, []);
+
 
     // Put this at the very bottom before the return 
     if (loading || hasAccess === null) {
@@ -387,6 +340,8 @@ const MedicalDashboard4 = () => {
         );
     }
 
+
+    // dot not alter
     return (
         <Box sx={{ height: "calc(100vh - 140px)", overflowY: "auto", paddingRight: 1, backgroundColor: "transparent" }}>
 
@@ -396,16 +351,16 @@ const MedicalDashboard4 = () => {
                 </div>
             )}
 
-
+            {/* Top header: DOCUMENTS SUBMITTED + Search */}
             <Box
                 sx={{
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     flexWrap: 'wrap',
-                   
+
                     mb: 2,
-                   
+
                 }}
             >
                 <Typography
@@ -418,11 +373,16 @@ const MedicalDashboard4 = () => {
                 >
                     MEDICAL - HEALTH MEDICAL RECORDS
                 </Typography>
+
+
             </Box>
+
             <hr style={{ border: "1px solid #ccc", width: "100%" }} />
             <br />
 
-            <Box
+            
+
+    <Box
                 sx={{
                     display: "flex",
                     justifyContent: "space-between",
@@ -494,26 +454,24 @@ const MedicalDashboard4 = () => {
             <br />
 
 
-
             <TableContainer component={Paper} sx={{ width: '100%', mb: 1 }}>
                 <Table>
                     <TableHead sx={{ backgroundColor: '#6D2323' }}>
                         <TableRow>
-                            {/* Left cell: Applicant ID */}
+                            {/* Left cell: Student Number */}
                             <TableCell sx={{ color: 'white', fontSize: '20px', fontFamily: 'Arial Black', border: 'none' }}>
-                                Applicant ID:&nbsp;
+                                Student Number:&nbsp;
                                 <span style={{ fontFamily: "Arial", fontWeight: "normal", textDecoration: "underline" }}>
-                                    {person?.applicant_number || "N/A"}
-
+                                    {person?.student_number || "N/A"}
                                 </span>
                             </TableCell>
 
-                            {/* Right cell: Applicant Name */}
+                            {/* Right cell: Student Name */}
                             <TableCell
                                 align="right"
                                 sx={{ color: 'white', fontSize: '20px', fontFamily: 'Arial Black', border: 'none' }}
                             >
-                                Applicant Name:&nbsp;
+                                Student Name:&nbsp;
                                 <span style={{ fontFamily: "Arial", fontWeight: "normal", textDecoration: "underline" }}>
                                     {person?.last_name?.toUpperCase()}, {person?.first_name?.toUpperCase()}{" "}
                                     {person?.middle_name?.toUpperCase()} {person?.extension?.toUpperCase() || ""}
@@ -524,57 +482,60 @@ const MedicalDashboard4 = () => {
                 </Table>
             </TableContainer>
 
-
-            <Box sx={{ display: "flex", width: "100%" }}>
-                {/* Left side: Notice */}
-                <Box sx={{ width: "100%", padding: "10px" }}>
+            <Box
+                sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "100%",
+                    mt: 2,
+                }}
+            >
+                <Box
+                    sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 2,
+                        p: 2,
+                        borderRadius: "10px",
+                        backgroundColor: "#fffaf5",
+                        border: "1px solid #6D2323",
+                        boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.05)",
+                        whiteSpace: "nowrap", // Prevent text wrapping
+                    }}
+                >
+                    {/* Icon */}
                     <Box
                         sx={{
                             display: "flex",
                             alignItems: "center",
-                            gap: 2,
-                            p: 2,
-                            borderRadius: "10px",
-                            backgroundColor: "#fffaf5",
-                            border: "1px solid #6D2323",
-                            boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.05)",
-                            whiteSpace: "nowrap", // Keep all in one row
+                            justifyContent: "center",
+                            backgroundColor: "#6D2323",
+                            borderRadius: "8px",
+                            width: 40,
+                            height: 40,
+                            flexShrink: 0,
                         }}
                     >
-                        {/* Icon */}
-                        <Box
-                            sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                backgroundColor: "#6D2323",
-                                borderRadius: "8px",
-                                width: 40,
-                                height: 40,
-                                flexShrink: 0,
-                            }}
-                        >
-                            <ErrorIcon sx={{ color: "white", fontSize: 28 }} />
-                        </Box>
-
-                        {/* Notice Text */}
-                        <Typography
-                            sx={{
-                                fontSize: "15px",
-                                fontFamily: "Arial",
-                                color: "#3e3e3e",
-                            }}
-                        >
-                            <strong style={{ color: "maroon" }}>Notice:</strong> &nbsp;
-                            <strong>1.</strong> Kindly type <strong>'NA'</strong> in boxes where there are no possible answers to the information being requested. &nbsp; | &nbsp;
-                            <strong>2.</strong> To use the letter <strong>'Ñ'</strong>, press <kbd>ALT</kbd> + <kbd>165</kbd>; for <strong>'ñ'</strong>, press <kbd>ALT</kbd> + <kbd>164</kbd>. &nbsp; | &nbsp;
-                            <strong>3.</strong> This is the list of all printable files.
-                        </Typography>
+                        <ErrorIcon sx={{ color: "white", fontSize: 28 }} />
                     </Box>
+
+                    {/* Text in one row */}
+                    <Typography
+                        sx={{
+                            fontSize: "15px",
+                            fontFamily: "Arial",
+                            color: "#3e3e3e",
+                        }}
+                    >
+                        <strong style={{ color: "maroon" }}>Notice:</strong> &nbsp;
+                        <strong>1.</strong> Kindly type <strong>'NA'</strong> in boxes where there are no possible answers to the information being requested. &nbsp; | &nbsp;
+                        <strong>2.</strong> To use the letter <strong>'Ñ'</strong>, press <kbd>ALT</kbd> + <kbd>165</kbd>; for <strong>'ñ'</strong>, press <kbd>ALT</kbd> + <kbd>164</kbd>. &nbsp; | &nbsp;
+                        <strong>3.</strong> This is the list of all printable files.
+                    </Typography>
                 </Box>
-
-
             </Box>
+
             {/* Cards Section */}
             <Box
                 sx={{
@@ -651,7 +612,10 @@ const MedicalDashboard4 = () => {
             </Box>
 
 
+
+
             <Container>
+
 
                 <Container>
                     <h1 style={{ fontSize: "50px", fontWeight: "bold", textAlign: "center", color: "maroon", marginTop: "25px" }}>APPLICANT FORM</h1>
@@ -659,67 +623,58 @@ const MedicalDashboard4 = () => {
                 </Container>
                 <br />
 
-                {person.person_id && (
-                    <Box sx={{ display: "flex", justifyContent: "center", width: "100%", px: 4 }}>
-                        {steps.map((step, index) => (
-                            <React.Fragment key={index}>
-                                {/* Wrap the step with Link for routing */}
-                                <Link to={step.path} style={{ textDecoration: "none" }}>
-                                    <Box
-                                        sx={{
-                                            display: "flex",
-                                            flexDirection: "column",
-                                            alignItems: "center",
-                                            cursor: "pointer",
-                                        }}
-                                        onClick={() => handleStepClick(index)}
-                                    >
-                                        {/* Step Icon */}
-                                        <Box
-                                            sx={{
-                                                width: 50,
-                                                height: 50,
-                                                borderRadius: "50%",
-                                                backgroundColor: activeStep === index ? "#6D2323" : "#E8C999",
-                                                color: activeStep === index ? "#fff" : "#000",
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                            }}
-                                        >
-                                            {step.icon}
-                                        </Box>
+                <Box sx={{ display: "flex", justifyContent: "center", width: "100%", px: 4 }}>
+                    {steps.map((step, index) => (
+                        <React.Fragment key={index}>
+                            <Box
+                                sx={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    alignItems: "center",
+                                    cursor: "pointer",
+                                }}
+                                onClick={() => handleStepClick(index)}
+                            >
+                                <Box
+                                    sx={{
+                                        width: 50,
+                                        height: 50,
+                                        borderRadius: "50%",
+                                        backgroundColor: activeStep === index ? "#6D2323" : "#E8C999",
+                                        color: activeStep === index ? "#fff" : "#000",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                    }}
+                                >
+                                    {step.icon}
+                                </Box>
+                                <Typography
+                                    sx={{
+                                        mt: 1,
+                                        color: activeStep === index ? "#6D2323" : "#000",
+                                        fontWeight: activeStep === index ? "bold" : "normal",
+                                        fontSize: 14,
+                                    }}
+                                >
+                                    {step.label}
+                                </Typography>
+                            </Box>
+                            {index < steps.length - 1 && (
+                                <Box
+                                    sx={{
+                                        height: "2px",
+                                        backgroundColor: "#6D2323",
+                                        flex: 1,
+                                        alignSelf: "center",
+                                        mx: 2,
+                                    }}
+                                />
+                            )}
+                        </React.Fragment>
+                    ))}
+                </Box>
 
-                                        {/* Step Label */}
-                                        <Typography
-                                            sx={{
-                                                mt: 1,
-                                                color: activeStep === index ? "#6D2323" : "#000",
-                                                fontWeight: activeStep === index ? "bold" : "normal",
-                                                fontSize: 14,
-                                            }}
-                                        >
-                                            {step.label}
-                                        </Typography>
-                                    </Box>
-                                </Link>
-
-                                {/* Connector Line */}
-                                {index < steps.length - 1 && (
-                                    <Box
-                                        sx={{
-                                            height: "2px",
-                                            backgroundColor: "#6D2323",
-                                            flex: 1,
-                                            alignSelf: "center",
-                                            mx: 2,
-                                        }}
-                                    />
-                                )}
-                            </React.Fragment>
-                        ))}
-                    </Box>
-                )}
                 <br />
 
                 <form>
@@ -754,11 +709,11 @@ const MedicalDashboard4 = () => {
                         <FormGroup row sx={{ ml: 2 }}>
                             {["cough", "colds", "fever"].map((symptom) => (
                                 <FormControlLabel
+                                disabled
                                     key={symptom}
                                     control={
                                         <Checkbox
                                             name={symptom}
-                                            disabled
                                             checked={person[symptom] === 1}
                                             onChange={(e) => {
                                                 const { name, checked } = e.target;
@@ -837,8 +792,8 @@ const MedicalDashboard4 = () => {
                                                                 {/* YES */}
                                                                 <div style={{ display: "flex", alignItems: "center", gap: "1px", }}>
                                                                     <Checkbox
+                                                                    disabled
                                                                         name={key}
-                                                                        disabled
                                                                         checked={person[key] === 1}
                                                                         onChange={() => {
                                                                             const updatedPerson = {
@@ -856,8 +811,8 @@ const MedicalDashboard4 = () => {
                                                                 {/* NO */}
                                                                 <div style={{ display: "flex", alignItems: "center", gap: "1px" }}>
                                                                     <Checkbox
+                                                                    disabled
                                                                         name={key}
-                                                                        disabled
                                                                         checked={person[key] === 0}
                                                                         onChange={() => {
                                                                             const updatedPerson = {
@@ -897,8 +852,8 @@ const MedicalDashboard4 = () => {
                                         <FormControlLabel
                                             control={
                                                 <Checkbox
+                                                disabled
                                                     name="hospitalized"
-                                                    disabled
                                                     checked={person.hospitalized === 1}
                                                     onChange={() => {
                                                         const updatedPerson = {
@@ -918,8 +873,8 @@ const MedicalDashboard4 = () => {
                                         <FormControlLabel
                                             control={
                                                 <Checkbox
+                                                disabled
                                                     name="hospitalized"
-                                                    disabled
                                                     checked={person.hospitalized === 0}
                                                     onChange={() => {
                                                         const updatedPerson = {
@@ -949,10 +904,10 @@ const MedicalDashboard4 = () => {
                                 IF YES, PLEASE SPECIFY:
                             </Typography>
                             <TextField
+                                  InputProps={{ readOnly: true }}
+
                                 fullWidth
                                 name="hospitalizationDetails"
-                                disabled
-
                                 placeholder=""
                                 variant="outlined"
                                 size="small"
@@ -980,12 +935,12 @@ const MedicalDashboard4 = () => {
 
                         <Box mb={2}>
                             <TextField
+                                   InputProps={{ readOnly: true }}
+
                                 fullWidth
                                 multiline
                                 minRows={3}
                                 name="medications"
-                                disabled
-
                                 variant="outlined"
                                 size="small"
                                 value={person.medications || ""}
@@ -1036,9 +991,9 @@ const MedicalDashboard4 = () => {
                                                 {/* YES */}
                                                 <Box display="flex" alignItems="center" gap="1px">
                                                     <Checkbox
+                                                    disabled
                                                         name="hadCovid"
                                                         checked={person.hadCovid === 1}
-                                                        disabled
                                                         onChange={() => {
                                                             const updatedPerson = {
                                                                 ...person,
@@ -1055,9 +1010,9 @@ const MedicalDashboard4 = () => {
                                                 {/* NO */}
                                                 <Box display="flex" alignItems="center" gap="1px">
                                                     <Checkbox
+                                                    disabled
                                                         name="hadCovid"
                                                         checked={person.hadCovid === 0}
-                                                        disabled
                                                         onChange={() => {
                                                             const updatedPerson = {
                                                                 ...person,
@@ -1077,9 +1032,9 @@ const MedicalDashboard4 = () => {
                                             {/* IF YES, WHEN */}
                                             <span>IF YES, WHEN:</span>
                                             <input
+                                            readOnly
                                                 type="date"
                                                 name="covidDate"
-                                                readOnly
                                                 value={person.covidDate || ""}
                                                 onChange={(e) => {
                                                     const updatedPerson = {
@@ -1140,10 +1095,9 @@ const MedicalDashboard4 = () => {
                                                     {["vaccine1Brand", "vaccine2Brand", "booster1Brand", "booster2Brand"].map((field) => (
                                                         <td key={field} style={{ padding: "4px" }}>
                                                             <input
+                                                            disabled
                                                                 type="text"
                                                                 name={field}
-                                                                disabled
-
                                                                 value={person[field] || ""}
                                                                 onChange={(e) => {
                                                                     const updatedPerson = {
@@ -1167,9 +1121,9 @@ const MedicalDashboard4 = () => {
                                                     {["vaccine1Date", "vaccine2Date", "booster1Date", "booster2Date"].map((field) => (
                                                         <td key={field} style={{ padding: "4px" }}>
                                                             <input
+                                                            readOnly
                                                                 type="date"
                                                                 name={field}
-                                                                readOnly
                                                                 value={person[field] || ""}
                                                                 onChange={(e) => {
                                                                     const updatedPerson = {
@@ -1208,11 +1162,10 @@ const MedicalDashboard4 = () => {
                                     <td className="border border-black p-2 w-1/3 font-medium">Chest X-ray:</td>
                                     <td className="border border-black p-2 w-2/3">
                                         <input
+                                        readOnly
                                             type="text"
                                             name="chestXray"
                                             value={person.chestXray || ""}
-                                            disabled
-
                                             onChange={(e) => {
                                                 const { name, value } = e.target;
                                                 const updatedPerson = { ...person, [name]: value };
@@ -1230,11 +1183,10 @@ const MedicalDashboard4 = () => {
                                     <td className="border border-black p-2 font-medium">CBC:</td>
                                     <td className="border border-black p-2">
                                         <input
+                                        readOnly
                                             type="text"
                                             name="cbc"
                                             value={person.cbc || ""}
-                                            disabled
-
                                             onChange={(e) => {
                                                 const { name, value } = e.target;
                                                 const updatedPerson = { ...person, [name]: value };
@@ -1252,11 +1204,10 @@ const MedicalDashboard4 = () => {
                                     <td className="border border-black p-2 font-medium">Urinalysis:</td>
                                     <td className="border border-black p-2">
                                         <input
+                                        readOnly
                                             type="text"
                                             name="urinalysis"
                                             value={person.urinalysis || ""}
-                                            disabled
-
                                             onChange={(e) => {
                                                 const { name, value } = e.target;
                                                 const updatedPerson = { ...person, [name]: value };
@@ -1274,11 +1225,10 @@ const MedicalDashboard4 = () => {
                                     <td className="border border-black p-2 font-medium">Other Workups:</td>
                                     <td className="border border-black p-2">
                                         <input
+                                        readOnly
                                             type="text"
                                             name="otherworkups"
                                             value={person.otherworkups || ""}
-                                            disabled
-
                                             onChange={(e) => {
                                                 const { name, value } = e.target;
                                                 const updatedPerson = { ...person, [name]: value };
@@ -1329,9 +1279,9 @@ const MedicalDashboard4 = () => {
                                                 {/* Physically Fit (0) */}
                                                 <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
                                                     <Checkbox
+                                                    disabled
                                                         name="symptomsToday"
                                                         checked={person.symptomsToday === 0}
-                                                        disabled
                                                         onChange={() => {
                                                             const updatedPerson = {
                                                                 ...person,
@@ -1348,9 +1298,9 @@ const MedicalDashboard4 = () => {
                                                 {/* For Compliance (1) */}
                                                 <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
                                                     <Checkbox
+                                                    disabled
                                                         name="symptomsToday"
                                                         checked={person.symptomsToday === 1}
-                                                        disabled
                                                         onChange={() => {
                                                             const updatedPerson = {
                                                                 ...person,
@@ -1388,12 +1338,11 @@ const MedicalDashboard4 = () => {
                                     <TableRow>
                                         <TableCell sx={{ border: "1px solid black", p: 1 }}>
                                             <TextField
+                                           disabled
                                                 name="remarks"
                                                 multiline
                                                 minRows={2}
                                                 fullWidth
-                                                disabled
-
                                                 size="small"
                                                 value={person.remarks || ""}
                                                 onChange={(e) => {
@@ -1462,6 +1411,10 @@ const MedicalDashboard4 = () => {
 
 
 
+
+
+
+
                         <Box display="flex" justifyContent="space-between" alignItems="center" mt={4}>
                             {/* Previous Page Button */}
                             <Button
@@ -1496,7 +1449,7 @@ const MedicalDashboard4 = () => {
                                 variant="contained"
                                 onClick={(e) => {
                                     handleUpdate();
-                                    navigate("/medical_dashboard5");
+                                    navigate("/medical_dashboard4");
 
                                 }}
                                 endIcon={

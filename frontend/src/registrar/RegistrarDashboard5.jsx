@@ -407,9 +407,9 @@ if (loading || hasAccess === null) {
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     flexWrap: 'wrap',
-                    mt: 3,
+                 
                     mb: 2,
-                    px: 2,
+                    
                 }}
             >
                 <Typography

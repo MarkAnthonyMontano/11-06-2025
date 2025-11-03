@@ -29,6 +29,8 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
 import Unauthorized from "../components/Unauthorized";
 import LoadingOverlay from "../components/LoadingOverlay";
+import SearchIcon from "@mui/icons-material/Search";
+
 
 const InterviewerApplicantList = () => {
   const settings = useContext(SettingsContext);
@@ -424,17 +426,25 @@ const InterviewerApplicantList = () => {
 
         <TextField
           variant="outlined"
-          placeholder="Search Proctor Name / Email"
+          placeholder="Search Interviewer Name / Email"
           size="small"
-          style={{ width: "450px" }}
+
           value={searchQuery}
           onChange={(e) => {
             setSearchQuery(e.target.value);
             handleSearch();
           }}
 
+          sx={{
+            width: 450,
+            backgroundColor: "#fff",
+            borderRadius: 1,
+            "& .MuiOutlinedInput-root": {
+              borderRadius: "10px",
+            },
+          }}
           InputProps={{
-            startAdornment: <Search sx={{ mr: 1 }} />,
+            startAdornment: <SearchIcon sx={{ mr: 1, color: "gray" }} />,
           }}
         />
       </Box>

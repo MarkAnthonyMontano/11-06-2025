@@ -362,9 +362,9 @@ const ReadmissionDashboard5 = () => {
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     flexWrap: 'wrap',
-                    mt: 2,
+                  
                     mb: 2,
-                    px: 2,
+                    
                 }}
             >
                 <Typography
@@ -657,6 +657,7 @@ const ReadmissionDashboard5 = () => {
                             <FormControlLabel
                                 control={
                                     <Checkbox
+                                    readOnly
                                         name="termsOfAgreement"
                                         checked={person.termsOfAgreement === 1}
                                         onChange={handleChange}

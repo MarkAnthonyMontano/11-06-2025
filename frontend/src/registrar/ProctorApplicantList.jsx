@@ -29,6 +29,7 @@ import PeopleIcon from "@mui/icons-material/People";
 import FactCheckIcon from "@mui/icons-material/FactCheck";
 import Unauthorized from "../components/Unauthorized";
 import LoadingOverlay from "../components/LoadingOverlay";
+import SearchIcon from "@mui/icons-material/Search";
 
 
 const ProctorApplicantList = () => {
@@ -415,9 +416,8 @@ const ProctorApplicantList = () => {
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
-          mt: 2,
           mb: 2,
-          px: 2,
+
         }}
       >
         <Typography
@@ -435,15 +435,23 @@ const ProctorApplicantList = () => {
           variant="outlined"
           placeholder="Search Proctor Name / Email"
           size="small"
-          style={{ width: "450px" }}
+
           value={searchQuery}
           onChange={(e) => {
             setSearchQuery(e.target.value);
             setCurrentPage(1); // reset page when searching
             handleSearch(); // 🔍 auto-search as you type
           }}
+          sx={{
+            width: 450,
+            backgroundColor: "#fff",
+            borderRadius: 1,
+            "& .MuiOutlinedInput-root": {
+              borderRadius: "10px",
+            },
+          }}
           InputProps={{
-            startAdornment: <Search sx={{ mr: 1 }} />,
+            startAdornment: <SearchIcon sx={{ mr: 1, color: "gray" }} />,
           }}
         />
       </Box>

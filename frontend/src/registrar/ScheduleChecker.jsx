@@ -342,6 +342,36 @@ const checkAccess = async (userID) => {
     }
   };
 
+  const handleDelete = async (scheduleId) => {
+    if (!window.confirm("Are you sure you want to delete this schedule?")) return;
+    
+    try {
+      const res = await axios.delete(
+        `http://localhost:5000/api/delete/schedule/${scheduleId}`
+      );
+      setMessage(res.data.message);
+      setOpenSnackbar(true);
+      fetchSchedule();
+      try {
+        const page_name = "Schedule Plotting";
+        const fullName = `${profData.lname}, ${profData.fname} ${profData.mname}`;
+        const type = "delete"
+  
+        await axios.post(`http://localhost:5000/insert-logs/faculty/${profData.prof_id}`, {
+          message: `Employee ID #${profData.prof_id} - ${fullName} successfully delete schedule in ${page_name}`, type: type,
+        });
+  
+      } catch (err) {
+        console.error("Error inserting audit log");
+      }
+    } catch (error) {
+      console.error("Error deleting schedule:", error);
+      setMessage("Failed to delete schedule.");
+      setOpenSnackbar(true);
+    }
+  };
+
+
   const handleCloseSnackbar = (event, reason) => {
     if (reason === "clickaway") return;
     setOpenSnackbar(false);
@@ -464,6 +494,7 @@ const checkAccess = async (userID) => {
           style={{ marginTop }}
         >
           {text}
+          <button onClick={() => handleDelete(entry.id)} > X </button>
         </span>
       );
     }
@@ -493,10 +524,10 @@ const checkAccess = async (userID) => {
 
   
 
-// Put this at the very bottom before the return 
-if (loading || hasAccess === null) {
-   return <LoadingOverlay open={loading} message="Check Access"/>;
-}
+  // Put this at the very bottom before the return 
+  if (loading || hasAccess === null) {
+    return <LoadingOverlay open={loading} message="Check Access"/>;
+  }
 
   if (!hasAccess) {
     return (

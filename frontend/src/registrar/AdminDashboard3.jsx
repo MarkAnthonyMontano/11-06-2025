@@ -219,6 +219,99 @@ const AdminDashboard3 = () => {
     }
   };
 
+  // Real-time save on every character typed
+  const handleChange = (e) => {
+    const { name, type, checked, value } = e.target;
+    const updatedPerson = {
+      ...person,
+      [name]: type === "checkbox" ? (checked ? 1 : 0) : value,
+    };
+    setPerson(updatedPerson);
+    handleUpdate(updatedPerson); // No delay, real-time save
+  };
+
+
+
+  const handleBlur = async () => {
+    try {
+      // ✅ Determine correct applicant/person_id
+      const targetId = selectedPerson?.person_id || queryPersonId || person.person_id;
+      if (!targetId) {
+        console.warn("⚠️ No valid applicant ID found — skipping update.");
+        return;
+      }
+
+      const allowedFields = [
+        "person_id", "profile_img", "campus", "academicProgram", "classifiedAs", "applyingAs",
+        "program", "program2", "program3", "yearLevel",
+        "last_name", "first_name", "middle_name", "extension", "nickname",
+        "height", "weight", "lrnNumber", "nolrnNumber", "gender",
+        "pwdMember", "pwdType", "pwdId",
+        "birthOfDate", "age", "birthPlace", "languageDialectSpoken",
+        "citizenship", "religion", "civilStatus", "tribeEthnicGroup",
+        "cellphoneNumber", "emailAddress",
+        "presentStreet", "presentBarangay", "presentZipCode", "presentRegion",
+        "presentProvince", "presentMunicipality", "presentDswdHouseholdNumber",
+        "sameAsPresentAddress",
+        "permanentStreet", "permanentBarangay", "permanentZipCode",
+        "permanentRegion", "permanentProvince", "permanentMunicipality",
+        "permanentDswdHouseholdNumber",
+        "solo_parent",
+        "father_deceased", "father_family_name", "father_given_name", "father_middle_name",
+        "father_ext", "father_nickname", "father_education", "father_education_level",
+        "father_last_school", "father_course", "father_year_graduated", "father_school_address",
+        "father_contact", "father_occupation", "father_employer", "father_income", "father_email",
+        "mother_deceased", "mother_family_name", "mother_given_name", "mother_middle_name",
+        "mother_ext", "mother_nickname", "mother_education", "mother_education_level",
+        "mother_last_school", "mother_course", "mother_year_graduated", "mother_school_address",
+        "mother_contact", "mother_occupation", "mother_employer", "mother_income", "mother_email",
+        "guardian", "guardian_family_name", "guardian_given_name", "guardian_middle_name",
+        "guardian_ext", "guardian_nickname", "guardian_address", "guardian_contact", "guardian_email",
+        "annual_income",
+        "schoolLevel", "schoolLastAttended", "schoolAddress", "courseProgram",
+        "honor", "generalAverage", "yearGraduated",
+        "schoolLevel1", "schoolLastAttended1", "schoolAddress1", "courseProgram1",
+        "honor1", "generalAverage1", "yearGraduated1",
+        "strand",
+        // 🩺 Health and medical
+        "cough", "colds", "fever", "asthma", "faintingSpells", "heartDisease",
+        "tuberculosis", "frequentHeadaches", "hernia", "chronicCough", "headNeckInjury",
+        "hiv", "highBloodPressure", "diabetesMellitus", "allergies", "cancer",
+        "smokingCigarette", "alcoholDrinking", "hospitalized", "hospitalizationDetails",
+        "medications",
+        // 🧬 Covid / Vaccination
+        "hadCovid", "covidDate",
+        "vaccine1Brand", "vaccine1Date", "vaccine2Brand", "vaccine2Date",
+        "booster1Brand", "booster1Date", "booster2Brand", "booster2Date",
+        // 🧪 Lab results / medical findings
+        "chestXray", "cbc", "urinalysis", "otherworkups",
+        // 🧍 Additional fields
+        "symptomsToday", "remarks",
+        // ✅ Agreement / Meta
+        "termsOfAgreement", "created_at", "current_step"
+      ];
+
+      // ✅ Clean payload before sending
+      const cleanedData = Object.fromEntries(
+        Object.entries(person).filter(([key]) => allowedFields.includes(key))
+      );
+
+      if (Object.keys(cleanedData).length === 0) {
+        console.warn("⚠️ No valid fields to update — skipping blur save.");
+        return;
+      }
+
+      // ✅ Execute safe update
+      await axios.put(`http://localhost:5000/api/person/${targetId}`, cleanedData);
+      console.log(`💾 Auto-saved (on blur) for person_id: ${targetId}`);
+    } catch (err) {
+      console.error("❌ Auto-save (on blur) failed:", {
+        message: err.message,
+        status: err.response?.status,
+        details: err.response?.data || err,
+      });
+    }
+  };
 
 
 
@@ -799,13 +892,14 @@ const AdminDashboard3 = () => {
                   <FormControl fullWidth size="small" required error={!!errors.schoolLevel}>
                     <InputLabel id="schoolLevel-label">School Level</InputLabel>
                     <Select
+                      readOnly
                       labelId="schoolLevel-label"
                       id="schoolLevel"
-                      readOnly
                       name="schoolLevel"
                       value={person.schoolLevel ?? ""}
                       label="School Level"
-
+                      onChange={handleChange}
+                      onBlur={handleBlur}
                     >
                       <MenuItem value="">
                         <em>Select School Level</em>
@@ -831,15 +925,16 @@ const AdminDashboard3 = () => {
                   School Last Attended
                 </Typography>
                 <TextField
-                  fullWidth
-                  size="small"
                   InputProps={{ readOnly: true }}
 
+                  fullWidth
+                  size="small"
                   required
                   name="schoolLastAttended"
                   placeholder="Enter School Last Attended"
-                  value={person.schoolLastAttended || ""}
-
+                  value={person.schoolLastAttended ?? ""}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
                   error={errors.schoolLastAttended}
                   helperText={errors.schoolLastAttended ? "This field is required." : ""}
                 />
@@ -850,16 +945,16 @@ const AdminDashboard3 = () => {
                   School Address
                 </Typography>
                 <TextField
-                  fullWidth
-                  size="small"
                   InputProps={{ readOnly: true }}
 
+                  fullWidth
+                  size="small"
                   required
                   name="schoolAddress"
-                  value={person.schoolAddress || ""}
-
+                  value={person.schoolAddress ?? ""}
+                  onChange={handleChange}
                   placeholder="Enter your School Address"
-
+                  onBlur={handleBlur}
                   error={errors.schoolAddress}
                   helperText={errors.schoolAddress ? "This field is required." : ""}
                 />
@@ -870,15 +965,16 @@ const AdminDashboard3 = () => {
                   Course Program
                 </Typography>
                 <TextField
-                  fullWidth
-                  size="small"
                   InputProps={{ readOnly: true }}
 
+                  fullWidth
+                  size="small"
                   name="courseProgram"
                   required
-                  value={person.courseProgram || ""}
+                  value={person.courseProgram ?? ""}
                   placeholder="Enter your Course Program"
-
+                  onChange={handleChange}
+                  onBlur={handleBlur}
                   error={errors.courseProgram}
                   helperText={errors.courseProgram ? "This field is required." : ""}
                 />
@@ -897,15 +993,16 @@ const AdminDashboard3 = () => {
                   Honor
                 </Typography>
                 <TextField
-                  fullWidth
-                  size="small"
                   InputProps={{ readOnly: true }}
 
+                  fullWidth
+                  size="small"
                   name="honor"
                   required
-                  value={person.honor || ""}
+                  value={person.honor ?? ""}
                   placeholder="Enter your Honor"
-
+                  onChange={handleChange}
+                  onBlur={handleBlur}
                   error={errors.honor}
                   helperText={errors.honor ? "This field is required." : ""}
                 />
@@ -916,15 +1013,16 @@ const AdminDashboard3 = () => {
                   General Average
                 </Typography>
                 <TextField
-                  fullWidth
-                  size="small"
                   InputProps={{ readOnly: true }}
 
+                  fullWidth
+                  size="small"
                   required
                   name="generalAverage"
-                  value={person.generalAverage || ""}
+                  value={person.generalAverage ?? ""}
                   placeholder="Enter your General Average"
-
+                  onChange={handleChange}
+                  onBlur={handleBlur}
                   error={errors.generalAverage}
                   helperText={errors.generalAverage ? "This field is required." : ""}
                 />
@@ -935,15 +1033,16 @@ const AdminDashboard3 = () => {
                   Year Graduated
                 </Typography>
                 <TextField
+                  InputProps={{ readOnly: true }}
+
                   fullWidth
                   size="small"
                   required
-                  InputProps={{ readOnly: true }}
-
                   name="yearGraduated"
                   placeholder="Enter your Year Graduated"
-                  value={person.yearGraduated || ""}
-
+                  value={person.yearGraduated ?? ""}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
                   error={errors.yearGraduated}
                   helperText={errors.yearGraduated ? "This field is required." : ""}
                 />
@@ -973,13 +1072,14 @@ const AdminDashboard3 = () => {
                 <FormControl fullWidth size="small" required error={!!errors.schoolLevel1}>
                   <InputLabel id="schoolLevel1-label">School Level</InputLabel>
                   <Select
+                    readOnly
                     labelId="schoolLevel1-label"
                     id="schoolLevel1"
-                    readOnly
                     name="schoolLevel1"
                     value={person.schoolLevel1 ?? ""}
                     label="School Level"
-
+                    onChange={handleChange}
+                    onBlur={handleBlur}
                   >
                     <MenuItem value=""><em>Select School Level</em></MenuItem>
                     <MenuItem value="High School/Junior High School">High School/Junior High School</MenuItem>
@@ -1001,15 +1101,16 @@ const AdminDashboard3 = () => {
                   School Last Attended
                 </Typography>
                 <TextField
+                  InputProps={{ readOnly: true }}
+
                   fullWidth
                   size="small"
                   required
-                  InputProps={{ readOnly: true }}
-
                   name="schoolLastAttended1"
                   placeholder="Enter School Last Attended"
-                  value={person.schoolLastAttended1 || ""}
-
+                  value={person.schoolLastAttended1 ?? ""}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
                   error={errors.schoolLastAttended1}
                   helperText={errors.schoolLastAttended1 ? "This field is required." : ""}
                 />
@@ -1021,15 +1122,16 @@ const AdminDashboard3 = () => {
                   School Address
                 </Typography>
                 <TextField
+                  InputProps={{ readOnly: true }}
+
                   fullWidth
                   size="small"
                   required
                   name="schoolAddress1"
-                  InputProps={{ readOnly: true }}
-
                   placeholder="Enter your School Address"
-                  value={person.schoolAddress1 || ""}
-
+                  value={person.schoolAddress1 ?? ""}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
                   error={errors.schoolAddress1}
                   helperText={errors.schoolAddress1 ? "This field is required." : ""}
                 />
@@ -1041,15 +1143,16 @@ const AdminDashboard3 = () => {
                   Course Program
                 </Typography>
                 <TextField
+                  InputProps={{ readOnly: true }}
+
                   fullWidth
                   size="small"
                   required
-                  InputProps={{ readOnly: true }}
-
                   name="courseProgram1"
                   placeholder="Enter your Course Program"
-                  value={person.courseProgram1 || ""}
-
+                  value={person.courseProgram1 ?? ""}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
                   error={errors.courseProgram1}
                   helperText={errors.courseProgram1 ? "This field is required." : ""}
                 />
@@ -1069,15 +1172,16 @@ const AdminDashboard3 = () => {
                   Honor
                 </Typography>
                 <TextField
+                  InputProps={{ readOnly: true }}
+
                   fullWidth
                   size="small"
                   required
                   name="honor1"
-                  InputProps={{ readOnly: true }}
-
                   placeholder="Enter your Honor"
-                  value={person.honor1 || ""}
-
+                  value={person.honor1 ?? ""}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
                   error={errors.honor1}
                   helperText={errors.honor1 ? "This field is required." : ""}
                 />
@@ -1089,15 +1193,16 @@ const AdminDashboard3 = () => {
                   General Average
                 </Typography>
                 <TextField
+                  InputProps={{ readOnly: true }}
+
                   fullWidth
                   size="small"
                   required
-                  InputProps={{ readOnly: true }}
-
                   name="generalAverage1"
                   placeholder="Enter your General Average"
-                  value={person.generalAverage1 || ""}
-
+                  value={person.generalAverage1 ?? ""}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
                   error={errors.generalAverage1}
                   helperText={errors.generalAverage1 ? "This field is required." : ""}
                 />
@@ -1109,15 +1214,16 @@ const AdminDashboard3 = () => {
                   Year Graduated
                 </Typography>
                 <TextField
+                  InputProps={{ readOnly: true }}
+
                   fullWidth
                   size="small"
                   required
-                  InputProps={{ readOnly: true }}
-
                   name="yearGraduated1"
                   placeholder="Enter your Year Graduated"
-                  value={person.yearGraduated1 || ""}
-
+                  value={person.yearGraduated1 ?? ""}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
                   error={errors.yearGraduated1}
                   helperText={errors.yearGraduated1 ? "This field is required." : ""}
                 />
@@ -1134,13 +1240,14 @@ const AdminDashboard3 = () => {
             <FormControl fullWidth size="small" required error={!!errors.strand} className="mb-4">
               <InputLabel id="strand-label">Strand</InputLabel>
               <Select
+                readOnly
                 labelId="strand-label"
                 id="strand-select"
                 name="strand"
-                readOnly
                 value={person.strand ?? ""}
                 label="Strand"
-
+                onChange={handleChange}
+                onBlur={handleBlur}
               >
                 <MenuItem value="">
                   <em>Select Strand</em>
@@ -1168,7 +1275,6 @@ const AdminDashboard3 = () => {
                 <FormHelperText>This field is required.</FormHelperText>
               )}
             </FormControl>
-
 
             <Modal
               open={examPermitModalOpen}
@@ -1219,7 +1325,7 @@ const AdminDashboard3 = () => {
               <Button
                 variant="contained"
                 component={Link}
-                to="/admin_dashboard2"
+                to="/admin_dashboard3"
                 startIcon={
                   <ArrowBackIcon
                     sx={{
@@ -1246,31 +1352,26 @@ const AdminDashboard3 = () => {
               {/* Next Step Button */}
               <Button
                 variant="contained"
-                onClick={(e) => {
-
-
-                  if (isFormValid()) {
-                    navigate("/admin_dashboard4");
-                  } else {
-                    alert("Please complete all required fields before proceeding.");
-                  }
+                onClick={() => {
+                  handleUpdate();
+                  navigate("/admin_dashboard4");
                 }}
                 endIcon={
                   <ArrowForwardIcon
                     sx={{
-                      color: '#fff',
-                      transition: 'color 0.3s',
+                      color: "#fff",
+                      transition: "color 0.3s",
                     }}
                   />
                 }
                 sx={{
-                  backgroundColor: '#6D2323',
-                  color: '#fff',
-                  '&:hover': {
-                    backgroundColor: '#E8C999',
-                    color: '#000',
-                    '& .MuiSvgIcon-root': {
-                      color: '#000',
+                  backgroundColor: "#6D2323",
+                  color: "#fff",
+                  "&:hover": {
+                    backgroundColor: "#E8C999",
+                    color: "#000",
+                    "& .MuiSvgIcon-root": {
+                      color: "#000",
                     },
                   },
                 }}
@@ -1278,7 +1379,6 @@ const AdminDashboard3 = () => {
                 Next Step
               </Button>
             </Box>
-
 
 
           </Container>

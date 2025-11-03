@@ -133,7 +133,7 @@ const StudentDashboard5 = () => {
             if (!userID) return;
 
             try {
-                const res = await axios.get(`http://localhost:5000/api/person_with_applicant/${userID}`);
+                const res = await axios.get(`http://localhost:5000/api/student_data_as_applicant/${userID}`);
                 if (res.data) {
                     setPerson(res.data);
                     setSelectedPerson(res.data);
@@ -155,7 +155,7 @@ const StudentDashboard5 = () => {
             if (!userID) return;
 
             try {
-                const res = await axios.get(`http://localhost:5000/api/person_with_applicant/${userID}`);
+                const res = await axios.get(`http://localhost:5000/api/student_data_as_applicant/${userID}`);
                 if (res.data) {
                     setPerson(res.data);
                     setSelectedPerson(res.data);
@@ -239,8 +239,8 @@ const StudentDashboard5 = () => {
         setActiveStep(index);
         navigate(to);
     };
-
-    const links = [
+    
+  const links = [
         { to: `/student_ecat_application_form`, label: "ECAT Application Form" },
         { to: `/student_form_process`, label: "Admission Form Process" },
         { to: `/student_personal_data_form`, label: "Personal Data Form" },
@@ -249,22 +249,6 @@ const StudentDashboard5 = () => {
 
     ];
 
-    // 🔒 Disable right-click
-    document.addEventListener('contextmenu', (e) => e.preventDefault());
-
-    // 🔒 Block DevTools shortcuts silently
-    document.addEventListener('keydown', (e) => {
-        const isBlockedKey =
-            e.key === 'F12' ||
-            e.key === 'F11' ||
-            (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J')) ||
-            (e.ctrlKey && e.key === 'U');
-
-        if (isBlockedKey) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-    });
 
     // dot not alter
     return (
@@ -276,9 +260,9 @@ const StudentDashboard5 = () => {
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     flexWrap: 'wrap',
-
+                    mt: 2,
                     mb: 2,
-
+                    px: 2,
                 }}
             >
                 <Typography
@@ -289,7 +273,7 @@ const StudentDashboard5 = () => {
                         fontSize: '36px',
                     }}
                 >
-                    OTHER INFORMATION
+                    STUDENT PROFILE
                 </Typography>
 
 

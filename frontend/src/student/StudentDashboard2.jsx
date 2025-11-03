@@ -133,7 +133,7 @@ const StudentDashboard2 = () => {
             if (!userID) return;
 
             try {
-                const res = await axios.get(`http://localhost:5000/api/person_with_applicant/${userID}`);
+                const res = await axios.get(`http://localhost:5000/api/student_data_as_applicant/${userID}`);
                 if (res.data) {
                     setPerson(res.data);
                     setSelectedPerson(res.data);

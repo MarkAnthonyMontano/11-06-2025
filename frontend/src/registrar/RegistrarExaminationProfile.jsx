@@ -14,10 +14,8 @@ import {
     Card
 } from "@mui/material";
 import EaristLogo from "../assets/EaristLogo.png";
-import EaristLogoBW from "../assets/earistblackandwhite.png";
 import "../styles/Print.css";
 import { FcPrint } from "react-icons/fc";
-import Search from "@mui/icons-material/Search";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import SchoolIcon from "@mui/icons-material/School";
@@ -30,6 +28,8 @@ import PeopleIcon from "@mui/icons-material/People";
 import FactCheckIcon from "@mui/icons-material/FactCheck";
 import Unauthorized from "../components/Unauthorized";
 import LoadingOverlay from "../components/LoadingOverlay";
+import SearchIcon from "@mui/icons-material/Search";
+
 
 const ExaminationProfile = ({ personId }) => {
     const settings = useContext(SettingsContext);
@@ -384,8 +384,17 @@ const ExaminationProfile = ({ personId }) => {
                         size="small"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        InputProps={{ startAdornment: <Search sx={{ mr: 1 }} /> }}
-                        sx={{ width: { xs: '100%', sm: '425px' }, mt: { xs: 2, sm: 0 } }}
+                        sx={{
+                            width: 450,
+                            backgroundColor: "#fff",
+                            borderRadius: 1,
+                            "& .MuiOutlinedInput-root": {
+                                borderRadius: "10px",
+                            },
+                        }}
+                        InputProps={{
+                            startAdornment: <SearchIcon sx={{ mr: 1, color: "gray" }} />,
+                        }}
                     />
                 </Box>
 

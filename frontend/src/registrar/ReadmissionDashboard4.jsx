@@ -355,9 +355,9 @@ const ReadmissionDashboard4 = () => {
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     flexWrap: 'wrap',
-                    mt: 2,
+
                     mb: 2,
-                    px: 2,
+
                 }}
             >
                 <Typography
@@ -632,6 +632,7 @@ const ReadmissionDashboard4 = () => {
                         <FormGroup row sx={{ ml: 2 }}>
                             {["cough", "colds", "fever"].map((symptom) => (
                                 <FormControlLabel
+                                disabled
                                     key={symptom}
                                     control={
                                         <Checkbox
@@ -714,6 +715,7 @@ const ReadmissionDashboard4 = () => {
                                                                 {/* YES */}
                                                                 <div style={{ display: "flex", alignItems: "center", gap: "1px", }}>
                                                                     <Checkbox
+                                                                    disabled
                                                                         name={key}
                                                                         checked={person[key] === 1}
                                                                         onChange={() => {
@@ -732,6 +734,7 @@ const ReadmissionDashboard4 = () => {
                                                                 {/* NO */}
                                                                 <div style={{ display: "flex", alignItems: "center", gap: "1px" }}>
                                                                     <Checkbox
+                                                                    disabled
                                                                         name={key}
                                                                         checked={person[key] === 0}
                                                                         onChange={() => {
@@ -772,6 +775,7 @@ const ReadmissionDashboard4 = () => {
                                         <FormControlLabel
                                             control={
                                                 <Checkbox
+                                                disabled
                                                     name="hospitalized"
                                                     checked={person.hospitalized === 1}
                                                     onChange={() => {
@@ -792,6 +796,7 @@ const ReadmissionDashboard4 = () => {
                                         <FormControlLabel
                                             control={
                                                 <Checkbox
+                                                disabled
                                                     name="hospitalized"
                                                     checked={person.hospitalized === 0}
                                                     onChange={() => {
@@ -822,6 +827,8 @@ const ReadmissionDashboard4 = () => {
                                 IF YES, PLEASE SPECIFY:
                             </Typography>
                             <TextField
+                                  InputProps={{ readOnly: true }}
+
                                 fullWidth
                                 name="hospitalizationDetails"
                                 placeholder=""
@@ -851,6 +858,8 @@ const ReadmissionDashboard4 = () => {
 
                         <Box mb={2}>
                             <TextField
+                                   InputProps={{ readOnly: true }}
+
                                 fullWidth
                                 multiline
                                 minRows={3}
@@ -905,6 +914,7 @@ const ReadmissionDashboard4 = () => {
                                                 {/* YES */}
                                                 <Box display="flex" alignItems="center" gap="1px">
                                                     <Checkbox
+                                                    disabled
                                                         name="hadCovid"
                                                         checked={person.hadCovid === 1}
                                                         onChange={() => {
@@ -923,6 +933,7 @@ const ReadmissionDashboard4 = () => {
                                                 {/* NO */}
                                                 <Box display="flex" alignItems="center" gap="1px">
                                                     <Checkbox
+                                                    disabled
                                                         name="hadCovid"
                                                         checked={person.hadCovid === 0}
                                                         onChange={() => {
@@ -944,6 +955,7 @@ const ReadmissionDashboard4 = () => {
                                             {/* IF YES, WHEN */}
                                             <span>IF YES, WHEN:</span>
                                             <input
+                                            readOnly
                                                 type="date"
                                                 name="covidDate"
                                                 value={person.covidDate || ""}
@@ -1006,6 +1018,7 @@ const ReadmissionDashboard4 = () => {
                                                     {["vaccine1Brand", "vaccine2Brand", "booster1Brand", "booster2Brand"].map((field) => (
                                                         <td key={field} style={{ padding: "4px" }}>
                                                             <input
+                                                            disabled
                                                                 type="text"
                                                                 name={field}
                                                                 value={person[field] || ""}
@@ -1031,6 +1044,7 @@ const ReadmissionDashboard4 = () => {
                                                     {["vaccine1Date", "vaccine2Date", "booster1Date", "booster2Date"].map((field) => (
                                                         <td key={field} style={{ padding: "4px" }}>
                                                             <input
+                                                            readOnly
                                                                 type="date"
                                                                 name={field}
                                                                 value={person[field] || ""}
@@ -1071,6 +1085,7 @@ const ReadmissionDashboard4 = () => {
                                     <td className="border border-black p-2 w-1/3 font-medium">Chest X-ray:</td>
                                     <td className="border border-black p-2 w-2/3">
                                         <input
+                                        readOnly
                                             type="text"
                                             name="chestXray"
                                             value={person.chestXray || ""}
@@ -1091,6 +1106,7 @@ const ReadmissionDashboard4 = () => {
                                     <td className="border border-black p-2 font-medium">CBC:</td>
                                     <td className="border border-black p-2">
                                         <input
+                                        readOnly
                                             type="text"
                                             name="cbc"
                                             value={person.cbc || ""}
@@ -1111,6 +1127,7 @@ const ReadmissionDashboard4 = () => {
                                     <td className="border border-black p-2 font-medium">Urinalysis:</td>
                                     <td className="border border-black p-2">
                                         <input
+                                        readOnly
                                             type="text"
                                             name="urinalysis"
                                             value={person.urinalysis || ""}
@@ -1131,6 +1148,7 @@ const ReadmissionDashboard4 = () => {
                                     <td className="border border-black p-2 font-medium">Other Workups:</td>
                                     <td className="border border-black p-2">
                                         <input
+                                        readOnly
                                             type="text"
                                             name="otherworkups"
                                             value={person.otherworkups || ""}
@@ -1184,6 +1202,7 @@ const ReadmissionDashboard4 = () => {
                                                 {/* Physically Fit (0) */}
                                                 <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
                                                     <Checkbox
+                                                    disabled
                                                         name="symptomsToday"
                                                         checked={person.symptomsToday === 0}
                                                         onChange={() => {
@@ -1202,6 +1221,7 @@ const ReadmissionDashboard4 = () => {
                                                 {/* For Compliance (1) */}
                                                 <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
                                                     <Checkbox
+                                                    disabled
                                                         name="symptomsToday"
                                                         checked={person.symptomsToday === 1}
                                                         onChange={() => {
@@ -1241,6 +1261,7 @@ const ReadmissionDashboard4 = () => {
                                     <TableRow>
                                         <TableCell sx={{ border: "1px solid black", p: 1 }}>
                                             <TextField
+                                           disabled
                                                 name="remarks"
                                                 multiline
                                                 minRows={2}
@@ -1322,7 +1343,7 @@ const ReadmissionDashboard4 = () => {
                             <Button
                                 variant="contained"
                                 component={Link}
-                                to="/readmission_dashboard3"
+                                to="/medical_dashboard3"
                                 startIcon={
                                     <ArrowBackIcon
                                         sx={{
@@ -1351,7 +1372,7 @@ const ReadmissionDashboard4 = () => {
                                 variant="contained"
                                 onClick={(e) => {
                                     handleUpdate();
-                                    navigate("/readmission_dashboard4");
+                                    navigate("/medical_dashboard4");
 
                                 }}
                                 endIcon={

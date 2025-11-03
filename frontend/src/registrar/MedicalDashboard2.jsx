@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import { Button, Box, TextField, Container, Card, Modal, TableContainer, Paper, Table, TableHead, TableRow, TableCell, Typography, FormControl, FormHelperText, InputLabel, Select, MenuItem, Checkbox, FormControlLabel } from "@mui/material";
-import { Link } from "react-router-dom";
+import { Button, Box, TextField, Container, Typography, Card, TableContainer, Paper, Table, TableHead, TableRow, TableCell, FormHelperText, FormControl, InputLabel, Select, MenuItem, Modal, FormControlLabel, Checkbox, IconButton } from "@mui/material";
+import { Link, useLocation } from "react-router-dom";
 import PersonIcon from "@mui/icons-material/Person";
 import FamilyRestroomIcon from "@mui/icons-material/FamilyRestroom";
 import SchoolIcon from "@mui/icons-material/School";
@@ -10,9 +10,10 @@ import InfoIcon from "@mui/icons-material/Info";
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ErrorIcon from '@mui/icons-material/Error';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { motion } from "framer-motion";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
+import ExamPermit from "../applicant/ExamPermit";
 import ListAltIcon from "@mui/icons-material/ListAlt";
 import DescriptionIcon from "@mui/icons-material/Description";
 import PsychologyIcon from "@mui/icons-material/Psychology";
@@ -21,9 +22,9 @@ import UploadFileIcon from '@mui/icons-material/UploadFile';
 import Unauthorized from "../components/Unauthorized";
 import LoadingOverlay from "../components/LoadingOverlay";
 
-import ExamPermit from "../applicant/ExamPermit";
-
 const MedicalDashboard2 = () => {
+
+
     const stepsData = [
         { label: "Medical Applicant List", to: "/medical_applicant_list", icon: <ListAltIcon /> },
         { label: "Applicant Form", to: "/medical_dashboard1", icon: <HowToRegIcon /> },
@@ -31,22 +32,9 @@ const MedicalDashboard2 = () => {
         { label: "Medical History", to: "/medical_requirements_form", icon: <PersonIcon /> },
         { label: "Dental Assessment", to: "/dental_assessment", icon: <DescriptionIcon /> },
         { label: "Physical and Neurological Examination", to: "/physical_neuro_exam", icon: <SchoolIcon /> },
+
     ];
 
-    const [currentStep, setCurrentStep] = useState(1);
-    const [visitedSteps, setVisitedSteps] = useState(Array(stepsData.length).fill(false));
-
-    const fetchByPersonId = async (personID) => {
-        try {
-            const res = await axios.get(`http://localhost:5000/api/person_with_applicant/${personID}`);
-            setPerson(res.data);
-            setSelectedPerson(res.data);
-            if (res.data?.applicant_number) {
-            }
-        } catch (err) {
-            console.error("❌ person_with_applicant failed:", err);
-        }
-    };
 
     const handleNavigateStep = (index, to) => {
         setCurrentStep(index);
@@ -59,9 +47,12 @@ const MedicalDashboard2 = () => {
         }
     };
 
-    const navigate = useNavigate();
-    const [explicitSelection, setExplicitSelection] = useState(false);
 
+    const [currentStep, setCurrentStep] = useState(1);
+    const [visitedSteps, setVisitedSteps] = useState(Array(stepsData.length).fill(false));
+
+
+    const navigate = useNavigate();
     const [userID, setUserID] = useState("");
     const [user, setUser] = useState("");
     const [userRole, setUserRole] = useState("");
@@ -72,13 +63,14 @@ const MedicalDashboard2 = () => {
         mother_year_graduated: "", mother_school_address: "", mother_contact: "", mother_occupation: "", mother_employer: "", mother_income: "", mother_email: "", guardian: "", guardian_family_name: "", guardian_given_name: "",
         guardian_middle_name: "", guardian_ext: "", guardian_nickname: "", guardian_address: "", guardian_contact: "", guardian_email: "", annual_income: "",
     });
-    const [selectedPerson, setSelectedPerson] = useState(null);
+
+
 
     const [hasAccess, setHasAccess] = useState(null);
     const [loading, setLoading] = useState(false);
 
 
-    const pageId = 32;
+    const pageId = 33;
 
     //Put this After putting the code of the past code
     useEffect(() => {
@@ -122,10 +114,15 @@ const MedicalDashboard2 = () => {
         }
     };
 
+
+
     // do not alter
+
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
-    const queryPersonId = queryParams.get("person_id");
+    const queryPersonId = queryParams.get("person_id")?.trim() ?? "";
+
+
 
     useEffect(() => {
         const storedUser = localStorage.getItem("email");
@@ -151,47 +148,34 @@ const MedicalDashboard2 = () => {
             sessionStorage.setItem("admin_edit_person_id", targetId);
 
             setUserID(targetId);
-            fetchPersonData(targetId);
+            fetchByPersonId(targetId);
             return;
         }
 
         window.location.href = "/login";
     }, [queryPersonId]);
 
-    useEffect(() => {
-        let consumedFlag = false;
 
-        const tryLoad = async () => {
-            if (queryPersonId) {
-                await fetchByPersonId(queryPersonId);
-                setExplicitSelection(true);
-                consumedFlag = true;
-                return;
+    const [selectedPerson, setSelectedPerson] = useState(null);
+
+
+    const fetchByPersonId = async (personID) => {
+        try {
+            const res = await axios.get(`http://localhost:5000/api/person/${personID}`);
+            setPerson(res.data);
+            setSelectedPerson(res.data);
+            if (res.data?.applicant_number) {
+                // optional: whatever logic you want
             }
+        } catch (err) {
+            console.error("❌ person (DB3) fetch failed:", err);
+        }
+    };
 
-            // fallback only if it's a fresh selection from Applicant List
-            const source = sessionStorage.getItem("admin_edit_person_id_source");
-            const tsStr = sessionStorage.getItem("admin_edit_person_id_ts");
-            const id = sessionStorage.getItem("admin_edit_person_id");
-            const ts = tsStr ? parseInt(tsStr, 10) : 0;
-            const isFresh = source === "applicant_list" && Date.now() - ts < 5 * 60 * 1000;
 
-            if (id && isFresh) {
-                await fetchByPersonId(id);
-                setExplicitSelection(true);
-                consumedFlag = true;
-            }
-        };
 
-        tryLoad().finally(() => {
-            // consume the freshness so it won't auto-load again later
-            if (consumedFlag) {
-                sessionStorage.removeItem("admin_edit_person_id_source");
-                sessionStorage.removeItem("admin_edit_person_id_ts");
-            }
-        });
-    }, [queryPersonId]);
-
+    const [activeStep, setActiveStep] = useState(1);
+    const [clickedSteps, setClickedSteps] = useState([]);
 
 
 
@@ -207,29 +191,71 @@ const MedicalDashboard2 = () => {
 
 
 
-    const [activeStep, setActiveStep] = useState(1);
+    const handleStepClick = (index) => {
+        setActiveStep(index);
+        setClickedSteps((prev) => [...new Set([...prev, index])]);
+        navigate(steps[index].path); // Go to the clicked step’s page
+    };
 
-    const fetchPersonData = async (id) => {
+
+
+
+    // Do not alter
+    const handleUpdate = async (updatedPerson) => {
         try {
-            const res = await axios.get(`http://localhost:5000/api/person/${id}`);
-
-            // Sanitize null values and set state
-            const safePerson = Object.fromEntries(
-                Object.entries(res.data).map(([key, val]) => [key, val ?? ""])
-            );
-
-            setPerson(safePerson);
-
-            // ✅ Set dropdown based on existing deceased values
-            if (res.data.solo_parent === 1) {
-                if (res.data.father_deceased === 1) {
-                    setSoloParentChoice("Mother");
-                } else if (res.data.mother_deceased === 1) {
-                    setSoloParentChoice("Father");
-                }
-            }
+            // ✅ force the request to the enrollment route
+            await axios.put(`http://localhost:5000/api/enrollment/person/${userID}`, updatedPerson);
+            console.log("✅ Auto-saved to ENROLLMENT DB3");
         } catch (error) {
-            console.error("Failed to fetch person data:", error);
+            console.error("❌ Auto-save failed:", error);
+        }
+    };
+
+    // Real-time save on every character typed
+    const handleChange = (e) => {
+        const { name, type, checked, value } = e.target;
+
+        const updatedPerson = {
+            ...person,
+            [name]: type === "checkbox" ? (checked ? 1 : 0) : value,
+        };
+
+        // If updating either mother_income or father_income, calculate total and set annual_income
+        if (name === "mother_income" || name === "father_income") {
+            const motherIncome = parseFloat(name === "mother_income" ? value : updatedPerson.mother_income) || 0;
+            const fatherIncome = parseFloat(name === "father_income" ? value : updatedPerson.father_income) || 0;
+            const totalIncome = motherIncome + fatherIncome;
+
+            let annualIncomeBracket = "";
+            if (totalIncome <= 80000) {
+                annualIncomeBracket = "80,000 and below";
+            } else if (totalIncome <= 135000) {
+                annualIncomeBracket = "80,000 to 135,000";
+            } else if (totalIncome <= 250000) {
+                annualIncomeBracket = "135,000 to 250,000";
+            } else if (totalIncome <= 500000) {
+                annualIncomeBracket = "250,000 to 500,000";
+            } else if (totalIncome <= 1000000) {
+                annualIncomeBracket = "500,000 to 1,000,000";
+            } else {
+                annualIncomeBracket = "1,000,000 and above";
+            }
+
+            updatedPerson.annual_income = annualIncomeBracket;
+        }
+
+        setPerson(updatedPerson);
+        handleUpdate(updatedPerson); // No delay, real-time save
+    };
+
+
+
+    const handleBlur = async () => {
+        try {
+            await axios.put(`http://localhost:5000/api/enrollment/person/${userID}`, person);
+            console.log("✅ Auto-saved (on blur) to ENROLLMENT DB3");
+        } catch (err) {
+            console.error("❌ Auto-save failed (on blur):", err);
         }
     };
 
@@ -268,76 +294,9 @@ const MedicalDashboard2 = () => {
 
     const [errors, setErrors] = useState({});
 
-    const isFormValid = () => {
-        const requiredFields = [];
-
-        // If father is NOT deceased, require father fields:
-        if (person.father_deceased !== 1) {
-            requiredFields.push(
-                "father_family_name", "father_given_name", "father_middle_name", "father_nickname",
-                "father_contact", "father_occupation", "father_employer", "father_income", "father_email"
-            );
-
-            // but only require education details if father_education !== 1
-            if (person.father_education !== 1) {
-                requiredFields.push(
-                    "father_education_level", "father_last_school", "father_course", "father_year_graduated", "father_school_address"
-                );
-            }
-        }
-
-        // If mother is NOT deceased, require mother fields:
-        if (person.mother_deceased !== 1) {
-            requiredFields.push(
-                "mother_family_name", "mother_given_name", "mother_middle_name", "mother_nickname",
-                "mother_contact", "mother_occupation", "mother_employer", "mother_income", "mother_email"
-            );
-
-            // only require education details if mother_education !== 1
-            if (person.mother_education !== 1) {
-                requiredFields.push(
-                    "mother_education_level", "mother_last_school", "mother_course", "mother_year_graduated", "mother_school_address"
-                );
-            }
-        }
-
-        // Guardian fields always required:
-        requiredFields.push(
-            "guardian", "guardian_family_name", "guardian_given_name", "guardian_middle_name",
-            "guardian_nickname", "guardian_address", "guardian_contact"
-        );
-
-        // Annual income always required:
-        requiredFields.push("annual_income");
-
-        let newErrors = {};
-        let isValid = true;
-
-        requiredFields.forEach((field) => {
-            const value = person[field];
-            const stringValue = value?.toString().trim();
-
-            if (!stringValue) {
-                newErrors[field] = true;
-                isValid = false;
-            }
-        });
-
-        setErrors(newErrors);
-        return isValid;
-    };
-
 
 
     const [soloParentChoice, setSoloParentChoice] = useState("");
-    const [clickedSteps, setClickedSteps] = useState(Array(steps.length).fill(false));
-
-    const handleStepClick = (index) => {
-        setActiveStep(index);
-        const newClickedSteps = [...clickedSteps];
-        newClickedSteps[index] = true;
-        setClickedSteps(newClickedSteps);
-    };
 
 
     const divToPrintRef = useRef();
@@ -390,29 +349,6 @@ const MedicalDashboard2 = () => {
         setExamPermitError("");
     };
 
-    const handleExamPermitClick = async () => {
-        try {
-            const res = await axios.get("http://localhost:5000/api/verified-exam-applicants");
-            const verified = res.data.some(a => a.person_id === parseInt(userID));
-
-            if (!verified) {
-                setExamPermitError("❌ You cannot print the Exam Permit until all required documents are verified.");
-                setExamPermitModalOpen(true);
-                return;
-            }
-
-            // ✅ Render permit and print
-            setShowPrintView(true);
-            setTimeout(() => {
-                printDiv();
-                setShowPrintView(false);
-            }, 500);
-        } catch (err) {
-            console.error("Error verifying exam permit eligibility:", err);
-            setExamPermitError("⚠️ Unable to check document verification status right now.");
-            setExamPermitModalOpen(true);
-        }
-    };
 
 
     const links = [
@@ -421,9 +357,8 @@ const MedicalDashboard2 = () => {
         { to: `/admin_personal_data_form`, label: "Personal Data Form" },
         { to: `/admin_office_of_the_registrar`, label: "Application For EARIST College Admission" },
         { to: `/admission_services`, label: "Application/Student Satisfactory Survey" },
-        { label: "Examination Permit", onClick: handleExamPermitClick }, // ✅
-    ];
 
+    ];
 
 
     const [canPrintPermit, setCanPrintPermit] = useState(false);
@@ -437,7 +372,20 @@ const MedicalDashboard2 = () => {
             });
     }, [userID]);
 
+    const [searchQuery, setSearchQuery] = useState("");
+    const [searchError, setSearchError] = useState("");
 
+    useEffect(() => {
+        const savedPerson = sessionStorage.getItem("admin_edit_person_data");
+        if (savedPerson) {
+            try {
+                const parsed = JSON.parse(savedPerson);
+                setPerson(parsed);
+            } catch (err) {
+                console.error("Failed to parse saved person:", err);
+            }
+        }
+    }, []);
 
 
     // Put this at the very bottom before the return 
@@ -454,13 +402,11 @@ const MedicalDashboard2 = () => {
     // dot not alter
     return (
         <Box sx={{ height: "calc(100vh - 140px)", overflowY: "auto", paddingRight: 1, backgroundColor: "transparent" }}>
-
             {showPrintView && (
                 <div ref={divToPrintRef} style={{ display: "block" }}>
                     <ExamPermit personId={userID} />   {/* ✅ pass the searched person_id */}
                 </div>
             )}
-
 
             {/* Top header: DOCUMENTS SUBMITTED + Search */}
             <Box
@@ -469,9 +415,9 @@ const MedicalDashboard2 = () => {
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     flexWrap: 'wrap',
-                   
+
                     mb: 2,
-                    
+
                 }}
             >
                 <Typography
@@ -484,9 +430,15 @@ const MedicalDashboard2 = () => {
                 >
                     MEDICAL - FAMILY BACKGROUND
                 </Typography>
+
+
             </Box>
+
             <hr style={{ border: "1px solid #ccc", width: "100%" }} />
             <br />
+
+
+
             <Box
                 sx={{
                     display: "flex",
@@ -556,8 +508,8 @@ const MedicalDashboard2 = () => {
                 ))}
             </Box>
 
-
             <br />
+
 
 
 
@@ -565,21 +517,20 @@ const MedicalDashboard2 = () => {
                 <Table>
                     <TableHead sx={{ backgroundColor: '#6D2323' }}>
                         <TableRow>
-                            {/* Left cell: Applicant ID */}
+                            {/* Left cell: Student Number */}
                             <TableCell sx={{ color: 'white', fontSize: '20px', fontFamily: 'Arial Black', border: 'none' }}>
-                                Applicant ID:&nbsp;
+                                Student Number:&nbsp;
                                 <span style={{ fontFamily: "Arial", fontWeight: "normal", textDecoration: "underline" }}>
-                                    {person?.applicant_number || "N/A"}
-
+                                    {person?.student_number || "N/A"}
                                 </span>
                             </TableCell>
 
-                            {/* Right cell: Applicant Name */}
+                            {/* Right cell: Student Name */}
                             <TableCell
                                 align="right"
                                 sx={{ color: 'white', fontSize: '20px', fontFamily: 'Arial Black', border: 'none' }}
                             >
-                                Applicant Name:&nbsp;
+                                Student Name:&nbsp;
                                 <span style={{ fontFamily: "Arial", fontWeight: "normal", textDecoration: "underline" }}>
                                     {person?.last_name?.toUpperCase()}, {person?.first_name?.toUpperCase()}{" "}
                                     {person?.middle_name?.toUpperCase()} {person?.extension?.toUpperCase() || ""}
@@ -589,58 +540,65 @@ const MedicalDashboard2 = () => {
                     </TableHead>
                 </Table>
             </TableContainer>
+            {/* Top header: DOCUMENTS SUBMITTED + Search */}
+
+            <br />
 
 
-            <Box sx={{ display: "flex", width: "100%" }}>
-                {/* Left side: Notice */}
-                <Box sx={{ width: "100%", padding: "10px" }}>
+
+            <Box
+                sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "100%",
+                    mt: 2,
+                }}
+            >
+                <Box
+                    sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 2,
+                        p: 2,
+                        borderRadius: "10px",
+                        backgroundColor: "#fffaf5",
+                        border: "1px solid #6D2323",
+                        boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.05)",
+                        whiteSpace: "nowrap", // Prevent text wrapping
+                    }}
+                >
+                    {/* Icon */}
                     <Box
                         sx={{
                             display: "flex",
                             alignItems: "center",
-                            gap: 2,
-                            p: 2,
-                            borderRadius: "10px",
-                            backgroundColor: "#fffaf5",
-                            border: "1px solid #6D2323",
-                            boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.05)",
-                            whiteSpace: "nowrap", // Keep all in one row
+                            justifyContent: "center",
+                            backgroundColor: "#6D2323",
+                            borderRadius: "8px",
+                            width: 40,
+                            height: 40,
+                            flexShrink: 0,
                         }}
                     >
-                        {/* Icon */}
-                        <Box
-                            sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                backgroundColor: "#6D2323",
-                                borderRadius: "8px",
-                                width: 40,
-                                height: 40,
-                                flexShrink: 0,
-                            }}
-                        >
-                            <ErrorIcon sx={{ color: "white", fontSize: 28 }} />
-                        </Box>
-
-                        {/* Notice Text */}
-                        <Typography
-                            sx={{
-                                fontSize: "15px",
-                                fontFamily: "Arial",
-                                color: "#3e3e3e",
-                            }}
-                        >
-                            <strong style={{ color: "maroon" }}>Notice:</strong> &nbsp;
-                            <strong>1.</strong> Kindly type <strong>'NA'</strong> in boxes where there are no possible answers to the information being requested. &nbsp; | &nbsp;
-                            <strong>2.</strong> To use the letter <strong>'Ñ'</strong>, press <kbd>ALT</kbd> + <kbd>165</kbd>; for <strong>'ñ'</strong>, press <kbd>ALT</kbd> + <kbd>164</kbd>. &nbsp; | &nbsp;
-                            <strong>3.</strong> This is the list of all printable files.
-                        </Typography>
+                        <ErrorIcon sx={{ color: "white", fontSize: 28 }} />
                     </Box>
+
+                    {/* Text in one row */}
+                    <Typography
+                        sx={{
+                            fontSize: "15px",
+                            fontFamily: "Arial",
+                            color: "#3e3e3e",
+                        }}
+                    >
+                        <strong style={{ color: "maroon" }}>Notice:</strong> &nbsp;
+                        <strong>1.</strong> Kindly type <strong>'NA'</strong> in boxes where there are no possible answers to the information being requested. &nbsp; | &nbsp;
+                        <strong>2.</strong> To use the letter <strong>'Ñ'</strong>, press <kbd>ALT</kbd> + <kbd>165</kbd>; for <strong>'ñ'</strong>, press <kbd>ALT</kbd> + <kbd>164</kbd>. &nbsp; | &nbsp;
+                        <strong>3.</strong> This is the list of all printable files.
+                    </Typography>
                 </Box>
             </Box>
-
-
 
             {/* Cards Section */}
             <Box
@@ -722,74 +680,63 @@ const MedicalDashboard2 = () => {
             <Container>
 
 
-
                 <Container>
                     <h1 style={{ fontSize: "50px", fontWeight: "bold", textAlign: "center", color: "maroon", marginTop: "25px" }}>APPLICANT FORM</h1>
                     <div style={{ textAlign: "center" }}>Complete the applicant form to secure your place for the upcoming academic year at EARIST.</div>
                 </Container>
                 <br />
 
-                {person.person_id && (
-                    <Box sx={{ display: "flex", justifyContent: "center", width: "100%", px: 4 }}>
-                        {steps.map((step, index) => (
-                            <React.Fragment key={index}>
-                                {/* Wrap the step with Link for routing */}
-                                <Link to={step.path} style={{ textDecoration: "none" }}>
-                                    <Box
-                                        sx={{
-                                            display: "flex",
-                                            flexDirection: "column",
-                                            alignItems: "center",
-                                            cursor: "pointer",
-                                        }}
-                                        onClick={() => handleStepClick(index)}
-                                    >
-                                        {/* Step Icon */}
-                                        <Box
-                                            sx={{
-                                                width: 50,
-                                                height: 50,
-                                                borderRadius: "50%",
-                                                backgroundColor: activeStep === index ? "#6D2323" : "#E8C999",
-                                                color: activeStep === index ? "#fff" : "#000",
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                            }}
-                                        >
-                                            {step.icon}
-                                        </Box>
-
-                                        {/* Step Label */}
-                                        <Typography
-                                            sx={{
-                                                mt: 1,
-                                                color: activeStep === index ? "#6D2323" : "#000",
-                                                fontWeight: activeStep === index ? "bold" : "normal",
-                                                fontSize: 14,
-                                            }}
-                                        >
-                                            {step.label}
-                                        </Typography>
-                                    </Box>
-                                </Link>
-
-                                {/* Connector Line */}
-                                {index < steps.length - 1 && (
-                                    <Box
-                                        sx={{
-                                            height: "2px",
-                                            backgroundColor: "#6D2323",
-                                            flex: 1,
-                                            alignSelf: "center",
-                                            mx: 2,
-                                        }}
-                                    />
-                                )}
-                            </React.Fragment>
-                        ))}
-                    </Box>
-                )}
+                <Box sx={{ display: "flex", justifyContent: "center", width: "100%", px: 4 }}>
+                    {steps.map((step, index) => (
+                        <React.Fragment key={index}>
+                            <Box
+                                sx={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    alignItems: "center",
+                                    cursor: "pointer",
+                                }}
+                                onClick={() => handleStepClick(index)}
+                            >
+                                <Box
+                                    sx={{
+                                        width: 50,
+                                        height: 50,
+                                        borderRadius: "50%",
+                                        backgroundColor: activeStep === index ? "#6D2323" : "#E8C999",
+                                        color: activeStep === index ? "#fff" : "#000",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                    }}
+                                >
+                                    {step.icon}
+                                </Box>
+                                <Typography
+                                    sx={{
+                                        mt: 1,
+                                        color: activeStep === index ? "#6D2323" : "#000",
+                                        fontWeight: activeStep === index ? "bold" : "normal",
+                                        fontSize: 14,
+                                    }}
+                                >
+                                    {step.label}
+                                </Typography>
+                            </Box>
+                            {index < steps.length - 1 && (
+                                <Box
+                                    sx={{
+                                        height: "2px",
+                                        backgroundColor: "#6D2323",
+                                        flex: 1,
+                                        alignSelf: "center",
+                                        mx: 2,
+                                    }}
+                                />
+                            )}
+                        </React.Fragment>
+                    ))}
+                </Box>
 
                 <br />
 
@@ -825,10 +772,9 @@ const MedicalDashboard2 = () => {
                             {/* Solo Parent Checkbox */}
                             <Box marginTop="10px" display="flex" alignItems="center" gap={1}>
                                 <Checkbox
+                                    disabled
                                     name="solo_parent"
                                     checked={person.solo_parent === 1}
-                                    disabled
-
                                     onChange={(e) => {
                                         const checked = e.target.checked;
 
@@ -842,7 +788,7 @@ const MedicalDashboard2 = () => {
                                         setPerson(newPerson);
                                         handleUpdate(newPerson); // Save immediately
                                     }}
-
+                                    onBlur={handleBlur}
                                     sx={{ width: 25, height: 25 }}
                                 />
                                 <label style={{ fontFamily: "Arial" }}>Solo Parent</label>
@@ -854,7 +800,6 @@ const MedicalDashboard2 = () => {
                                     <InputLabel id="parent-select-label">- Parent- </InputLabel>
                                     <Select
                                         labelId="parent-select-label"
-                                        readOnly
                                         value={soloParentChoice}
                                         onChange={(e) => {
                                             const choice = e.target.value;
@@ -895,13 +840,12 @@ const MedicalDashboard2 = () => {
                                     <Checkbox
                                         disabled
                                         name="father_deceased"
-                                        value={person.father_deceased} // 👈 Added value
                                         checked={person.father_deceased === 1}
                                         onChange={(e) => {
                                             const checked = e.target.checked;
 
                                             // Call your form handler
-
+                                            handleChange(e);
 
                                             // Update local state
                                             setPerson((prev) => ({
@@ -909,12 +853,13 @@ const MedicalDashboard2 = () => {
                                                 father_deceased: checked ? 1 : 0,
                                             }));
                                         }}
-
+                                        onBlur={handleBlur}
                                     />
                                 }
                                 label="Father Deceased"
                             />
                             <br />
+
 
                             {/* Show Father's Info ONLY if not deceased */}
                             {!isFatherDeceased && (
@@ -923,45 +868,48 @@ const MedicalDashboard2 = () => {
                                         <Box sx={{ flex: 1 }}>
                                             <Typography variant="subtitle2" mb={1}>Father Family Name</Typography>
                                             <TextField
+                                                InputProps={{ readOnly: true }}
+
                                                 fullWidth
                                                 size="small"
                                                 required
-                                                readOnly
-
                                                 placeholder="Enter Father Last Name"
                                                 name="father_family_name"
-                                                value={person.father_family_name}
-
+                                                value={person.father_family_name ?? ""}
+                                                onChange={handleChange}
+                                                onBlur={handleBlur}
                                                 error={errors.father_family_name} helperText={errors.father_family_name ? "This field is required." : ""}
                                             />
                                         </Box>
                                         <Box sx={{ flex: 1 }}>
                                             <Typography variant="subtitle2" mb={1}>Father Given Name</Typography>
                                             <TextField
+                                                InputProps={{ readOnly: true }}
+
                                                 fullWidth
                                                 size="small"
                                                 required
                                                 name="father_given_name"
-                                                readOnly
-
                                                 placeholder="Enter Father First Name"
-                                                value={person.father_given_name}
-
+                                                value={person.father_given_name ?? ""}
+                                                onChange={handleChange}
+                                                onBlur={handleBlur}
                                                 error={errors.father_given_name} helperText={errors.father_given_name ? "This field is required." : ""}
                                             />
                                         </Box>
                                         <Box sx={{ flex: 1 }}>
                                             <Typography variant="subtitle2" mb={1}>Father Middle Name</Typography>
                                             <TextField
+                                                InputProps={{ readOnly: true }}
+
                                                 fullWidth
                                                 size="small"
                                                 required
-                                                readOnly
-
                                                 name="father_middle_name"
                                                 placeholder="Enter Father Middle Name"
-                                                value={person.father_middle_name}
-
+                                                value={person.father_middle_name ?? ""}
+                                                onChange={handleChange}
+                                                onBlur={handleBlur}
                                                 error={errors.father_middle_name} helperText={errors.father_middle_name ? "This field is required." : ""}
                                             />
                                         </Box>
@@ -970,13 +918,14 @@ const MedicalDashboard2 = () => {
                                             <FormControl fullWidth size="small" required error={!!errors.father_ext}>
                                                 <InputLabel id="father-ext-label">Extension</InputLabel>
                                                 <Select
+                                                    readOnly
                                                     labelId="father-ext-label"
                                                     id="father_ext"
-                                                    readOnly
                                                     name="father_ext"
                                                     value={person.father_ext || ""}
                                                     label="Extension"
-
+                                                    onChange={handleChange}
+                                                    onBlur={handleBlur}
                                                 >
                                                     <MenuItem value=""><em>Select Extension</em></MenuItem>
                                                     <MenuItem value="Jr.">Jr.</MenuItem>
@@ -996,15 +945,16 @@ const MedicalDashboard2 = () => {
                                         <Box sx={{ flex: 1 }}>
                                             <Typography variant="subtitle2" mb={1}>Father Nickname</Typography>
                                             <TextField
+                                                InputProps={{ readOnly: true }}
+
                                                 fullWidth
                                                 size="small"
                                                 required
-                                                readOnly
-
                                                 name="father_nickname"
                                                 placeholder="Enter Father Nickname"
-                                                value={person.father_nickname}
-
+                                                value={person.father_nickname ?? ""}
+                                                onChange={handleChange}
+                                                onBlur={handleBlur}
                                                 error={errors.father_nickname} helperText={errors.father_nickname ? "This field is required." : ""}
                                             />
                                         </Box>
@@ -1018,8 +968,8 @@ const MedicalDashboard2 = () => {
                                     <Box display="flex" gap={3} alignItems="center">
                                         {/* Father's Education Not Applicable Checkbox */}
                                         <Checkbox
-                                            name="father_education"
                                             disabled
+                                            name="father_education"
                                             checked={person.father_education === 1}
                                             onChange={(e) => {
                                                 const isChecked = e.target.checked;
@@ -1041,7 +991,7 @@ const MedicalDashboard2 = () => {
                                                 setPerson(updatedPerson);
                                                 handleUpdate(updatedPerson); // Immediate update (optional)
                                             }}
-
+                                            onBlur={handleBlur}
                                             sx={{ width: 25, height: 25 }}
                                         />
                                         <label style={{ fontFamily: "Arial" }}>Father's education not applicable</label>
@@ -1056,13 +1006,15 @@ const MedicalDashboard2 = () => {
                                             <Box sx={{ flex: 1 }}>
                                                 <Typography variant="subtitle2" mb={1}>Father Education Level</Typography>
                                                 <TextField
+                                                    InputProps={{ readOnly: true }}
+
                                                     fullWidth
                                                     size="small"
-                                                    readOnly
                                                     placeholder="Enter Father Education Level"
                                                     name="father_education_level"
-                                                    value={person.father_education_level}
-
+                                                    value={person.father_education_level ?? ""}
+                                                    onChange={handleChange}
+                                                    onBlur={handleBlur}
                                                     error={errors.father_education_level}
                                                     helperText={errors.father_education_level ? "This field is required." : ""}
                                                 />
@@ -1071,14 +1023,15 @@ const MedicalDashboard2 = () => {
                                             <Box sx={{ flex: 1 }}>
                                                 <Typography variant="subtitle2" mb={1}>Father Last School</Typography>
                                                 <TextField
+                                                    InputProps={{ readOnly: true }}
+
                                                     fullWidth
                                                     size="small"
                                                     name="father_last_school"
-                                                    readOnly
-
                                                     placeholder="Enter Father Last School"
-                                                    value={person.father_last_school}
-
+                                                    value={person.father_last_school ?? ""}
+                                                    onChange={handleChange}
+                                                    onBlur={handleBlur}
                                                     error={errors.father_last_school}
                                                     helperText={errors.father_last_school ? "This field is required." : ""}
                                                 />
@@ -1087,14 +1040,15 @@ const MedicalDashboard2 = () => {
                                             <Box sx={{ flex: 1 }}>
                                                 <Typography variant="subtitle2" mb={1}>Father Course</Typography>
                                                 <TextField
+                                                    InputProps={{ readOnly: true }}
+
                                                     fullWidth
                                                     size="small"
                                                     name="father_course"
-                                                    readOnly
-
                                                     placeholder="Enter Father Course"
-                                                    value={person.father_course}
-
+                                                    value={person.father_course ?? ""}
+                                                    onChange={handleChange}
+                                                    onBlur={handleBlur}
                                                     error={errors.father_course}
                                                     helperText={errors.father_course ? "This field is required." : ""}
                                                 />
@@ -1103,14 +1057,15 @@ const MedicalDashboard2 = () => {
                                             <Box sx={{ flex: 1 }}>
                                                 <Typography variant="subtitle2" mb={1}>Father Year Graduated</Typography>
                                                 <TextField
+                                                    InputProps={{ readOnly: true }}
+
                                                     fullWidth
                                                     size="small"
                                                     name="father_year_graduated"
-                                                    readOnly
-
                                                     placeholder="Enter Father Year Graduated"
-                                                    value={person.father_year_graduated}
-
+                                                    value={person.father_year_graduated ?? ""}
+                                                    onChange={handleChange}
+                                                    onBlur={handleBlur}
                                                     error={errors.father_year_graduated}
                                                     helperText={errors.father_year_graduated ? "This field is required." : ""}
                                                 />
@@ -1119,14 +1074,15 @@ const MedicalDashboard2 = () => {
                                             <Box sx={{ flex: 1 }}>
                                                 <Typography variant="subtitle2" mb={1}>Father School Address</Typography>
                                                 <TextField
+                                                    InputProps={{ readOnly: true }}
+
                                                     fullWidth
                                                     size="small"
-                                                    readOnly
-
                                                     name="father_school_address"
                                                     placeholder="Enter Father School Address"
-                                                    value={person.father_school_address}
-
+                                                    value={person.father_school_address ?? ""}
+                                                    onChange={handleChange}
+                                                    onBlur={handleBlur}
                                                     error={errors.father_school_address}
                                                     helperText={errors.father_school_address ? "This field is required." : ""}
                                                 />
@@ -1145,45 +1101,48 @@ const MedicalDashboard2 = () => {
                                         <Box sx={{ flex: 1 }}>
                                             <Typography variant="subtitle2" mb={0.5}>Father Contact</Typography>
                                             <TextField
+                                                InputProps={{ readOnly: true }}
+
                                                 fullWidth
                                                 size="small"
                                                 required
-                                                readOnly
-
                                                 name="father_contact"
                                                 placeholder="Enter Father Contact"
-                                                value={person.father_contact}
-
+                                                value={person.father_contact ?? ""}
+                                                onChange={handleChange}
+                                                onBlur={handleBlur}
                                                 error={errors.father_contact} helperText={errors.father_contact ? "This field is required." : ""}
                                             />
                                         </Box>
                                         <Box sx={{ flex: 1 }}>
                                             <Typography variant="subtitle2" mb={0.5}>Father Occupation</Typography>
                                             <TextField
+                                                InputProps={{ readOnly: true }}
+
                                                 fullWidth
                                                 size="small"
                                                 required
-                                                readOnly
-
                                                 name="father_occupation"
-                                                value={person.father_occupation}
+                                                value={person.father_occupation ?? ""}
                                                 placeholder="Enter Father Occupation"
-
+                                                onChange={handleChange}
+                                                onBlur={handleBlur}
                                                 error={errors.father_occupation} helperText={errors.father_occupation ? "This field is required." : ""}
                                             />
                                         </Box>
                                         <Box sx={{ flex: 1 }}>
                                             <Typography variant="subtitle2" mb={0.5}>Father Employer</Typography>
                                             <TextField
+                                                InputProps={{ readOnly: true }}
+
                                                 fullWidth
                                                 size="small"
                                                 required
-                                                readOnly
-
                                                 name="father_employer"
                                                 placeholder="Enter Father Employer"
-                                                value={person.father_employer}
-
+                                                value={person.father_employer ?? ""}
+                                                onChange={handleChange}
+                                                onBlur={handleBlur}
                                                 error={errors.father_employer} helperText={errors.father_employer ? "This field is required." : ""}
                                             />
                                         </Box>
@@ -1191,15 +1150,16 @@ const MedicalDashboard2 = () => {
                                         <Box sx={{ flex: 1 }}>
                                             <Typography variant="subtitle2" mb={0.5}>Father Income</Typography>
                                             <TextField
+                                                InputProps={{ readOnly: true }}
+
                                                 fullWidth
                                                 size="small"
                                                 required
                                                 name="father_income"
-                                                readOnly
-
                                                 placeholder="Enter Father Income"
-                                                value={person.father_income}
-
+                                                value={person.father_income ?? ""}
+                                                onChange={handleChange}
+                                                onBlur={handleBlur}
                                                 error={errors.father_income}
                                                 helperText={errors.father_income ? "This field is required." : ""}
                                             />
@@ -1209,15 +1169,16 @@ const MedicalDashboard2 = () => {
                                     <Box sx={{ mb: 2 }}>
                                         <Typography variant="subtitle2" mb={1}>Father Email Address</Typography>
                                         <TextField
+                                            InputProps={{ readOnly: true }}
+
                                             fullWidth
                                             size="small"
                                             required
-                                            readOnly
-
                                             name="father_email"
                                             placeholder="Enter your Father Email Address (e.g., username@gmail.com)"
-                                            value={person.father_email}
-
+                                            value={person.father_email ?? ""}
+                                            onChange={handleChange}
+                                            onBlur={handleBlur}
 
                                         />
                                     </Box>
@@ -1235,13 +1196,14 @@ const MedicalDashboard2 = () => {
                             <FormControlLabel
                                 control={
                                     <Checkbox
-                                        name="mother_deceased"
                                         disabled
-                                        value={person.mother_deceased} // 👈 Added value
+                                        name="mother_deceased"
                                         checked={person.mother_deceased === 1}
                                         onChange={(e) => {
                                             const checked = e.target.checked;
 
+                                            // Call your form handler
+                                            handleChange(e);
 
                                             // Update local state
                                             setPerson((prev) => ({
@@ -1249,12 +1211,13 @@ const MedicalDashboard2 = () => {
                                                 mother_deceased: checked ? 1 : 0,
                                             }));
                                         }}
-
+                                        onBlur={handleBlur}
                                     />
                                 }
                                 label="Mother Deceased"
                             />
                             <br />
+
 
                             {/* Show Mother's Info ONLY if not deceased */}
                             {!isMotherDeceased && (
@@ -1263,16 +1226,16 @@ const MedicalDashboard2 = () => {
                                         <Box sx={{ flex: 1 }}>
                                             <Typography variant="subtitle2" mb={1}>Mother Family Name</Typography>
                                             <TextField
+                                                InputProps={{ readOnly: true }}
+
                                                 fullWidth
                                                 size="small"
                                                 required
-
-                                                readOnly
-
                                                 name="mother_family_name"
                                                 placeholder="Enter your Mother Last Name"
-                                                value={person.mother_family_name}
-
+                                                value={person.mother_family_name ?? ""}
+                                                onChange={handleChange}
+                                                onBlur={handleBlur}
                                                 error={errors.mother_family_name}
                                                 helperText={errors.mother_family_name ? "This field is required." : ""}
                                             />
@@ -1281,15 +1244,16 @@ const MedicalDashboard2 = () => {
                                         <Box sx={{ flex: 1 }}>
                                             <Typography variant="subtitle2" mb={1}>Mother First Name</Typography>
                                             <TextField
+                                                InputProps={{ readOnly: true }}
+
                                                 fullWidth
                                                 size="small"
                                                 required
-                                                readOnly
-
                                                 name="mother_given_name"
                                                 placeholder="Enter your Mother First Name"
-                                                value={person.mother_given_name}
-
+                                                value={person.mother_given_name ?? ""}
+                                                onChange={handleChange}
+                                                onBlur={handleBlur}
                                                 error={errors.mother_given_name}
                                                 helperText={errors.mother_given_name ? "This field is required." : ""}
                                             />
@@ -1298,15 +1262,16 @@ const MedicalDashboard2 = () => {
                                         <Box sx={{ flex: 1 }}>
                                             <Typography variant="subtitle2" mb={1}>Mother Middle Name</Typography>
                                             <TextField
+                                                InputProps={{ readOnly: true }}
+
                                                 fullWidth
                                                 size="small"
                                                 required
-                                                readOnly
-
                                                 name="mother_middle_name"
                                                 placeholder="Enter your Mother Middle Name"
-                                                value={person.mother_middle_name}
-
+                                                value={person.mother_middle_name ?? ""}
+                                                onChange={handleChange}
+                                                onBlur={handleBlur}
                                                 error={errors.mother_middle_name}
                                                 helperText={errors.mother_middle_name ? "This field is required." : ""}
                                             />
@@ -1318,13 +1283,14 @@ const MedicalDashboard2 = () => {
                                             <FormControl fullWidth size="small" >
                                                 <InputLabel id="mother-ext-label">Extension</InputLabel>
                                                 <Select
+                                                    readOnly
                                                     labelId="mother-ext-label"
                                                     id="mother_ext"
                                                     name="mother_ext"
-                                                    readOnly
                                                     value={person.mother_ext || ""}
                                                     label="Extension"
-
+                                                    onChange={handleChange}
+                                                    onBlur={handleBlur}
                                                 >
                                                     <MenuItem value=""><em>Select Extension</em></MenuItem>
                                                     <MenuItem value="Jr.">Jr.</MenuItem>
@@ -1343,15 +1309,16 @@ const MedicalDashboard2 = () => {
                                         <Box sx={{ flex: 1 }}>
                                             <Typography variant="subtitle2" mb={1}>Mother Nickname</Typography>
                                             <TextField
+                                                InputProps={{ readOnly: true }}
+
                                                 fullWidth
                                                 size="small"
                                                 required
-                                                readOnly
-
                                                 name="mother_nickname"
                                                 placeholder="Enter your Mother Nickname"
-                                                value={person.mother_nickname}
-
+                                                value={person.mother_nickname ?? ""}
+                                                onChange={handleChange}
+                                                onBlur={handleBlur}
                                                 error={errors.mother_nickname}
                                                 helperText={errors.mother_nickname ? "This field is required." : ""}
                                             />
@@ -1368,8 +1335,8 @@ const MedicalDashboard2 = () => {
                                     <Box display="flex" gap={3} alignItems="center">
                                         {/* Mother's Education Not Applicable Checkbox */}
                                         <Checkbox
-                                            name="mother_education"
                                             disabled
+                                            name="mother_education"
                                             checked={person.mother_education === 1}
                                             onChange={(e) => {
                                                 const isChecked = e.target.checked;
@@ -1391,7 +1358,7 @@ const MedicalDashboard2 = () => {
                                                 setPerson(updatedPerson);
                                                 handleUpdate(updatedPerson); // Optional: Immediate save
                                             }}
-
+                                            onBlur={handleBlur}
                                             sx={{ width: 25, height: 25 }}
                                         />
                                         <label style={{ fontFamily: "Arial" }}>Mother's education not applicable</label>
@@ -1403,13 +1370,15 @@ const MedicalDashboard2 = () => {
                                             <Box sx={{ flex: 1 }}>
                                                 <Typography variant="subtitle2" mb={1}>Mother Education Level</Typography>
                                                 <TextField
+                                                    InputProps={{ readOnly: true }}
+
                                                     fullWidth
                                                     size="small"
-                                                    readOnly
                                                     name="mother_education_level"
                                                     placeholder="Enter your Mother Education Level"
-                                                    value={person.mother_education_level}
-
+                                                    value={person.mother_education_level ?? ""}
+                                                    onChange={handleChange}
+                                                    onBlur={handleBlur}
                                                     error={errors.mother_education_level}
                                                     helperText={errors.mother_education_level ? "This field is required." : ""}
                                                 />
@@ -1418,13 +1387,15 @@ const MedicalDashboard2 = () => {
                                             <Box sx={{ flex: 1 }}>
                                                 <Typography variant="subtitle2" mb={1}>Mother Last School</Typography>
                                                 <TextField
+                                                    InputProps={{ readOnly: true }}
+
                                                     fullWidth
                                                     size="small"
                                                     name="mother_last_school"
-                                                    readOnly
                                                     placeholder="Enter your Mother Last School Attended"
-                                                    value={person.mother_last_school}
-
+                                                    value={person.mother_last_school ?? ""}
+                                                    onChange={handleChange}
+                                                    onBlur={handleBlur}
                                                     error={errors.mother_last_school}
                                                     helperText={errors.mother_last_school ? "This field is required." : ""}
                                                 />
@@ -1433,14 +1404,15 @@ const MedicalDashboard2 = () => {
                                             <Box sx={{ flex: 1 }}>
                                                 <Typography variant="subtitle2" mb={1}>Mother Course</Typography>
                                                 <TextField
+                                                    InputProps={{ readOnly: true }}
+
                                                     fullWidth
                                                     size="small"
                                                     name="mother_course"
-                                                    readOnly
-
                                                     placeholder="Enter your Mother Course"
-                                                    value={person.mother_course}
-
+                                                    value={person.mother_course ?? ""}
+                                                    onChange={handleChange}
+                                                    onBlur={handleBlur}
                                                     error={errors.mother_course}
                                                     helperText={errors.mother_course ? "This field is required." : ""}
                                                 />
@@ -1449,14 +1421,15 @@ const MedicalDashboard2 = () => {
                                             <Box sx={{ flex: 1 }}>
                                                 <Typography variant="subtitle2" mb={1}>Mother Year Graduated</Typography>
                                                 <TextField
+                                                    InputProps={{ readOnly: true }}
+
                                                     fullWidth
                                                     size="small"
                                                     name="mother_year_graduated"
-                                                    readOnly
-
                                                     placeholder="Enter your Mother Year Graduated"
-                                                    value={person.mother_year_graduated}
-
+                                                    value={person.mother_year_graduated ?? ""}
+                                                    onChange={handleChange}
+                                                    onBlur={handleBlur}
                                                     error={errors.mother_year_graduated}
                                                     helperText={errors.mother_year_graduated ? "This field is required." : ""}
                                                 />
@@ -1465,14 +1438,15 @@ const MedicalDashboard2 = () => {
                                             <Box sx={{ flex: 1 }}>
                                                 <Typography variant="subtitle2" mb={1}>Mother School Address</Typography>
                                                 <TextField
+                                                    InputProps={{ readOnly: true }}
+
                                                     fullWidth
                                                     size="small"
                                                     name="mother_school_address"
-                                                    readOnly
-
                                                     placeholder="Enter your Mother School Address"
-                                                    value={person.mother_school_address}
-
+                                                    value={person.mother_school_address ?? ""}
+                                                    onChange={handleChange}
+                                                    onBlur={handleBlur}
                                                     error={errors.mother_school_address}
                                                     helperText={errors.mother_school_address ? "This field is required." : ""}
                                                 />
@@ -1490,45 +1464,48 @@ const MedicalDashboard2 = () => {
                                         <Box sx={{ flex: 1 }}>
                                             <Typography variant="subtitle2" mb={0.5}>Mother Contact</Typography>
                                             <TextField
+                                                InputProps={{ readOnly: true }}
+
                                                 fullWidth
                                                 size="small"
-                                                readOnly
-
                                                 required
                                                 name="mother_contact"
                                                 placeholder="Enter your Mother Contact"
-                                                value={person.mother_contact}
-
+                                                value={person.mother_contact ?? ""}
+                                                onChange={handleChange}
+                                                onBlur={handleBlur}
                                                 error={errors.mother_contact} helperText={errors.mother_contact ? "This field is required." : ""}
                                             />
                                         </Box>
                                         <Box sx={{ flex: 1 }}>
                                             <Typography variant="subtitle2" mb={0.5}>Mother Occupation</Typography>
                                             <TextField
+                                                InputProps={{ readOnly: true }}
+
                                                 fullWidth
                                                 size="small"
                                                 required
-                                                readOnly
-
                                                 name="mother_occupation"
                                                 placeholder="Enter your Mother Occupation"
-                                                value={person.mother_occupation}
-
+                                                value={person.mother_occupation ?? ""}
+                                                onChange={handleChange}
+                                                onBlur={handleBlur}
                                                 error={errors.mother_occupation} helperText={errors.mother_occupation ? "This field is required." : ""}
                                             />
                                         </Box>
                                         <Box sx={{ flex: 1 }}>
                                             <Typography variant="subtitle2" mb={0.5}>Mother Employer</Typography>
                                             <TextField
+                                                InputProps={{ readOnly: true }}
+
                                                 fullWidth
                                                 size="small"
                                                 required
-                                                readOnly
-
                                                 name="mother_employer"
                                                 placeholder="Enter your Mother Employer"
-                                                value={person.mother_employer}
-
+                                                value={person.mother_employer ?? ""}
+                                                onChange={handleChange}
+                                                onBlur={handleBlur}
                                                 error={errors.mother_employer} helperText={errors.mother_employer ? "This field is required." : ""}
                                             />
                                         </Box>
@@ -1537,15 +1514,16 @@ const MedicalDashboard2 = () => {
                                         <Box sx={{ flex: 1 }}>
                                             <Typography variant="subtitle2" mb={0.5}>Mother Income</Typography>
                                             <TextField
+                                                InputProps={{ readOnly: true }}
+
                                                 fullWidth
                                                 size="small"
                                                 required
-                                                readOnly
-
                                                 name="mother_income"
                                                 placeholder="Enter your Mother Income"
-                                                value={person.mother_income}
-
+                                                value={person.mother_income ?? ""}
+                                                onChange={handleChange}
+                                                onBlur={handleBlur}
                                                 error={errors.mother_income}
                                                 helperText={errors.mother_income ? "This field is required." : ""}
                                             />
@@ -1555,15 +1533,16 @@ const MedicalDashboard2 = () => {
                                     <Box sx={{ mb: 2 }}>
                                         <Typography variant="subtitle2" mb={1}>Mother Email</Typography>
                                         <TextField
+                                            InputProps={{ readOnly: true }}
+
                                             fullWidth
                                             size="small"
                                             required
-                                            readOnly
-
                                             name="mother_email"
                                             placeholder="Enter your Mother Email Address (e.g., username@gmail.com)"
-                                            value={person.mother_email}
-
+                                            value={person.mother_email ?? ""}
+                                            onChange={handleChange}
+                                            onBlur={handleBlur}
 
                                         />
                                     </Box>
@@ -1581,13 +1560,14 @@ const MedicalDashboard2 = () => {
                             <FormControl style={{ marginBottom: "10px", width: "200px" }} size="small" required error={!!errors.guardian}>
                                 <InputLabel id="guardian-label">Guardian</InputLabel>
                                 <Select
+                                    readOnly
                                     labelId="guardian-label"
                                     id="guardian"
-                                    readOnly
                                     name="guardian"
                                     value={person.guardian || ""}
                                     label="Guardian"
-
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
                                 >
                                     <MenuItem value=""><em>Select Guardian</em></MenuItem>
                                     <MenuItem value="Father">Father</MenuItem>
@@ -1614,15 +1594,16 @@ const MedicalDashboard2 = () => {
                             <Box sx={{ flex: 1 }}>
                                 <Typography variant="subtitle2" mb={1}>Guardian Family Name</Typography>
                                 <TextField
+                                    InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
-                                    readOnly
-
                                     required
                                     name="guardian_family_name"
                                     placeholder="Enter your Guardian Family Name"
-                                    value={person.guardian_family_name}
-
+                                    value={person.guardian_family_name ?? ""}
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
                                     error={!!errors.guardian_family_name}
                                     helperText={errors.guardian_family_name ? "This field is required." : ""}
                                 />
@@ -1632,15 +1613,16 @@ const MedicalDashboard2 = () => {
                             <Box sx={{ flex: 1 }}>
                                 <Typography variant="subtitle2" mb={1}>Guardian First Name</Typography>
                                 <TextField
+                                    InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     required
-                                    readOnly
-
                                     name="guardian_given_name"
                                     placeholder="Enter your Guardian First Name"
-                                    value={person.guardian_given_name}
-
+                                    value={person.guardian_given_name ?? ""}
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
                                     error={!!errors.guardian_given_name}
                                     helperText={errors.guardian_given_name ? "This field is required." : ""}
                                 />
@@ -1650,15 +1632,16 @@ const MedicalDashboard2 = () => {
                             <Box sx={{ flex: 1 }}>
                                 <Typography variant="subtitle2" mb={1}>Guardian Middle Name</Typography>
                                 <TextField
+                                    InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     required
-                                    readOnly
-
                                     name="guardian_middle_name"
                                     placeholder="Enter your Guardian Middle Name"
-                                    value={person.guardian_middle_name}
-
+                                    value={person.guardian_middle_name ?? ""}
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
                                     error={!!errors.guardian_middle_name}
                                     helperText={errors.guardian_middle_name ? "This field is required." : ""}
                                 />
@@ -1670,13 +1653,14 @@ const MedicalDashboard2 = () => {
                                 <FormControl fullWidth size="small" required error={!!errors.guardian_ext}>
                                     <InputLabel id="guardian-ext-label">Extension</InputLabel>
                                     <Select
+                                        readOnly
                                         labelId="guardian-ext-label"
                                         id="guardian_ext"
                                         name="guardian_ext"
-                                        readOnly
                                         value={person.guardian_ext || ""}
                                         label="Extension"
-
+                                        onChange={handleChange}
+                                        onBlur={handleBlur}
                                     >
                                         <MenuItem value=""><em>Select Extension</em></MenuItem>
                                         <MenuItem value="Jr.">Jr.</MenuItem>
@@ -1697,15 +1681,16 @@ const MedicalDashboard2 = () => {
                             <Box sx={{ flex: 1 }}>
                                 <Typography variant="subtitle2" mb={1}>Guardian Nickname</Typography>
                                 <TextField
+                                    InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     required
-                                    readOnly
-
                                     name="guardian_nickname"
                                     placeholder="Enter your Guardian Nickname"
-                                    value={person.guardian_nickname}
-
+                                    value={person.guardian_nickname ?? ""}
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
                                     error={!!errors.guardian_nickname}
                                     helperText={errors.guardian_nickname ? "This field is required." : ""}
                                 />
@@ -1719,15 +1704,16 @@ const MedicalDashboard2 = () => {
                         <Box sx={{ width: '100%', mb: 2 }}>
                             <Typography variant="subtitle2" mb={1}>Guardian Address</Typography>
                             <TextField
+                                InputProps={{ readOnly: true }}
+
                                 fullWidth
                                 size="small"
                                 required
-                                readOnly
-
                                 name="guardian_address"
                                 placeholder="Enter your Guardian Address"
-                                value={person.guardian_address}
-
+                                value={person.guardian_address ?? ""}
+                                onChange={handleChange}
+                                onBlur={handleBlur}
                                 error={errors.guardian_address}
                                 helperText={errors.guardian_address ? "This field is required." : ""}
                             />
@@ -1737,15 +1723,16 @@ const MedicalDashboard2 = () => {
                             <Box sx={{ flex: 1 }}>
                                 <Typography variant="subtitle2" mb={1}>Guardian Contact</Typography>
                                 <TextField
+                                    InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     required
                                     name="guardian_contact"
-                                    readOnly
-
                                     placeholder="Enter your Guardian Contact Number"
-                                    value={person.guardian_contact}
-
+                                    value={person.guardian_contact ?? ""}
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
                                     error={errors.guardian_contact} helperText={errors.guardian_contact ? "This field is required." : ""}
                                 />
                             </Box>
@@ -1753,15 +1740,16 @@ const MedicalDashboard2 = () => {
                             <Box sx={{ flex: 1 }}>
                                 <Typography variant="subtitle2" mb={1}>Guardian Email</Typography>
                                 <TextField
+                                    InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     required
                                     name="guardian_email"
-                                    readOnly
-
                                     placeholder="Enter your Guardian Email Address (e.g., username@gmail.com)"
-                                    value={person.guardian_email}
-
+                                    value={person.guardian_email ?? ""}
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
 
                                 />
                             </Box>
@@ -1777,12 +1765,13 @@ const MedicalDashboard2 = () => {
                             <FormControl fullWidth size="small" required error={!!errors.annual_income}>
                                 <InputLabel id="annual-income-label">Annual Income</InputLabel>
                                 <Select
+                                    readOnly
                                     labelId="annual-income-label"
                                     name="annual_income"
-                                    readOnly
                                     value={person.annual_income || ""}
                                     label="Annual Income"
-
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
                                 >
                                     <MenuItem value=""><em>Select Annual Income</em></MenuItem>
                                     <MenuItem value="80,000 and below">80,000 and below</MenuItem>
@@ -1797,6 +1786,8 @@ const MedicalDashboard2 = () => {
                                 )}
                             </FormControl>
                         </Box>
+
+
 
                         <Modal
                             open={examPermitModalOpen}
@@ -1839,6 +1830,8 @@ const MedicalDashboard2 = () => {
 
 
 
+
+
                         <Box display="flex" justifyContent="space-between" mt={4}>
                             {/* Previous Page Button */}
                             <Button
@@ -1870,31 +1863,26 @@ const MedicalDashboard2 = () => {
 
                             <Button
                                 variant="contained"
-                                onClick={(e) => {
+                                onClick={() => {
                                     handleUpdate();
-
-                                    if (isFormValid()) {
-                                        navigate("/medical_dashboard3");
-                                    } else {
-                                        alert("Please complete all required fields before proceeding.");
-                                    }
+                                    navigate("/medical_dashboard3");
                                 }}
                                 endIcon={
                                     <ArrowForwardIcon
                                         sx={{
-                                            color: '#fff',
-                                            transition: 'color 0.3s',
+                                            color: "#fff",
+                                            transition: "color 0.3s",
                                         }}
                                     />
                                 }
                                 sx={{
-                                    backgroundColor: '#6D2323',
-                                    color: '#fff',
-                                    '&:hover': {
-                                        backgroundColor: '#E8C999',
-                                        color: '#000',
-                                        '& .MuiSvgIcon-root': {
-                                            color: '#000',
+                                    backgroundColor: "#6D2323",
+                                    color: "#fff",
+                                    "&:hover": {
+                                        backgroundColor: "#E8C999",
+                                        color: "#000",
+                                        "& .MuiSvgIcon-root": {
+                                            color: "#000",
                                         },
                                     },
                                 }}

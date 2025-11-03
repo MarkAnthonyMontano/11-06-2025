@@ -26,15 +26,17 @@ import { useNavigate } from "react-router-dom";
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { io } from "socket.io-client";
 import { Snackbar, Alert } from "@mui/material";
-import SchoolIcon from "@mui/icons-material/School";
-import DashboardIcon from "@mui/icons-material/Dashboard";
-import AssignmentIcon from "@mui/icons-material/Assignment";
-import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
-import ScheduleIcon from "@mui/icons-material/Schedule";
-import PersonSearchIcon from "@mui/icons-material/PersonSearch";
-import PeopleIcon from "@mui/icons-material/People";
+import SchoolIcon from '@mui/icons-material/School';
+import AssignmentIcon from '@mui/icons-material/Assignment';
+import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
+import ScheduleIcon from '@mui/icons-material/Schedule';
+import PeopleIcon from '@mui/icons-material/People';
+import PersonSearchIcon from '@mui/icons-material/PersonSearch';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
 import Unauthorized from "../components/Unauthorized";
 import LoadingOverlay from "../components/LoadingOverlay";
+import SearchIcon from "@mui/icons-material/Search";
 
 
 const socket = io("http://localhost:5000");
@@ -43,20 +45,16 @@ const socket = io("http://localhost:5000");
 
 
 
-
-const tabs = [
-    {
-        label: <>Admission Process for <br /> Registrar</>,
-        to: "/applicant_list_admin",
-        icon: <SchoolIcon fontSize="large" />
-    },
-    { label: "Applicant Form", to: "/admin_dashboard1", icon: <DashboardIcon fontSize="large" /> },
-    { label: "Student Requirements", to: "/student_requirements", icon: <AssignmentIcon fontSize="large" /> },
-    { label: "Entrance Exam Room Assignment", to: "/assign_entrance_exam", icon: <MeetingRoomIcon fontSize="large" /> },
-    { label: "Entrance Exam Schedule Management", to: "/assign_schedule_applicant", icon: <ScheduleIcon fontSize="large" /> },
-    { label: "Examination Profile", to: "/registrar_examination_profile", icon: <PersonSearchIcon fontSize="large" /> },
-    { label: "Proctor's Applicant List", to: "/proctor_applicant_list", icon: <PeopleIcon fontSize="large" /> },
-];
+ const tabs = [
+        { label: "Admission Process For College", to: "/applicant_list", icon: <SchoolIcon fontSize="large" /> },
+        { label: "Applicant Form", to: "/registrar_dashboard1", icon: <AssignmentIcon fontSize="large" /> },
+        { label: "Student Requirements", to: "/registrar_requirements", icon: <AssignmentTurnedInIcon fontSize="large" /> },
+        { label: "Interview Room Assignment", to: "/assign_interview_exam", icon: <MeetingRoomIcon fontSize="large" /> },
+        { label: "Interview Schedule Management", to: "/assign_schedule_applicants_interview", icon: <ScheduleIcon fontSize="large" /> },
+        { label: "Interviewer Applicant's List", to: "/interviewer_applicant_list", icon: <PeopleIcon fontSize="large" /> },
+        { label: "Qualifying Exam Score", to: "/qualifying_exam_scores", icon: <PersonSearchIcon fontSize="large" /> },
+        { label: "Student Numbering", to: "/student_numbering_per_college", icon: <DashboardIcon fontSize="large" /> },
+    ];
 
 
 const remarksOptions = [
@@ -933,9 +931,9 @@ const RegistrarRequirements = () => {
                         justifyContent: 'space-between',
                         alignItems: 'center',
                         flexWrap: 'wrap',
-                       
+
                         mb: 2,
-                      
+
                     }}
                 >
                     <Typography
@@ -955,8 +953,17 @@ const RegistrarRequirements = () => {
                         size="small"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        InputProps={{ startAdornment: <Search sx={{ mr: 1 }} /> }}
-                        sx={{ width: { xs: '100%', sm: '425px' }, mt: { xs: 2, sm: 0 } }}
+                        sx={{
+                            width: 450,
+                            backgroundColor: "#fff",
+                            borderRadius: 1,
+                            "& .MuiOutlinedInput-root": {
+                                borderRadius: "10px",
+                            },
+                        }}
+                        InputProps={{
+                            startAdornment: <SearchIcon sx={{ mr: 1, color: "gray" }} />,
+                        }}
                     />
                 </Box>
 

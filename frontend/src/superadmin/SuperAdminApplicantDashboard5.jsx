@@ -31,53 +31,53 @@ const SuperAdminApplicantDashboard5 = () => {
 
 
 
-const [hasAccess, setHasAccess] = useState(null);
-const [loading, setLoading] = useState(false);
+    const [hasAccess, setHasAccess] = useState(null);
+    const [loading, setLoading] = useState(false);
 
 
-const pageId = 85;
+    const pageId = 85;
 
-//Put this After putting the code of the past code
-useEffect(() => {
-    
-    const storedUser = localStorage.getItem("email");
-    const storedRole = localStorage.getItem("role");
-    const storedID = localStorage.getItem("person_id");
+    //Put this After putting the code of the past code
+    useEffect(() => {
 
-    if (storedUser && storedRole && storedID) {
-      setUser(storedUser);
-      setUserRole(storedRole);
-      setUserID(storedID);
+        const storedUser = localStorage.getItem("email");
+        const storedRole = localStorage.getItem("role");
+        const storedID = localStorage.getItem("person_id");
 
-      if (storedRole === "registrar") {
-        checkAccess(storedID);
-      } else {
-        window.location.href = "/login";
-      }
-    } else {
-      window.location.href = "/login";
-    }
-  }, []);
+        if (storedUser && storedRole && storedID) {
+            setUser(storedUser);
+            setUserRole(storedRole);
+            setUserID(storedID);
 
-const checkAccess = async (userID) => {
-    try {
-        const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
-        if (response.data && response.data.page_privilege === 1) {
-          setHasAccess(true);
+            if (storedRole === "registrar") {
+                checkAccess(storedID);
+            } else {
+                window.location.href = "/login";
+            }
         } else {
-          setHasAccess(false);
+            window.location.href = "/login";
         }
-    } catch (error) {
-        console.error('Error checking access:', error);
-        setHasAccess(false);
-        if (error.response && error.response.data.message) {
-          console.log(error.response.data.message);
-        } else {
-          console.log("An unexpected error occurred.");
+    }, []);
+
+    const checkAccess = async (userID) => {
+        try {
+            const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
+            if (response.data && response.data.page_privilege === 1) {
+                setHasAccess(true);
+            } else {
+                setHasAccess(false);
+            }
+        } catch (error) {
+            console.error('Error checking access:', error);
+            setHasAccess(false);
+            if (error.response && error.response.data.message) {
+                console.log(error.response.data.message);
+            } else {
+                console.log("An unexpected error occurred.");
+            }
+            setLoading(false);
         }
-        setLoading(false);
-    }
-  };
+    };
 
 
     const location = useLocation();
@@ -182,48 +182,169 @@ const checkAccess = async (userID) => {
         navigate(steps[index].path); // Go to the clicked step’s page
     };
 
-
-
-    // Do not alter
-    const handleUpdate = async () => {
-        const currentDate = new Date();
-        const formattedDate = currentDate.toLocaleDateString('en-GB'); // Format: DD/MM/YYYY
-
-        const updatedPerson = {
-            ...person,
-            created_at: person.created_at || formattedDate // Only add if not already set
-        };
-
+    // ✅ Auto-save update with correct applicant ID and safe SQL data
+    const handleUpdate = async (updatedData) => {
         try {
-            await axios.put(`http://localhost:5000/api/person/${userID}`, updatedPerson);
-            console.log("Auto-saved with created_at:", updatedPerson.created_at);
+            // ✅ Determine correct person_id to update (the applicant, not the admin)
+            const targetId = selectedPerson?.person_id || queryPersonId || person.person_id;
+            if (!targetId) {
+                console.warn("⚠️ No valid applicant ID found — skipping update.");
+                return;
+            }
+
+            // ✅ Proper MySQL-compatible date for created_at (YYYY-MM-DD)
+            const currentDate = new Date();
+            const formattedDate = currentDate.toISOString().split("T")[0]; // e.g., "2025-11-03"
+
+            // ✅ Only allow valid fields (match your person_table)
+            const allowedFields = [
+                "person_id", "profile_img", "campus", "academicProgram", "classifiedAs", "applyingAs",
+                "program", "program2", "program3", "yearLevel",
+                "last_name", "first_name", "middle_name", "extension", "nickname",
+                "height", "weight", "lrnNumber", "nolrnNumber", "gender",
+                "pwdMember", "pwdType", "pwdId",
+                "birthOfDate", "age", "birthPlace", "languageDialectSpoken",
+                "citizenship", "religion", "civilStatus", "tribeEthnicGroup",
+                "cellphoneNumber", "emailAddress",
+                "presentStreet", "presentBarangay", "presentZipCode", "presentRegion",
+                "presentProvince", "presentMunicipality", "presentDswdHouseholdNumber",
+                "sameAsPresentAddress",
+                "permanentStreet", "permanentBarangay", "permanentZipCode",
+                "permanentRegion", "permanentProvince", "permanentMunicipality",
+                "permanentDswdHouseholdNumber",
+                "solo_parent",
+                "father_deceased", "father_family_name", "father_given_name", "father_middle_name",
+                "father_ext", "father_nickname", "father_education", "father_education_level",
+                "father_last_school", "father_course", "father_year_graduated", "father_school_address",
+                "father_contact", "father_occupation", "father_employer", "father_income", "father_email",
+                "mother_deceased", "mother_family_name", "mother_given_name", "mother_middle_name",
+                "mother_ext", "mother_nickname", "mother_education", "mother_education_level",
+                "mother_last_school", "mother_course", "mother_year_graduated", "mother_school_address",
+                "mother_contact", "mother_occupation", "mother_employer", "mother_income", "mother_email",
+                "guardian", "guardian_family_name", "guardian_given_name", "guardian_middle_name",
+                "guardian_ext", "guardian_nickname", "guardian_address", "guardian_contact", "guardian_email",
+                "annual_income",
+                "schoolLevel", "schoolLastAttended", "schoolAddress", "courseProgram",
+                "honor", "generalAverage", "yearGraduated",
+                "schoolLevel1", "schoolLastAttended1", "schoolAddress1", "courseProgram1",
+                "honor1", "generalAverage1", "yearGraduated1",
+                "strand",
+                // 🩺 Health and medical
+                "cough", "colds", "fever", "asthma", "faintingSpells", "heartDisease",
+                "tuberculosis", "frequentHeadaches", "hernia", "chronicCough", "headNeckInjury",
+                "hiv", "highBloodPressure", "diabetesMellitus", "allergies", "cancer",
+                "smokingCigarette", "alcoholDrinking", "hospitalized", "hospitalizationDetails",
+                "medications",
+                // 🧬 Covid / Vaccination
+                "hadCovid", "covidDate",
+                "vaccine1Brand", "vaccine1Date", "vaccine2Brand", "vaccine2Date",
+                "booster1Brand", "booster1Date", "booster2Brand", "booster2Date",
+                // 🧪 Lab results / medical findings
+                "chestXray", "cbc", "urinalysis", "otherworkups",
+                // 🧍 Additional fields
+                "symptomsToday", "remarks",
+                // ✅ Agreement / Meta
+                "termsOfAgreement", "created_at", "current_step"
+            ];
+
+            // ✅ Clean the payload — remove any unknown keys
+            const cleanedData = Object.fromEntries(
+                Object.entries(updatedData || person).filter(([key]) => allowedFields.includes(key))
+            );
+
+            // ✅ Ensure created_at is valid
+            if (!cleanedData.created_at) cleanedData.created_at = formattedDate;
+
+            // ✅ Execute update to backend
+            await axios.put(`http://localhost:5000/api/person/${targetId}`, cleanedData);
+            console.log(`✅ Auto-saved for applicant person_id: ${targetId}`);
         } catch (error) {
-            console.error("Auto-save failed:", error);
+            console.error("❌ Auto-save failed:", {
+                message: error.message,
+                status: error.response?.status,
+                details: error.response?.data || error,
+            });
         }
     };
 
-
-    // Real-time save on every character typed
+    // ✅ Real-time update on every change
     const handleChange = (e) => {
         const { name, type, checked, value } = e.target;
+
+        const updatedValue = type === "checkbox" ? (checked ? 1 : 0) : value;
+
         const updatedPerson = {
             ...person,
-            [name]: type === "checkbox" ? (checked ? 1 : 0) : value,
+            [name]: updatedValue,
         };
+
         setPerson(updatedPerson);
-        handleUpdate(updatedPerson); // No delay, real-time save
+        handleUpdate(updatedPerson); // Auto-save immediately
     };
 
 
 
+    // ✅ Safe handleBlur for SuperAdmin (updates correct applicant)
     const handleBlur = async () => {
         try {
-            await axios.put(`http://localhost:5000/api/person/${userID}`, person);
-            console.log("Auto-saved");
+            // ✅ Determine correct person_id to update (applicant)
+            const targetId = selectedPerson?.person_id || queryPersonId || person.person_id;
+            if (!targetId) {
+                console.warn("⚠️ No valid applicant ID found — skipping update.");
+                return;
+            }
+
+            // ✅ List of valid MySQL columns (from person_table)
+            const allowedFields = [
+                "profile_img", "campus", "academicProgram", "classifiedAs", "applyingAs",
+                "program", "program2", "program3", "yearLevel",
+                "last_name", "first_name", "middle_name", "extension", "nickname",
+                "height", "weight", "lrnNumber", "nolrnNumber", "gender",
+                "pwdMember", "pwdType", "pwdId", "birthOfDate", "age", "birthPlace",
+                "languageDialectSpoken", "citizenship", "religion", "civilStatus",
+                "tribeEthnicGroup", "cellphoneNumber", "emailAddress",
+                "presentStreet", "presentBarangay", "presentZipCode",
+                "presentRegion", "presentProvince", "presentMunicipality",
+                "presentDswdHouseholdNumber", "sameAsPresentAddress",
+                "permanentStreet", "permanentBarangay", "permanentZipCode",
+                "permanentRegion", "permanentProvince", "permanentMunicipality",
+                "permanentDswdHouseholdNumber",
+                "father_family_name", "father_given_name", "father_middle_name",
+                "father_ext", "father_nickname", "father_contact", "father_occupation",
+                "father_employer", "father_income", "father_email",
+                "mother_family_name", "mother_given_name", "mother_middle_name",
+                "mother_ext", "mother_nickname", "mother_contact", "mother_occupation",
+                "mother_employer", "mother_income", "mother_email",
+                "guardian_family_name", "guardian_given_name", "guardian_middle_name",
+                "guardian_ext", "guardian_nickname", "guardian_contact",
+                "guardian_address", "guardian_email", "annual_income",
+                "schoolLevel", "schoolLastAttended", "schoolAddress", "courseProgram",
+                "honor", "generalAverage", "yearGraduated",
+                "strand", "termsOfAgreement", "current_step"
+            ];
+
+            // ✅ Filter out invalid fields to prevent SQL errors
+            const cleanedData = Object.fromEntries(
+                Object.entries(person).filter(([key]) => allowedFields.includes(key))
+            );
+
+            if (Object.keys(cleanedData).length === 0) {
+                console.warn("⚠️ No valid fields to update — skipping blur save.");
+                return;
+            }
+
+            // ✅ Send update to backend
+            await axios.put(`http://localhost:5000/api/person/${targetId}`, cleanedData);
+            console.log(`💾 Auto-saved (on blur) for person_id: ${targetId}`);
         } catch (err) {
-            console.error("Auto-save failed", err);
+            console.error("❌ Auto-save (on blur) failed:", {
+                message: err.message,
+                status: err.response?.status,
+                details: err.response?.data || err,
+            });
         }
     };
+
 
     const [errors, setErrors] = useState({});
 
@@ -331,16 +452,16 @@ const checkAccess = async (userID) => {
 
 
 
-// Put this at the very bottom before the return 
-if (loading || hasAccess === null) {
-   return <LoadingOverlay open={loading} message="Check Access"/>;
-}
+    // Put this at the very bottom before the return 
+    if (loading || hasAccess === null) {
+        return <LoadingOverlay open={loading} message="Check Access" />;
+    }
 
-  if (!hasAccess) {
-    return (
-      <Unauthorized />
-    );
-  }
+    if (!hasAccess) {
+        return (
+            <Unauthorized />
+        );
+    }
 
 
 
@@ -364,9 +485,9 @@ if (loading || hasAccess === null) {
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     flexWrap: 'wrap',
-                   
+
                     mb: 2,
-                   
+
                 }}
             >
                 <Typography
@@ -377,7 +498,7 @@ if (loading || hasAccess === null) {
                         fontSize: '36px',
                     }}
                 >
-                   APPLICANT - OTHER INFORMATION
+                    APPLICANT - OTHER INFORMATION
                 </Typography>
 
 

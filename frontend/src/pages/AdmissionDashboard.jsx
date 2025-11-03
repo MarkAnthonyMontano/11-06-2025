@@ -32,21 +32,21 @@ import { Box } from "@mui/material";
 import { Link } from "react-router-dom";
 
 const AdmissionDashboardPanel = () => {
-  
-// Also put it at the very top
-const [userID, setUserID] = useState("");
-const [user, setUser] = useState("");
-const [userRole, setUserRole] = useState("");
 
-const [hasAccess, setHasAccess] = useState(null);
-const [loading, setLoading] = useState(false);
+  // Also put it at the very top
+  const [userID, setUserID] = useState("");
+  const [user, setUser] = useState("");
+  const [userRole, setUserRole] = useState("");
+
+  const [hasAccess, setHasAccess] = useState(null);
+  const [loading, setLoading] = useState(false);
 
 
-const pageId = 96;
+  const pageId = 96;
 
-//Put this After putting the code of the past code
-useEffect(() => {
-    
+  //Put this After putting the code of the past code
+  useEffect(() => {
+
     const storedUser = localStorage.getItem("email");
     const storedRole = localStorage.getItem("role");
     const storedID = localStorage.getItem("person_id");
@@ -66,23 +66,23 @@ useEffect(() => {
     }
   }, []);
 
-const checkAccess = async (userID) => {
+  const checkAccess = async (userID) => {
     try {
-        const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
-        if (response.data && response.data.page_privilege === 1) {
-          setHasAccess(true);
-        } else {
-          setHasAccess(false);
-        }
-    } catch (error) {
-        console.error('Error checking access:', error);
+      const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
+      if (response.data && response.data.page_privilege === 1) {
+        setHasAccess(true);
+      } else {
         setHasAccess(false);
-        if (error.response && error.response.data.message) {
-          console.log(error.response.data.message);
-        } else {
-          console.log("An unexpected error occurred.");
-        }
-        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Error checking access:', error);
+      setHasAccess(false);
+      if (error.response && error.response.data.message) {
+        console.log(error.response.data.message);
+      } else {
+        console.log("An unexpected error occurred.");
+      }
+      setLoading(false);
     }
   };
 
@@ -95,10 +95,10 @@ const checkAccess = async (userID) => {
 
 
 
-// Put this at the very bottom before the return 
-if (loading || hasAccess === null) {
-   return <LoadingOverlay open={loading} message="Check Access"/>;
-}
+  // Put this at the very bottom before the return 
+  if (loading || hasAccess === null) {
+    return <LoadingOverlay open={loading} message="Check Access" />;
+  }
 
   if (!hasAccess) {
     return (
@@ -110,7 +110,22 @@ if (loading || hasAccess === null) {
   // Each item: title, link, icon
   const menuItems = [
     {
-      title: "ADMISSION PROCESS FOR SUPERADMIN",
+      title: "ADMISSION OFFICE ",
+      link: "/applicant_list_admin",
+      icon: <CollectionsBookmark className="text-maroon-500 text-2xl" />,
+    },
+    {
+      title: "ENROLLMENT OFFICER ",
+      link: "/applicant_list",
+      icon: <CollectionsBookmark className="text-maroon-500 text-2xl" />,
+    },
+    {
+      title: "MEDICAL APPLICANT LIST",
+      link: "/medical_applicant_list",
+      icon: <People className="text-maroon-500 text-2xl" />,
+    },
+    {
+      title: "ADMISSION PROCESS FOR REGISTRAR",
       link: "/super_admin_applicant_list",
       icon: <CollectionsBookmark className="text-maroon-500 text-2xl" />,
     },
@@ -175,22 +190,37 @@ if (loading || hasAccess === null) {
       link: "/interviewer_applicant_list",
       icon: <Group className="text-maroon-500 text-2xl" />,
     },
-   
     {
-      title: "MEDICAL APPLICANT LIST",
-      link: "/medical_applicant_list",
-      icon: <People className="text-maroon-500 text-2xl" />,
+      title: "MEDICAL REQUIREMENTS",
+      link: "/medical_requirements_form",
+      icon: <Group className="text-maroon-500 text-2xl" />,
+    },
+    {
+      title: "DENTAL ASSESSMENT",
+      link: "/dental_assessment",
+      icon: <Group className="text-maroon-500 text-2xl" />,
+    },
+    {
+      title: "PHYSICAL AND NEUROLOGICAL EXAM",
+      link: "/physical_neuro_exam",
+      icon: <Group className="text-maroon-500 text-2xl" />,
+    },
+    {
+      title: "HEALTH RECORDS CERTIFICATE",
+      link: "/health_records",
+      icon: <Group className="text-maroon-500 text-2xl" />,
+    },
+      {
+      title: "MEDICAL CERTIFICATE",
+      link: "/medical_certificate",
+      icon: <Group className="text-maroon-500 text-2xl" />,
     },
     {
       title: "TRANSCRIPT OF RECORDS",
       link: "/transcript_of_records",
       icon: <People className="text-maroon-500 text-2xl" />,
     },
-    {
-      title: "MEDICAL PROFILE",
-      link: "/medical_profile",
-      icon: <AssignmentTurnedIn className="text-maroon-500 text-2xl" />,
-    },
+
     {
       title: "CLASS LIST",
       link: "/class_roster",

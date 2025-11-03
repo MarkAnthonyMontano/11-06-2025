@@ -41,6 +41,7 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
 import Unauthorized from "../components/Unauthorized";
 import LoadingOverlay from "../components/LoadingOverlay";
+import SearchIcon from "@mui/icons-material/Search";
 
 
 const socket = io("http://localhost:5000");
@@ -1387,7 +1388,7 @@ ${companyName} Registrar's Office
     }
 
     return (
-        <Box sx={{ height: 'calc(100vh - 150px)', overflowY: 'auto', pr: 1, p: 2 }}>
+        <Box sx={{ height: 'calc(100vh - 150px)', overflowY: 'auto', pr: 1,}}>
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                 <Typography variant="h4" fontWeight="bold" color="maroon">
                     QUALIFYING EXAMINATION SCORING
@@ -1400,16 +1401,24 @@ ${companyName} Registrar's Office
                         variant="outlined"
                         placeholder="Search Applicant Name / Email / Applicant ID"
                         size="small"
-                        style={{ width: '450px' }}
+
                         value={searchQuery}
                         onChange={(e) => {
                             setSearchQuery(e.target.value);
                             setCurrentPage(1); // Corrected
                         }}
-
-                        InputProps={{
-                            startAdornment: <Search sx={{ mr: 1 }} />,
+                        sx={{
+                            width: 450,
+                            backgroundColor: "#fff",
+                            borderRadius: 1,
+                            "& .MuiOutlinedInput-root": {
+                                borderRadius: "10px",
+                            },
                         }}
+                        InputProps={{
+                            startAdornment: <SearchIcon sx={{ mr: 1, color: "gray" }} />,
+                        }}
+
                     />
                 </Box>
             </Box>

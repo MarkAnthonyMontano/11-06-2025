@@ -153,7 +153,7 @@ const StudentDashboard4 = () => {
             if (!userID) return;
 
             try {
-                const res = await axios.get(`http://localhost:5000/api/person_with_applicant/${userID}`);
+                const res = await axios.get(`http://localhost:5000/api/student_data_as_applicant/${userID}`);
                 if (res.data) {
                     setPerson(res.data);
                     setSelectedPerson(res.data);
@@ -249,9 +249,9 @@ const StudentDashboard4 = () => {
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     flexWrap: 'wrap',
-                  
+                    mt: 2,
                     mb: 2,
-                   
+                    px: 2,
                 }}
             >
                 <Typography
@@ -262,7 +262,7 @@ const StudentDashboard4 = () => {
                         fontSize: '36px',
                     }}
                 >
-                   HEALTH MEDICAL RECORDS
+                    STUDENT PROFILE
                 </Typography>
 
 

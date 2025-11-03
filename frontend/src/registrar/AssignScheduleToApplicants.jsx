@@ -26,7 +26,6 @@ import {
   Snackbar,
   Alert,
 } from "@mui/material";
-import { Search } from '@mui/icons-material';
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import SchoolIcon from "@mui/icons-material/School";
 import DashboardIcon from "@mui/icons-material/Dashboard";
@@ -38,6 +37,9 @@ import PeopleIcon from "@mui/icons-material/People";
 import FactCheckIcon from "@mui/icons-material/FactCheck";
 import Unauthorized from "../components/Unauthorized";
 import LoadingOverlay from "../components/LoadingOverlay";
+import SearchIcon from "@mui/icons-material/Search";
+
+
 
 const socket = io("http://localhost:5000");
 
@@ -96,50 +98,50 @@ const AssignScheduleToApplicants = () => {
   const [user, setUser] = useState("");
   const [userRole, setUserRole] = useState("");
   const [hasAccess, setHasAccess] = useState(null);
-  
+
   const pageId = 14;
 
   //
   useEffect(() => {
 
-      const storedUser = localStorage.getItem("email");
-      const storedRole = localStorage.getItem("role");
-      const storedID = localStorage.getItem("person_id");
+    const storedUser = localStorage.getItem("email");
+    const storedRole = localStorage.getItem("role");
+    const storedID = localStorage.getItem("person_id");
 
-      if (storedUser && storedRole && storedID) {
-        setUser(storedUser);
-        setUserRole(storedRole);
-        setUserID(storedID);
+    if (storedUser && storedRole && storedID) {
+      setUser(storedUser);
+      setUserRole(storedRole);
+      setUserID(storedID);
 
-        if (storedRole === "registrar") {
-          checkAccess(storedID);
-        } else {
-          window.location.href = "/login";
-        }
+      if (storedRole === "registrar") {
+        checkAccess(storedID);
       } else {
         window.location.href = "/login";
       }
-    }, []);
+    } else {
+      window.location.href = "/login";
+    }
+  }, []);
 
   const checkAccess = async (userID) => {
-      try {
-          const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
-          if (response.data && response.data.page_privilege === 1) {
-            setHasAccess(true);
-          } else {
-            setHasAccess(false);
-          }
-      } catch (error) {
-          console.error('Error checking access:', error);
-          setHasAccess(false);
-          if (error.response && error.response.data.message) {
-            console.log(error.response.data.message);
-          } else {
-            console.log("An unexpected error occurred.");
-          }
-          setLoading(false);
+    try {
+      const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
+      if (response.data && response.data.page_privilege === 1) {
+        setHasAccess(true);
+      } else {
+        setHasAccess(false);
       }
-    };
+    } catch (error) {
+      console.error('Error checking access:', error);
+      setHasAccess(false);
+      if (error.response && error.response.data.message) {
+        console.log(error.response.data.message);
+      } else {
+        console.log("An unexpected error occurred.");
+      }
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     const fetchCurriculums = async () => {
@@ -680,10 +682,10 @@ const AssignScheduleToApplicants = () => {
   });
 
 
-// Put this at the very bottom before the return 
-if (loading || hasAccess === null) {
-   return <LoadingOverlay open={loading} message="Check Access"/>;
-}
+  // Put this at the very bottom before the return 
+  if (loading || hasAccess === null) {
+    return <LoadingOverlay open={loading} message="Check Access" />;
+  }
 
   if (!hasAccess) {
     return (
@@ -701,9 +703,9 @@ if (loading || hasAccess === null) {
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
-        
+
           mb: 2,
-        
+
         }}
       >
         <Typography
@@ -721,15 +723,23 @@ if (loading || hasAccess === null) {
           variant="outlined"
           placeholder="Search Applicant Name / Email / Applicant ID"
           size="small"
-          style={{ width: '450px' }}
+
           value={searchQuery}
           onChange={(e) => {
             setSearchQuery(e.target.value);
             setCurrentPage(1); // Corrected
           }}
 
+          sx={{
+            width: 450,
+            backgroundColor: "#fff",
+            borderRadius: 1,
+            "& .MuiOutlinedInput-root": {
+              borderRadius: "10px",
+            },
+          }}
           InputProps={{
-            startAdornment: <Search sx={{ mr: 1 }} />,
+            startAdornment: <SearchIcon sx={{ mr: 1, color: "gray" }} />,
           }}
         />
 

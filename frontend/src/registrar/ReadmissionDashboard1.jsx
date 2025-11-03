@@ -685,59 +685,11 @@ const ReadmissionDashboard1 = () => {
     // ✅ For Excel Import
     const [excelFile, setExcelFile] = useState(null);
 
-    const handleExcelChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            setExcelFile(file);
-        }
-    };
+
 
     const handleSnackClose = (_, reason) => {
         if (reason === 'clickaway') return;
         setSnack({ ...snack, open: false });
-    };
-
-    const handleImportExcel = async () => {
-        if (!excelFile) {
-            setSnack({
-                open: true,
-                message: "⚠️ Please select a file to import.",
-                severity: "warning",
-            });
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append("file", excelFile);
-
-        try {
-            const res = await axios.post("http://localhost:5000/api/person/import", formData, {
-                headers: { "Content-Type": "multipart/form-data" },
-            });
-
-            if (res.data.success) {
-                setSnack({
-                    open: true,
-                    message: `✅ ${res.data.message}`,
-                    severity: "success",
-                });
-                // optional: re-fetch applicants if needed
-                // await fetchApplicants();
-            } else {
-                setSnack({
-                    open: true,
-                    message: res.data.error || "⚠️ Import failed.",
-                    severity: "warning",
-                });
-            }
-        } catch (error) {
-            console.error("❌ Import error:", error);
-            setSnack({
-                open: true,
-                message: "❌ Server error while importing Excel.",
-                severity: "error",
-            });
-        }
     };
 
     const divToPrintRef = useRef();
@@ -843,9 +795,9 @@ const ReadmissionDashboard1 = () => {
                     justifyContent: "space-between",
                     alignItems: "center",
                     flexWrap: "wrap",
-                    mt: 2,
+
                     mb: 2,
-                    px: 2,
+
                 }}
             >
                 <Typography
@@ -866,7 +818,10 @@ const ReadmissionDashboard1 = () => {
                         placeholder="Search Student Name / Email / Student Number"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        InputProps={{ startAdornment: <Search sx={{ mr: 1 }} /> }}
+                        InputProps={{
+                            readOnly: true,
+                            startAdornment: <Search sx={{ mr: 1 }} />,
+                        }}
                         sx={{ width: { xs: "100%", sm: "425px" } }}
                     />
 
@@ -1149,11 +1104,13 @@ const ReadmissionDashboard1 = () => {
                             />
                         </div>
 
+
                         <div className="flex items-center mb-4 gap-4">
                             <label className="w-40 font-medium">Campus:</label>
                             <FormControl fullWidth size="small" required error={!!errors.campus} className="mb-4">
                                 <InputLabel id="campus-label">Campus (Manila/Cavite)</InputLabel>
                                 <Select
+                                    readOnly
                                     labelId="campus-label"
                                     id="campus-select"
                                     name="campus"
@@ -1187,6 +1144,7 @@ const ReadmissionDashboard1 = () => {
                             <FormControl fullWidth size="small" required error={!!errors.academicProgram} className="mb-4">
                                 <InputLabel id="academic-program-label">Academic Program</InputLabel>
                                 <Select
+                                    readOnly
                                     labelId="academic-program-label"
                                     id="academic-program-select"
                                     name="academicProgram"
@@ -1211,6 +1169,7 @@ const ReadmissionDashboard1 = () => {
                             <FormControl fullWidth size="small" required error={!!errors.classifiedAs} className="mb-4">
                                 <InputLabel id="classified-as-label">Classified As</InputLabel>
                                 <Select
+                                    readOnly
                                     labelId="classified-as-label"
                                     id="classified-as-select"
                                     name="classifiedAs"
@@ -1238,6 +1197,7 @@ const ReadmissionDashboard1 = () => {
                             <FormControl fullWidth size="small" required error={!!errors.applyingAs} className="mb-4">
                                 <InputLabel id="applying-as-label">Applying As</InputLabel>
                                 <Select
+                                    readOnly
                                     labelId="applying-as-label"
                                     id="applying-as-select"
                                     name="applyingAs"
@@ -1280,6 +1240,8 @@ const ReadmissionDashboard1 = () => {
                                         <FormControl fullWidth size="small" required error={!!errors.program}>
                                             <InputLabel>Program</InputLabel>
                                             <Select
+                                                readOnly
+
                                                 name="program"
                                                 value={person.program ?? ""}
                                                 onBlur={handleBlur}
@@ -1305,6 +1267,7 @@ const ReadmissionDashboard1 = () => {
                                         <FormControl fullWidth size="small" required error={!!errors.program2}>
                                             <InputLabel>Program 2</InputLabel>
                                             <Select
+                                                readOnly
                                                 name="program2"
                                                 value={person.program2 ?? ""}
                                                 onBlur={handleBlur}
@@ -1330,6 +1293,7 @@ const ReadmissionDashboard1 = () => {
                                         <FormControl fullWidth size="small" required error={!!errors.program3}>
                                             <InputLabel>Program 3</InputLabel>
                                             <Select
+                                                readOnly
                                                 name="program3"
                                                 value={person.program3 ?? ""}
                                                 onBlur={handleBlur}
@@ -1400,6 +1364,7 @@ const ReadmissionDashboard1 = () => {
                             <FormControl fullWidth size="small" required error={!!errors.yearLevel}>
                                 <InputLabel id="year-level-label">Year Level</InputLabel>
                                 <Select
+                                    readOnly
                                     labelId="year-level-label"
                                     id="year-level-select"
                                     name="yearLevel"
@@ -1430,6 +1395,8 @@ const ReadmissionDashboard1 = () => {
                             <Box flex="1 1 20%">
                                 <Typography mb={1} fontWeight="medium">Last Name</Typography>
                                 <TextField
+                                    InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     name="last_name"
@@ -1448,6 +1415,8 @@ const ReadmissionDashboard1 = () => {
                             <Box flex="1 1 20%">
                                 <Typography mb={1} fontWeight="medium">First Name</Typography>
                                 <TextField
+                                    InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     name="first_name"
@@ -1465,6 +1434,8 @@ const ReadmissionDashboard1 = () => {
                             <Box flex="1 1 20%">
                                 <Typography mb={1} fontWeight="medium">Middle Name</Typography>
                                 <TextField
+                                    InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     name="middle_name"
@@ -1484,6 +1455,7 @@ const ReadmissionDashboard1 = () => {
                                 <FormControl fullWidth size="small" error={errors.extension}>
                                     <InputLabel id="extension-label">Extension</InputLabel>
                                     <Select
+                                        readOnly
                                         labelId="extension-label"
                                         id="extension-select"
                                         name="extension"
@@ -1511,6 +1483,8 @@ const ReadmissionDashboard1 = () => {
                             <Box flex="1 1 20%">
                                 <Typography mb={1} fontWeight="medium">Nickname</Typography>
                                 <TextField
+                                    InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     name="nickname"
@@ -1532,6 +1506,8 @@ const ReadmissionDashboard1 = () => {
                                         Height:
                                     </Typography>
                                     <TextField
+                                        InputProps={{ readOnly: true }}
+
                                         size="small"
                                         name="height"
                                         value={person.height ?? ""}
@@ -1557,6 +1533,8 @@ const ReadmissionDashboard1 = () => {
                                         Weight:
                                     </Typography>
                                     <TextField
+                                        InputProps={{ readOnly: true }}
+
                                         size="small"
                                         name="weight"
                                         value={person.weight ?? ""}
@@ -1584,6 +1562,7 @@ const ReadmissionDashboard1 = () => {
 
                             {/* LRN Input */}
                             <TextField
+                                disabled
                                 id="lrnNumber"
                                 name="lrnNumber"
                                 required={person.lrnNumber !== "No LRN Number"}
@@ -1591,10 +1570,10 @@ const ReadmissionDashboard1 = () => {
                                 value={person.lrnNumber === "No LRN Number" ? "" : person.lrnNumber ?? ""}
                                 onChange={handleChange}
                                 onBlur={handleBlur}
-                                disabled={person.lrnNumber === "No LRN Number"}
+
                                 size="small"
                                 sx={{ width: 220 }}
-                                InputProps={{ sx: { height: 40 } }}
+                                InputProps={{ sx: { height: 40, readOnly: true } }}
                                 inputProps={{ style: { height: 40, padding: "10.5px 14px" } }}
                                 error={errors.lrnNumber}
                                 helperText={errors.lrnNumber ? "This field is required." : ""}
@@ -1604,6 +1583,7 @@ const ReadmissionDashboard1 = () => {
                             <FormControlLabel
                                 control={
                                     <Checkbox
+                                        disabled
                                         name="lrn_na"
                                         checked={person.lrnNumber === "No LRN Number"}
                                         onChange={(e) => {
@@ -1628,6 +1608,7 @@ const ReadmissionDashboard1 = () => {
 
                             {/* Gender */}
                             <TextField
+                                readOnly
                                 select
                                 size="small"
                                 label="Gender"
@@ -1646,7 +1627,7 @@ const ReadmissionDashboard1 = () => {
                                 onBlur={handleBlur}
                                 error={Boolean(errors.gender)}
                                 sx={{ width: 150 }}
-                                InputProps={{ sx: { height: 40 } }}
+                                InputProps={{ sx: { height: 40, } }}
                                 inputProps={{ style: { height: 40 } }}
                             >
                                 <MenuItem value=""><em>Select Gender</em></MenuItem>
@@ -1665,6 +1646,7 @@ const ReadmissionDashboard1 = () => {
                             <FormControlLabel
                                 control={
                                     <Checkbox
+                                        disabled
                                         checked={person.pwdMember === 1}
                                         onChange={handlePwdCheck}
                                         inputProps={{ "aria-label": "PWD Checkbox" }}
@@ -1678,6 +1660,7 @@ const ReadmissionDashboard1 = () => {
                                 <>
                                     {/* PWD Type */}
                                     <TextField
+                                        readOnly
                                         select
                                         size="small"
                                         label="PWD Type"
@@ -1720,6 +1703,7 @@ const ReadmissionDashboard1 = () => {
 
                                     {/* PWD ID */}
                                     <TextField
+                                        disabled
                                         size="small"
                                         label="PWD ID"
                                         name="pwdId"
@@ -1753,6 +1737,7 @@ const ReadmissionDashboard1 = () => {
                                     Birth of Date
                                 </Typography>
                                 <TextField
+                                    disabled
                                     fullWidth
                                     size="small"
                                     type="date"
@@ -1772,6 +1757,7 @@ const ReadmissionDashboard1 = () => {
                                     Age
                                 </Typography>
                                 <TextField
+
                                     fullWidth
                                     size="small"
                                     name="age"
@@ -1789,14 +1775,16 @@ const ReadmissionDashboard1 = () => {
                                 <Typography mb={1} fontWeight="medium">
                                     Birth Place
                                 </Typography>
-                                <TextField fullWidth size="small" name="birthPlace" placeholder="Enter your Birth Place" value={person.birthPlace ?? ""} required onBlur={handleBlur} onChange={handleChange} error={!!errors.birthPlace}
+                                <TextField InputProps={{ readOnly: true }}
+                                    fullWidth size="small" name="birthPlace" placeholder="Enter your Birth Place" value={person.birthPlace ?? ""} required onBlur={handleBlur} onChange={handleChange} error={!!errors.birthPlace}
                                     helperText={errors.birthPlace ? "This field is required." : ""} />
                             </Box>
                             <Box flex={1} >
                                 <Typography mb={1} fontWeight="medium">
                                     Language/Dialect Spoken
                                 </Typography>
-                                <TextField fullWidth size="small" name="languageDialectSpoken" placeholder="Enter your Language Spoken" value={person.languageDialectSpoken ?? ""} required onBlur={handleBlur} onChange={handleChange} error={!!errors.languageDialectSpoken}
+                                <TextField InputProps={{ readOnly: true }}
+                                    fullWidth size="small" name="languageDialectSpoken" placeholder="Enter your Language Spoken" value={person.languageDialectSpoken ?? ""} required onBlur={handleBlur} onChange={handleChange} error={!!errors.languageDialectSpoken}
                                     helperText={errors.languageDialectSpoken ? "This field is required." : ""}
                                 />
                             </Box>
@@ -1813,6 +1801,7 @@ const ReadmissionDashboard1 = () => {
                                 <FormControl fullWidth size="small" required error={!!errors.citizenship}>
                                     <InputLabel id="citizenship-label">Citizenship</InputLabel>
                                     <Select
+                                        readOnly
                                         labelId="citizenship-label"
                                         id="citizenship"
                                         name="citizenship"
@@ -1954,6 +1943,7 @@ const ReadmissionDashboard1 = () => {
                                 <FormControl fullWidth size="small" required error={!!errors.religion}>
                                     <InputLabel id="religion-label">Religion</InputLabel>
                                     <Select
+                                        readOnly
                                         labelId="religion-label"
                                         id="religion"
                                         name="religion"
@@ -2002,6 +1992,7 @@ const ReadmissionDashboard1 = () => {
                                 <FormControl fullWidth size="small" required error={!!errors.civilStatus}>
                                     <InputLabel id="civil-status-label">Civil Status</InputLabel>
                                     <Select
+                                        readOnly
                                         labelId="civil-status-label"
                                         id="civilStatus"
                                         name="civilStatus"
@@ -2032,6 +2023,7 @@ const ReadmissionDashboard1 = () => {
                                 <FormControl fullWidth size="small" required error={!!errors.tribeEthnicGroup}>
                                     <InputLabel id="tribe-label">Tribe/Ethnic Group</InputLabel>
                                     <Select
+                                        readOnly
                                         labelId="tribe-label"
                                         id="tribeEthnicGroup"
                                         name="tribeEthnicGroup"
@@ -2110,6 +2102,8 @@ const ReadmissionDashboard1 = () => {
                                     Cellphone Number:
                                 </Typography>
                                 <TextField
+                                    InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     name="cellphoneNumber"
@@ -2129,6 +2123,8 @@ const ReadmissionDashboard1 = () => {
                                     Email Address:
                                 </Typography>
                                 <TextField
+                                    InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     name="emailAddress"
@@ -2155,6 +2151,8 @@ const ReadmissionDashboard1 = () => {
                             <Box flex={1}>
                                 <Typography mb={1} fontWeight="medium">Present Street</Typography>
                                 <TextField
+                                    InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     name="presentStreet"
@@ -2170,6 +2168,8 @@ const ReadmissionDashboard1 = () => {
                             <Box flex={1}>
                                 <Typography mb={1} fontWeight="medium">Present Zip Code</Typography>
                                 <TextField
+                                    InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     name="presentZipCode"
@@ -2189,6 +2189,7 @@ const ReadmissionDashboard1 = () => {
                             <FormControl fullWidth size="small" required error={!!errors.presentRegion}>
                                 <InputLabel id="present-region-label">Region</InputLabel>
                                 <Select
+                                    readOnly
                                     labelId="present-region-label"
                                     name="presentRegion"
                                     value={person.presentRegion ?? ""}
@@ -2224,6 +2225,7 @@ const ReadmissionDashboard1 = () => {
                             <FormControl fullWidth size="small" required error={!!errors.presentProvince}>
                                 <InputLabel id="present-province-label">Province</InputLabel>
                                 <Select
+                                    readOnly
                                     labelId="present-province-label"
                                     name="presentProvince"
                                     value={person.presentProvince ?? ""}
@@ -2325,6 +2327,8 @@ const ReadmissionDashboard1 = () => {
                         <Box mb={2}>
                             <Typography mb={1} fontWeight="medium">Present DSWD Household Number</Typography>
                             <TextField
+                                InputProps={{ readOnly: true }}
+
                                 fullWidth
                                 size="small"
                                 name="presentDswdHouseholdNumber"
@@ -2343,6 +2347,7 @@ const ReadmissionDashboard1 = () => {
                         <FormControlLabel
                             control={
                                 <Checkbox
+                                    disabled
                                     name="same_as_present_address"
                                     checked={person.same_as_present_address === 1}
                                     onChange={(e) => {
@@ -2383,6 +2388,8 @@ const ReadmissionDashboard1 = () => {
                             <Box flex={1}>
                                 <Typography mb={1} fontWeight="medium">Permanent Street</Typography>
                                 <TextField
+                                    InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     name="permanentStreet"
@@ -2398,6 +2405,8 @@ const ReadmissionDashboard1 = () => {
                             <Box flex={1}>
                                 <Typography mb={1} fontWeight="medium">Permanent Zip Code</Typography>
                                 <TextField
+                                    InputProps={{ readOnly: true }}
+
                                     fullWidth
                                     size="small"
                                     name="permanentZipCode"
@@ -2418,6 +2427,7 @@ const ReadmissionDashboard1 = () => {
                                 <FormControl fullWidth size="small" required error={!!errors.permanentRegion}>
                                     <InputLabel id="permanent-region-label">Select Region</InputLabel>
                                     <Select
+                                        readOnly
                                         labelId="permanent-region-label"
                                         id="permanentRegion"
                                         name="permanentRegion"
@@ -2457,6 +2467,7 @@ const ReadmissionDashboard1 = () => {
                                 <FormControl fullWidth size="small" required error={!!errors.permanentProvince}>
                                     <InputLabel id="permanent-province-label">Select Province</InputLabel>
                                     <Select
+                                        readOnly
                                         labelId="permanent-province-label"
                                         id="permanentProvince"
                                         name="permanentProvince"
@@ -2498,6 +2509,7 @@ const ReadmissionDashboard1 = () => {
                                 <FormControl fullWidth size="small" required error={!!errors.permanentMunicipality}>
                                     <InputLabel id="permanent-municipality-label">Select Municipality</InputLabel>
                                     <Select
+                                        readOnly
                                         labelId="permanent-municipality-label"
                                         id="permanentMunicipality"
                                         name="permanentMunicipality"
@@ -2534,6 +2546,7 @@ const ReadmissionDashboard1 = () => {
                                 <FormControl fullWidth size="small" required error={!!errors.permanentBarangay}>
                                     <InputLabel id="permanent-barangay-label">Select Barangay</InputLabel>
                                     <Select
+                                        readOnly
                                         labelId="permanent-barangay-label"
                                         id="permanentBarangay"
                                         name="permanentBarangay"
@@ -2568,6 +2581,8 @@ const ReadmissionDashboard1 = () => {
                         <Box mb={2}>
                             <Typography mb={1} fontWeight="medium">Permanent DSWD Household Number</Typography>
                             <TextField
+                                InputProps={{ readOnly: true }}
+
                                 fullWidth
                                 size="small"
                                 variant="outlined"
@@ -2749,6 +2764,7 @@ const ReadmissionDashboard1 = () => {
 
                                     {/* Upload Button */}
                                     <Button
+                                        disabled
                                         variant="contained"
                                         fullWidth
                                         onClick={handleUpload}
@@ -2766,7 +2782,6 @@ const ReadmissionDashboard1 = () => {
                                 </Box>
                             </Box>
                         </Modal>
-
 
                         <Modal
                             open={examPermitModalOpen}

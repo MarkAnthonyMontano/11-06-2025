@@ -409,9 +409,9 @@ const RegistrarDashboard4 = () => {
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     flexWrap: 'wrap',
-                    mt: 3,
+                   
                     mb: 2,
-                    px: 2,
+               
                 }}
             >
                 <Typography
@@ -760,11 +760,11 @@ const RegistrarDashboard4 = () => {
                         <FormGroup row sx={{ ml: 2 }}>
                             {["cough", "colds", "fever"].map((symptom) => (
                                 <FormControlLabel
+                                disabled
                                     key={symptom}
                                     control={
                                         <Checkbox
                                             name={symptom}
-                                            disabled
                                             checked={person[symptom] === 1}
                                             onChange={(e) => {
                                                 const { name, checked } = e.target;
@@ -843,8 +843,8 @@ const RegistrarDashboard4 = () => {
                                                                 {/* YES */}
                                                                 <div style={{ display: "flex", alignItems: "center", gap: "1px", }}>
                                                                     <Checkbox
+                                                                    disabled
                                                                         name={key}
-                                                                        disabled
                                                                         checked={person[key] === 1}
                                                                         onChange={() => {
                                                                             const updatedPerson = {
@@ -862,8 +862,8 @@ const RegistrarDashboard4 = () => {
                                                                 {/* NO */}
                                                                 <div style={{ display: "flex", alignItems: "center", gap: "1px" }}>
                                                                     <Checkbox
+                                                                    disabled
                                                                         name={key}
-                                                                        disabled
                                                                         checked={person[key] === 0}
                                                                         onChange={() => {
                                                                             const updatedPerson = {
@@ -903,8 +903,8 @@ const RegistrarDashboard4 = () => {
                                         <FormControlLabel
                                             control={
                                                 <Checkbox
+                                                disabled
                                                     name="hospitalized"
-                                                    disabled
                                                     checked={person.hospitalized === 1}
                                                     onChange={() => {
                                                         const updatedPerson = {
@@ -924,8 +924,8 @@ const RegistrarDashboard4 = () => {
                                         <FormControlLabel
                                             control={
                                                 <Checkbox
+                                                disabled
                                                     name="hospitalized"
-                                                    disabled
                                                     checked={person.hospitalized === 0}
                                                     onChange={() => {
                                                         const updatedPerson = {
@@ -955,10 +955,10 @@ const RegistrarDashboard4 = () => {
                                 IF YES, PLEASE SPECIFY:
                             </Typography>
                             <TextField
+                                  InputProps={{ readOnly: true }}
+
                                 fullWidth
                                 name="hospitalizationDetails"
-                                disabled
-
                                 placeholder=""
                                 variant="outlined"
                                 size="small"
@@ -986,12 +986,12 @@ const RegistrarDashboard4 = () => {
 
                         <Box mb={2}>
                             <TextField
+                                   InputProps={{ readOnly: true }}
+
                                 fullWidth
                                 multiline
                                 minRows={3}
                                 name="medications"
-                                disabled
-
                                 variant="outlined"
                                 size="small"
                                 value={person.medications || ""}
@@ -1042,9 +1042,9 @@ const RegistrarDashboard4 = () => {
                                                 {/* YES */}
                                                 <Box display="flex" alignItems="center" gap="1px">
                                                     <Checkbox
+                                                    disabled
                                                         name="hadCovid"
                                                         checked={person.hadCovid === 1}
-                                                        disabled
                                                         onChange={() => {
                                                             const updatedPerson = {
                                                                 ...person,
@@ -1061,9 +1061,9 @@ const RegistrarDashboard4 = () => {
                                                 {/* NO */}
                                                 <Box display="flex" alignItems="center" gap="1px">
                                                     <Checkbox
+                                                    disabled
                                                         name="hadCovid"
                                                         checked={person.hadCovid === 0}
-                                                        disabled
                                                         onChange={() => {
                                                             const updatedPerson = {
                                                                 ...person,
@@ -1083,9 +1083,9 @@ const RegistrarDashboard4 = () => {
                                             {/* IF YES, WHEN */}
                                             <span>IF YES, WHEN:</span>
                                             <input
+                                            readOnly
                                                 type="date"
                                                 name="covidDate"
-                                                readOnly
                                                 value={person.covidDate || ""}
                                                 onChange={(e) => {
                                                     const updatedPerson = {
@@ -1146,10 +1146,9 @@ const RegistrarDashboard4 = () => {
                                                     {["vaccine1Brand", "vaccine2Brand", "booster1Brand", "booster2Brand"].map((field) => (
                                                         <td key={field} style={{ padding: "4px" }}>
                                                             <input
+                                                            disabled
                                                                 type="text"
                                                                 name={field}
-                                                                disabled
-
                                                                 value={person[field] || ""}
                                                                 onChange={(e) => {
                                                                     const updatedPerson = {
@@ -1173,9 +1172,9 @@ const RegistrarDashboard4 = () => {
                                                     {["vaccine1Date", "vaccine2Date", "booster1Date", "booster2Date"].map((field) => (
                                                         <td key={field} style={{ padding: "4px" }}>
                                                             <input
+                                                            readOnly
                                                                 type="date"
                                                                 name={field}
-                                                                readOnly
                                                                 value={person[field] || ""}
                                                                 onChange={(e) => {
                                                                     const updatedPerson = {
@@ -1214,11 +1213,10 @@ const RegistrarDashboard4 = () => {
                                     <td className="border border-black p-2 w-1/3 font-medium">Chest X-ray:</td>
                                     <td className="border border-black p-2 w-2/3">
                                         <input
+                                        readOnly
                                             type="text"
                                             name="chestXray"
                                             value={person.chestXray || ""}
-                                            disabled
-
                                             onChange={(e) => {
                                                 const { name, value } = e.target;
                                                 const updatedPerson = { ...person, [name]: value };
@@ -1236,11 +1234,10 @@ const RegistrarDashboard4 = () => {
                                     <td className="border border-black p-2 font-medium">CBC:</td>
                                     <td className="border border-black p-2">
                                         <input
+                                        readOnly
                                             type="text"
                                             name="cbc"
                                             value={person.cbc || ""}
-                                            disabled
-
                                             onChange={(e) => {
                                                 const { name, value } = e.target;
                                                 const updatedPerson = { ...person, [name]: value };
@@ -1258,11 +1255,10 @@ const RegistrarDashboard4 = () => {
                                     <td className="border border-black p-2 font-medium">Urinalysis:</td>
                                     <td className="border border-black p-2">
                                         <input
+                                        readOnly
                                             type="text"
                                             name="urinalysis"
                                             value={person.urinalysis || ""}
-                                            disabled
-
                                             onChange={(e) => {
                                                 const { name, value } = e.target;
                                                 const updatedPerson = { ...person, [name]: value };
@@ -1280,11 +1276,10 @@ const RegistrarDashboard4 = () => {
                                     <td className="border border-black p-2 font-medium">Other Workups:</td>
                                     <td className="border border-black p-2">
                                         <input
+                                        readOnly
                                             type="text"
                                             name="otherworkups"
                                             value={person.otherworkups || ""}
-                                            disabled
-
                                             onChange={(e) => {
                                                 const { name, value } = e.target;
                                                 const updatedPerson = { ...person, [name]: value };
@@ -1335,9 +1330,9 @@ const RegistrarDashboard4 = () => {
                                                 {/* Physically Fit (0) */}
                                                 <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
                                                     <Checkbox
+                                                    disabled
                                                         name="symptomsToday"
                                                         checked={person.symptomsToday === 0}
-                                                        disabled
                                                         onChange={() => {
                                                             const updatedPerson = {
                                                                 ...person,
@@ -1354,9 +1349,9 @@ const RegistrarDashboard4 = () => {
                                                 {/* For Compliance (1) */}
                                                 <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
                                                     <Checkbox
+                                                    disabled
                                                         name="symptomsToday"
                                                         checked={person.symptomsToday === 1}
-                                                        disabled
                                                         onChange={() => {
                                                             const updatedPerson = {
                                                                 ...person,
@@ -1394,12 +1389,11 @@ const RegistrarDashboard4 = () => {
                                     <TableRow>
                                         <TableCell sx={{ border: "1px solid black", p: 1 }}>
                                             <TextField
+                                           disabled
                                                 name="remarks"
                                                 multiline
                                                 minRows={2}
                                                 fullWidth
-                                                disabled
-
                                                 size="small"
                                                 value={person.remarks || ""}
                                                 onChange={(e) => {
@@ -1468,6 +1462,10 @@ const RegistrarDashboard4 = () => {
 
 
 
+
+
+
+
                         <Box display="flex" justifyContent="space-between" alignItems="center" mt={4}>
                             {/* Previous Page Button */}
                             <Button
@@ -1502,7 +1500,7 @@ const RegistrarDashboard4 = () => {
                                 variant="contained"
                                 onClick={(e) => {
                                     handleUpdate();
-                                    navigate("/registrar_dashboard5");
+                                    navigate("/registrar_dashboard4");
 
                                 }}
                                 endIcon={

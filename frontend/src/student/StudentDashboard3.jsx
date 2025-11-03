@@ -147,7 +147,7 @@ const allowedRoles = ["student", "registrar"];
             if (!userID) return;
 
             try {
-                const res = await axios.get(`http://localhost:5000/api/person_with_applicant/${userID}`);
+                const res = await axios.get(`http://localhost:5000/api/student_data_as_applicant/${userID}`);
                 if (res.data) {
                     setPerson(res.data);
                     setSelectedPerson(res.data);
@@ -272,9 +272,9 @@ const allowedRoles = ["student", "registrar"];
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     flexWrap: 'wrap',
-               
+                    mt: 2,
                     mb: 2,
-                  
+                    px: 2,
                 }}
             >
                 <Typography
@@ -285,7 +285,7 @@ const allowedRoles = ["student", "registrar"];
                         fontSize: '36px',
                     }}
                 >
-                  EDUCATIONAL ATTAINMENT
+                    STUDENT PROFILE
                 </Typography>
 
 

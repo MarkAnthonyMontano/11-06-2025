@@ -30,6 +30,8 @@ import PeopleIcon from "@mui/icons-material/People";
 import FactCheckIcon from "@mui/icons-material/FactCheck";
 import Unauthorized from "../components/Unauthorized";
 import LoadingOverlay from "../components/LoadingOverlay";
+import SearchIcon from "@mui/icons-material/Search";
+
 
 const AdminDashboard1 = () => {
   const stepsData = [
@@ -160,23 +162,23 @@ const AdminDashboard1 = () => {
     }
   }, []);
 
- const checkAccess = async (userID) => {
+  const checkAccess = async (userID) => {
     try {
-        const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
-        if (response.data && response.data.page_privilege === 1) {
-          setHasAccess(true);
-        } else {
-          setHasAccess(false);
-        }
-    } catch (error) {
-        console.error('Error checking access:', error);
+      const response = await axios.get(`http://localhost:5000/api/page_access/${userID}/${pageId}`);
+      if (response.data && response.data.page_privilege === 1) {
+        setHasAccess(true);
+      } else {
         setHasAccess(false);
-        if (error.response && error.response.data.message) {
-          console.log(error.response.data.message);
-        } else {
-          console.log("An unexpected error occurred.");
-        }
-        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Error checking access:', error);
+      setHasAccess(false);
+      if (error.response && error.response.data.message) {
+        console.log(error.response.data.message);
+      } else {
+        console.log("An unexpected error occurred.");
+      }
+      setLoading(false);
     }
   };
 
@@ -324,19 +326,93 @@ const AdminDashboard1 = () => {
   // dot not alter
 
 
-
-
-  // Do not alter
+  // ✅ Safe handleUpdate function (no DB errors, correct applicant update)
   const handleUpdate = async (updatedData) => {
-    if (!person || !person.person_id) return;
+    if (!person) return;
 
     try {
-      await axios.put(`http://localhost:5000/api/person/${person.person_id}`, updatedData);
-      console.log("✅ Auto-saved successfully");
+      // ✅ Get correct applicant ID
+      const targetId = selectedPerson?.person_id || queryPersonId || person.person_id;
+      if (!targetId) {
+        console.warn("⚠️ No valid applicant ID found — skipping update.");
+        return;
+      }
+
+      // ✅ Only include valid columns existing in person_table
+      const allowedFields = [
+        "person_id", "profile_img", "campus", "academicProgram", "classifiedAs", "applyingAs",
+        "program", "program2", "program3", "yearLevel",
+        "last_name", "first_name", "middle_name", "extension", "nickname",
+        "height", "weight", "lrnNumber", "nolrnNumber", "gender",
+        "pwdMember", "pwdType", "pwdId",
+        "birthOfDate", "age", "birthPlace", "languageDialectSpoken",
+        "citizenship", "religion", "civilStatus", "tribeEthnicGroup",
+        "cellphoneNumber", "emailAddress",
+        "presentStreet", "presentBarangay", "presentZipCode", "presentRegion",
+        "presentProvince", "presentMunicipality", "presentDswdHouseholdNumber",
+        "sameAsPresentAddress",
+        "permanentStreet", "permanentBarangay", "permanentZipCode",
+        "permanentRegion", "permanentProvince", "permanentMunicipality",
+        "permanentDswdHouseholdNumber",
+        "solo_parent",
+        "father_deceased", "father_family_name", "father_given_name", "father_middle_name",
+        "father_ext", "father_nickname", "father_education", "father_education_level",
+        "father_last_school", "father_course", "father_year_graduated", "father_school_address",
+        "father_contact", "father_occupation", "father_employer", "father_income", "father_email",
+        "mother_deceased", "mother_family_name", "mother_given_name", "mother_middle_name",
+        "mother_ext", "mother_nickname", "mother_education", "mother_education_level",
+        "mother_last_school", "mother_course", "mother_year_graduated", "mother_school_address",
+        "mother_contact", "mother_occupation", "mother_employer", "mother_income", "mother_email",
+        "guardian", "guardian_family_name", "guardian_given_name", "guardian_middle_name",
+        "guardian_ext", "guardian_nickname", "guardian_address", "guardian_contact", "guardian_email",
+        "annual_income",
+        "schoolLevel", "schoolLastAttended", "schoolAddress", "courseProgram",
+        "honor", "generalAverage", "yearGraduated",
+        "schoolLevel1", "schoolLastAttended1", "schoolAddress1", "courseProgram1",
+        "honor1", "generalAverage1", "yearGraduated1",
+        "strand",
+        // 🩺 Health and medical
+        "cough", "colds", "fever", "asthma", "faintingSpells", "heartDisease",
+        "tuberculosis", "frequentHeadaches", "hernia", "chronicCough", "headNeckInjury",
+        "hiv", "highBloodPressure", "diabetesMellitus", "allergies", "cancer",
+        "smokingCigarette", "alcoholDrinking", "hospitalized", "hospitalizationDetails",
+        "medications",
+        // 🧬 Covid / Vaccination
+        "hadCovid", "covidDate",
+        "vaccine1Brand", "vaccine1Date", "vaccine2Brand", "vaccine2Date",
+        "booster1Brand", "booster1Date", "booster2Brand", "booster2Date",
+        // 🧪 Lab results / medical findings
+        "chestXray", "cbc", "urinalysis", "otherworkups",
+        // 🧍 Additional fields
+        "symptomsToday", "remarks",
+        // ✅ Agreement / Meta
+        "termsOfAgreement", "created_at", "current_step"
+      ];
+
+      // ✅ Clean the payload
+      const cleanedData = Object.fromEntries(
+        Object.entries(updatedData).filter(([key]) => allowedFields.includes(key))
+      );
+
+      if (Object.keys(cleanedData).length === 0) {
+        console.warn("⚠️ No valid fields to update — skipping request.");
+        return;
+      }
+
+      // ✅ Send update request
+      await axios.put(`http://localhost:5000/api/person/${targetId}`, cleanedData);
+
+      console.log(`✅ SuperAdmin updated person_id: ${targetId} successfully.`);
     } catch (error) {
-      console.error("❌ Auto-save failed:", error);
+      console.error("❌ SuperAdmin update failed:", {
+        message: error.message,
+        status: error.response?.status,
+        details: error.response?.data || error,
+      });
     }
   };
+
+
 
   // Helper: parse "YYYY-MM-DD" safely (local date in Asia/Manila)
   const parseISODate = (dateString) => {
@@ -408,27 +484,165 @@ const AdminDashboard1 = () => {
   };
 
 
-
+  // ✅ Safe handleBlur for SuperAdmin — updates correct applicant only
   const handleBlur = async () => {
     try {
-      const personIdToUpdate = selectedPerson?.person_id || userID;
-      await axios.put(`http://localhost:5000/api/person/${personIdToUpdate}`, person);
-      console.log("Auto-saved on blur");
+      // ✅ Determine correct applicant/person_id
+      const targetId = selectedPerson?.person_id || queryPersonId || person.person_id;
+      if (!targetId) {
+        console.warn("⚠️ No valid applicant ID found — skipping update.");
+        return;
+      }
+
+      const allowedFields = [
+        "person_id", "profile_img", "campus", "academicProgram", "classifiedAs", "applyingAs",
+        "program", "program2", "program3", "yearLevel",
+        "last_name", "first_name", "middle_name", "extension", "nickname",
+        "height", "weight", "lrnNumber", "nolrnNumber", "gender",
+        "pwdMember", "pwdType", "pwdId",
+        "birthOfDate", "age", "birthPlace", "languageDialectSpoken",
+        "citizenship", "religion", "civilStatus", "tribeEthnicGroup",
+        "cellphoneNumber", "emailAddress",
+        "presentStreet", "presentBarangay", "presentZipCode", "presentRegion",
+        "presentProvince", "presentMunicipality", "presentDswdHouseholdNumber",
+        "sameAsPresentAddress",
+        "permanentStreet", "permanentBarangay", "permanentZipCode",
+        "permanentRegion", "permanentProvince", "permanentMunicipality",
+        "permanentDswdHouseholdNumber",
+        "solo_parent",
+        "father_deceased", "father_family_name", "father_given_name", "father_middle_name",
+        "father_ext", "father_nickname", "father_education", "father_education_level",
+        "father_last_school", "father_course", "father_year_graduated", "father_school_address",
+        "father_contact", "father_occupation", "father_employer", "father_income", "father_email",
+        "mother_deceased", "mother_family_name", "mother_given_name", "mother_middle_name",
+        "mother_ext", "mother_nickname", "mother_education", "mother_education_level",
+        "mother_last_school", "mother_course", "mother_year_graduated", "mother_school_address",
+        "mother_contact", "mother_occupation", "mother_employer", "mother_income", "mother_email",
+        "guardian", "guardian_family_name", "guardian_given_name", "guardian_middle_name",
+        "guardian_ext", "guardian_nickname", "guardian_address", "guardian_contact", "guardian_email",
+        "annual_income",
+        "schoolLevel", "schoolLastAttended", "schoolAddress", "courseProgram",
+        "honor", "generalAverage", "yearGraduated",
+        "schoolLevel1", "schoolLastAttended1", "schoolAddress1", "courseProgram1",
+        "honor1", "generalAverage1", "yearGraduated1",
+        "strand",
+        // 🩺 Health and medical
+        "cough", "colds", "fever", "asthma", "faintingSpells", "heartDisease",
+        "tuberculosis", "frequentHeadaches", "hernia", "chronicCough", "headNeckInjury",
+        "hiv", "highBloodPressure", "diabetesMellitus", "allergies", "cancer",
+        "smokingCigarette", "alcoholDrinking", "hospitalized", "hospitalizationDetails",
+        "medications",
+        // 🧬 Covid / Vaccination
+        "hadCovid", "covidDate",
+        "vaccine1Brand", "vaccine1Date", "vaccine2Brand", "vaccine2Date",
+        "booster1Brand", "booster1Date", "booster2Brand", "booster2Date",
+        // 🧪 Lab results / medical findings
+        "chestXray", "cbc", "urinalysis", "otherworkups",
+        // 🧍 Additional fields
+        "symptomsToday", "remarks",
+        // ✅ Agreement / Meta
+        "termsOfAgreement", "created_at", "current_step"
+      ];
+
+      // ✅ Clean payload before sending
+      const cleanedData = Object.fromEntries(
+        Object.entries(person).filter(([key]) => allowedFields.includes(key))
+      );
+
+      if (Object.keys(cleanedData).length === 0) {
+        console.warn("⚠️ No valid fields to update — skipping blur save.");
+        return;
+      }
+
+      // ✅ Execute safe update
+      await axios.put(`http://localhost:5000/api/person/${targetId}`, cleanedData);
+      console.log(`💾 Auto-saved (on blur) for person_id: ${targetId}`);
     } catch (err) {
-      console.error("Auto-save failed", err);
+      console.error("❌ Auto-save (on blur) failed:", {
+        message: err.message,
+        status: err.response?.status,
+        details: err.response?.data || err,
+      });
     }
   };
 
+  // ✅ Safe autoSave for SuperAdmin — same logic as handleBlur
   const autoSave = async () => {
     try {
-      const personIdToUpdate = selectedPerson?.person_id || userID;
-      await axios.put(`http://localhost:5000/api/person/${personIdToUpdate}`, person);
-      console.log("Auto-saved.");
+      const targetId = selectedPerson?.person_id || queryPersonId || person.person_id;
+      if (!targetId) {
+        console.warn("⚠️ No valid applicant ID found — skipping autoSave.");
+        return;
+      }
+
+      const allowedFields = [
+        "person_id", "profile_img", "campus", "academicProgram", "classifiedAs", "applyingAs",
+        "program", "program2", "program3", "yearLevel",
+        "last_name", "first_name", "middle_name", "extension", "nickname",
+        "height", "weight", "lrnNumber", "nolrnNumber", "gender",
+        "pwdMember", "pwdType", "pwdId",
+        "birthOfDate", "age", "birthPlace", "languageDialectSpoken",
+        "citizenship", "religion", "civilStatus", "tribeEthnicGroup",
+        "cellphoneNumber", "emailAddress",
+        "presentStreet", "presentBarangay", "presentZipCode", "presentRegion",
+        "presentProvince", "presentMunicipality", "presentDswdHouseholdNumber",
+        "sameAsPresentAddress",
+        "permanentStreet", "permanentBarangay", "permanentZipCode",
+        "permanentRegion", "permanentProvince", "permanentMunicipality",
+        "permanentDswdHouseholdNumber",
+        "solo_parent",
+        "father_deceased", "father_family_name", "father_given_name", "father_middle_name",
+        "father_ext", "father_nickname", "father_education", "father_education_level",
+        "father_last_school", "father_course", "father_year_graduated", "father_school_address",
+        "father_contact", "father_occupation", "father_employer", "father_income", "father_email",
+        "mother_deceased", "mother_family_name", "mother_given_name", "mother_middle_name",
+        "mother_ext", "mother_nickname", "mother_education", "mother_education_level",
+        "mother_last_school", "mother_course", "mother_year_graduated", "mother_school_address",
+        "mother_contact", "mother_occupation", "mother_employer", "mother_income", "mother_email",
+        "guardian", "guardian_family_name", "guardian_given_name", "guardian_middle_name",
+        "guardian_ext", "guardian_nickname", "guardian_address", "guardian_contact", "guardian_email",
+        "annual_income",
+        "schoolLevel", "schoolLastAttended", "schoolAddress", "courseProgram",
+        "honor", "generalAverage", "yearGraduated",
+        "schoolLevel1", "schoolLastAttended1", "schoolAddress1", "courseProgram1",
+        "honor1", "generalAverage1", "yearGraduated1",
+        "strand",
+        // 🩺 Health and medical
+        "cough", "colds", "fever", "asthma", "faintingSpells", "heartDisease",
+        "tuberculosis", "frequentHeadaches", "hernia", "chronicCough", "headNeckInjury",
+        "hiv", "highBloodPressure", "diabetesMellitus", "allergies", "cancer",
+        "smokingCigarette", "alcoholDrinking", "hospitalized", "hospitalizationDetails",
+        "medications",
+        // 🧬 Covid / Vaccination
+        "hadCovid", "covidDate",
+        "vaccine1Brand", "vaccine1Date", "vaccine2Brand", "vaccine2Date",
+        "booster1Brand", "booster1Date", "booster2Brand", "booster2Date",
+        // 🧪 Lab results / medical findings
+        "chestXray", "cbc", "urinalysis", "otherworkups",
+        // 🧍 Additional fields
+        "symptomsToday", "remarks",
+        // ✅ Agreement / Meta
+        "termsOfAgreement", "created_at", "current_step"
+      ];
+      const cleanedData = Object.fromEntries(
+        Object.entries(person).filter(([key]) => allowedFields.includes(key))
+      );
+
+      if (Object.keys(cleanedData).length === 0) {
+        console.warn("⚠️ No valid fields to update — skipping autoSave.");
+        return;
+      }
+
+      await axios.put(`http://localhost:5000/api/person/${targetId}`, cleanedData);
+      console.log(`💾 Auto-saved (manual) for person_id: ${targetId}`);
     } catch (err) {
-      console.error("Auto-save failed.");
+      console.error("❌ Auto-save (manual) failed:", {
+        message: err.message,
+        status: err.response?.status,
+        details: err.response?.data || err,
+      });
     }
   };
-
 
   const [uploadedImage, setUploadedImage] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -906,8 +1120,17 @@ const AdminDashboard1 = () => {
           placeholder="Search Applicant Name / Email / Applicant ID"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          InputProps={{ startAdornment: <Search sx={{ mr: 1 }} /> }}
-          sx={{ width: { xs: '100%', sm: '425px' }, mt: { xs: 2, sm: 0 } }}
+          sx={{
+            width: 450,
+            backgroundColor: "#fff",
+            borderRadius: 1,
+            "& .MuiOutlinedInput-root": {
+              borderRadius: "10px",
+            },
+          }}
+          InputProps={{
+            startAdornment: <SearchIcon sx={{ mr: 1, color: "gray" }} />,
+          }}
         />
       </Box>
       {searchError && <Typography color="error">{searchError}</Typography>}
@@ -1239,17 +1462,21 @@ const AdminDashboard1 = () => {
           <Container maxWidth="100%" sx={{ backgroundColor: "#f1f1f1", border: "2px solid black", padding: 4, borderRadius: 2, boxShadow: 3 }}>
             <Typography style={{ fontSize: "20px", color: "#6D2323", fontWeight: "bold" }}>Personal Information:</Typography>
             <hr style={{ border: "1px solid #ccc", width: "100%" }} />
+
             <br />
+
+
+
 
             <div className="flex items-center mb-4 gap-4">
               <label className="w-40 font-medium">Campus:</label>
               <FormControl fullWidth size="small" required error={!!errors.campus} className="mb-4">
                 <InputLabel id="campus-label">Campus (Manila/Cavite)</InputLabel>
                 <Select
+                  readOnly
                   labelId="campus-label"
                   id="campus-select"
                   name="campus"
-                  readOnly
                   value={person.campus == null ? "" : String(person.campus)}
                   label="Campus (Manila/Cavite)"
                   onChange={(e) => {
@@ -1280,11 +1507,11 @@ const AdminDashboard1 = () => {
               <FormControl fullWidth size="small" required error={!!errors.academicProgram} className="mb-4">
                 <InputLabel id="academic-program-label">Academic Program</InputLabel>
                 <Select
+                  readOnly
                   labelId="academic-program-label"
                   id="academic-program-select"
                   name="academicProgram"
-                  readOnly
-                  value={person.academicProgram || ""}
+                  value={person.academicProgram ?? ""}
                   label="Academic Program"
                   onChange={handleChange}
                   onBlur={handleBlur}
@@ -1305,11 +1532,11 @@ const AdminDashboard1 = () => {
               <FormControl fullWidth size="small" required error={!!errors.classifiedAs} className="mb-4">
                 <InputLabel id="classified-as-label">Classified As</InputLabel>
                 <Select
+                  readOnly
                   labelId="classified-as-label"
                   id="classified-as-select"
                   name="classifiedAs"
-                  readOnly
-                  value={person.classifiedAs || ""}
+                  value={person.classifiedAs ?? ""}
                   label="Classified As"
                   onChange={handleChange}
                   onBlur={handleBlur}
@@ -1333,11 +1560,11 @@ const AdminDashboard1 = () => {
               <FormControl fullWidth size="small" required error={!!errors.applyingAs} className="mb-4">
                 <InputLabel id="applying-as-label">Applying As</InputLabel>
                 <Select
+                  readOnly
                   labelId="applying-as-label"
                   id="applying-as-select"
                   name="applyingAs"
-                  readOnly
-                  value={person.applyingAs || ""}
+                  value={person.applyingAs ?? ""}
                   label="Applying As"
                   onChange={handleChange}
                   onBlur={handleBlur}
@@ -1376,8 +1603,9 @@ const AdminDashboard1 = () => {
                     <FormControl fullWidth size="small" required error={!!errors.program}>
                       <InputLabel>Program</InputLabel>
                       <Select
+
                         name="program"
-                        value={person.program || ""}
+                        value={person.program ?? ""}
                         onBlur={handleBlur}
                         onChange={handleChange}
                         label="Program"
@@ -1401,8 +1629,9 @@ const AdminDashboard1 = () => {
                     <FormControl fullWidth size="small" required error={!!errors.program2}>
                       <InputLabel>Program 2</InputLabel>
                       <Select
+                        readOnly
                         name="program2"
-                        value={person.program2 || ""}
+                        value={person.program2 ?? ""}
                         onBlur={handleBlur}
                         onChange={handleChange}
                         label="Program 2"
@@ -1426,8 +1655,9 @@ const AdminDashboard1 = () => {
                     <FormControl fullWidth size="small" required error={!!errors.program3}>
                       <InputLabel>Program 3</InputLabel>
                       <Select
+                        readOnly
                         name="program3"
-                        value={person.program3 || ""}
+                        value={person.program3 ?? ""}
                         onBlur={handleBlur}
                         onChange={handleChange}
                         label="Program 3"
@@ -1457,7 +1687,6 @@ const AdminDashboard1 = () => {
                   width: "5.08cm",
                   height: "5.08cm",
                   display: "flex",
-
                   justifyContent: "center",
                   alignItems: "center",
                   flexDirection: "column",
@@ -1470,7 +1699,6 @@ const AdminDashboard1 = () => {
                     alt="Profile"
                     style={{
                       width: "100%",
-
                       height: "100%",
                       objectFit: "cover",
                     }}
@@ -1498,11 +1726,11 @@ const AdminDashboard1 = () => {
               <FormControl fullWidth size="small" required error={!!errors.yearLevel}>
                 <InputLabel id="year-level-label">Year Level</InputLabel>
                 <Select
+                  readOnly
                   labelId="year-level-label"
                   id="year-level-select"
                   name="yearLevel"
-                  readOnly
-                  value={person.yearLevel || ""}
+                  value={person.yearLevel ?? ""}
                   label="Year Level"
                   onChange={handleChange}
                   onBlur={handleBlur}
@@ -1529,13 +1757,13 @@ const AdminDashboard1 = () => {
               <Box flex="1 1 20%">
                 <Typography mb={1} fontWeight="medium">Last Name</Typography>
                 <TextField
+                  InputProps={{ readOnly: true }}
+
                   fullWidth
                   size="small"
                   name="last_name"
                   required
-                  InputProps={{ readOnly: true }}
-
-                  value={person.last_name}
+                  value={person.last_name ?? ""}
                   onChange={handleChange}
                   onBlur={handleBlur}
                   placeholder="Enter your Last Name"
@@ -1549,13 +1777,13 @@ const AdminDashboard1 = () => {
               <Box flex="1 1 20%">
                 <Typography mb={1} fontWeight="medium">First Name</Typography>
                 <TextField
+                  InputProps={{ readOnly: true }}
+
                   fullWidth
                   size="small"
                   name="first_name"
                   required
-                  InputProps={{ readOnly: true }}
-
-                  value={person.first_name}
+                  value={person.first_name ?? ""}
                   onChange={handleChange}
                   onBlur={handleBlur}
                   placeholder="Enter your First Name"
@@ -1568,13 +1796,13 @@ const AdminDashboard1 = () => {
               <Box flex="1 1 20%">
                 <Typography mb={1} fontWeight="medium">Middle Name</Typography>
                 <TextField
+                  InputProps={{ readOnly: true }}
+
                   fullWidth
                   size="small"
                   name="middle_name"
                   required
-                  InputProps={{ readOnly: true }}
-
-                  value={person.middle_name}
+                  value={person.middle_name ?? ""}
                   onChange={handleChange}
                   onBlur={handleBlur}
                   placeholder="Enter your Middle Name"
@@ -1589,11 +1817,11 @@ const AdminDashboard1 = () => {
                 <FormControl fullWidth size="small" error={errors.extension}>
                   <InputLabel id="extension-label">Extension</InputLabel>
                   <Select
+                    readOnly
                     labelId="extension-label"
                     id="extension-select"
-                    readOnly
                     name="extension"
-                    value={person.extension || ""}
+                    value={person.extension ?? ""}
                     label="Extension"
                     onChange={handleChange}
                     onBlur={handleBlur}
@@ -1617,14 +1845,14 @@ const AdminDashboard1 = () => {
               <Box flex="1 1 20%">
                 <Typography mb={1} fontWeight="medium">Nickname</Typography>
                 <TextField
+                  InputProps={{ readOnly: true }}
+
                   fullWidth
                   size="small"
                   name="nickname"
-                  InputProps={{ readOnly: true }}
-
-                  value={person.nickname}
+                  required
+                  value={person.nickname ?? ""}
                   onChange={handleChange}
-                  readOnly
                   onBlur={handleBlur}
                   placeholder="Enter your Nickname"
                   error={errors.nickname}
@@ -1640,11 +1868,11 @@ const AdminDashboard1 = () => {
                     Height:
                   </Typography>
                   <TextField
-                    size="small"
-                    name="height"
-                    value={person.height}
                     InputProps={{ readOnly: true }}
 
+                    size="small"
+                    name="height"
+                    value={person.height ?? ""}
                     onChange={handleChange}
                     onBlur={handleBlur}
                     placeholder="Enter your Height"
@@ -1667,11 +1895,11 @@ const AdminDashboard1 = () => {
                     Weight:
                   </Typography>
                   <TextField
-                    size="small"
-                    name="weight"
-                    value={person.weight}
                     InputProps={{ readOnly: true }}
 
+                    size="small"
+                    name="weight"
+                    value={person.weight ?? ""}
                     onChange={handleChange}
                     onBlur={handleBlur}
                     placeholder="Enter your Weight"
@@ -1696,15 +1924,15 @@ const AdminDashboard1 = () => {
 
               {/* LRN Input */}
               <TextField
+                disabled
                 id="lrnNumber"
                 name="lrnNumber"
                 required={person.lrnNumber !== "No LRN Number"}
                 label="Enter your LRN Number"
-                value={person.lrnNumber === "No LRN Number" ? "" : person.lrnNumber || ""}
+                value={person.lrnNumber === "No LRN Number" ? "" : person.lrnNumber ?? ""}
                 onChange={handleChange}
-                readOnly
                 onBlur={handleBlur}
-                disabled={person.lrnNumber === "No LRN Number"}
+
                 size="small"
                 sx={{ width: 220 }}
                 InputProps={{ sx: { height: 40, readOnly: true } }}
@@ -1717,6 +1945,7 @@ const AdminDashboard1 = () => {
               <FormControlLabel
                 control={
                   <Checkbox
+                    disabled
                     name="lrn_na"
                     checked={person.lrnNumber === "No LRN Number"}
                     onChange={(e) => {
@@ -1741,11 +1970,11 @@ const AdminDashboard1 = () => {
 
               {/* Gender */}
               <TextField
+                readOnly
                 select
                 size="small"
                 label="Gender"
                 name="gender"
-                readOnly
                 required
                 value={person.gender == null ? "" : String(person.gender)}
                 onChange={(e) => {
@@ -1760,7 +1989,7 @@ const AdminDashboard1 = () => {
                 onBlur={handleBlur}
                 error={Boolean(errors.gender)}
                 sx={{ width: 150 }}
-                InputProps={{ sx: { height: 40 } }}
+                InputProps={{ sx: { height: 40, } }}
                 inputProps={{ style: { height: 40 } }}
               >
                 <MenuItem value=""><em>Select Gender</em></MenuItem>
@@ -1779,6 +2008,7 @@ const AdminDashboard1 = () => {
               <FormControlLabel
                 control={
                   <Checkbox
+                    disabled
                     checked={person.pwdMember === 1}
                     onChange={handlePwdCheck}
                     inputProps={{ "aria-label": "PWD Checkbox" }}
@@ -1792,12 +2022,12 @@ const AdminDashboard1 = () => {
                 <>
                   {/* PWD Type */}
                   <TextField
+                    readOnly
                     select
                     size="small"
                     label="PWD Type"
-                    readOnly
                     name="pwdType"
-                    value={person.pwdType || ""}
+                    value={person.pwdType ?? ""}
                     onChange={handleChange}
                     onBlur={handleBlur}
                     required={person.pwdMember === 1}
@@ -1835,11 +2065,11 @@ const AdminDashboard1 = () => {
 
                   {/* PWD ID */}
                   <TextField
+                    disabled
                     size="small"
                     label="PWD ID"
                     name="pwdId"
-                    disabled
-                    value={person.pwdId || ""}
+                    value={person.pwdId ?? ""}
                     onChange={handleChange}
                     onBlur={handleBlur}
                     required={person.pwdMember === 1}
@@ -1860,6 +2090,7 @@ const AdminDashboard1 = () => {
             </Box>
 
             {/* Row 1: Birth Place + Citizenship */}
+
 
             <Box display="flex" gap={2} mb={2}>
               {/* 🎂 Birth Date */}
@@ -1888,7 +2119,7 @@ const AdminDashboard1 = () => {
                   Age
                 </Typography>
                 <TextField
-                  readOnly
+
                   fullWidth
                   size="small"
                   name="age"
@@ -1906,16 +2137,16 @@ const AdminDashboard1 = () => {
                 <Typography mb={1} fontWeight="medium">
                   Birth Place
                 </Typography>
-                <TextField fullWidth size="small" name="birthPlace" InputProps={{ readOnly: true }}
-                  placeholder="Enter your Birth Place" value={person.birthPlace} required onBlur={handleBlur} onChange={handleChange} error={!!errors.birthPlace}
+                <TextField InputProps={{ readOnly: true }}
+                  fullWidth size="small" name="birthPlace" placeholder="Enter your Birth Place" value={person.birthPlace ?? ""} required onBlur={handleBlur} onChange={handleChange} error={!!errors.birthPlace}
                   helperText={errors.birthPlace ? "This field is required." : ""} />
               </Box>
               <Box flex={1} >
                 <Typography mb={1} fontWeight="medium">
                   Language/Dialect Spoken
                 </Typography>
-                <TextField fullWidth size="small" InputProps={{ readOnly: true }}
-                  name="languageDialectSpoken" placeholder="Enter your Language Spoken" value={person.languageDialectSpoken || ""} required onBlur={handleBlur} onChange={handleChange} error={!!errors.languageDialectSpoken}
+                <TextField InputProps={{ readOnly: true }}
+                  fullWidth size="small" name="languageDialectSpoken" placeholder="Enter your Language Spoken" value={person.languageDialectSpoken ?? ""} required onBlur={handleBlur} onChange={handleChange} error={!!errors.languageDialectSpoken}
                   helperText={errors.languageDialectSpoken ? "This field is required." : ""}
                 />
               </Box>
@@ -1932,11 +2163,11 @@ const AdminDashboard1 = () => {
                 <FormControl fullWidth size="small" required error={!!errors.citizenship}>
                   <InputLabel id="citizenship-label">Citizenship</InputLabel>
                   <Select
+                    readOnly
                     labelId="citizenship-label"
                     id="citizenship"
                     name="citizenship"
-                    readOnly
-                    value={person.citizenship || ""}
+                    value={person.citizenship ?? ""}
                     onChange={handleChange}
                     onBlur={handleBlur}
                     label="Citizenship" // Required for floating label
@@ -2074,11 +2305,11 @@ const AdminDashboard1 = () => {
                 <FormControl fullWidth size="small" required error={!!errors.religion}>
                   <InputLabel id="religion-label">Religion</InputLabel>
                   <Select
+                    readOnly
                     labelId="religion-label"
                     id="religion"
-                    readOnly
                     name="religion"
-                    value={person.religion || ""}
+                    value={person.religion ?? ""}
                     onChange={handleChange}
                     onBlur={handleBlur}
                     label="Religion" // Enables floating label
@@ -2123,11 +2354,11 @@ const AdminDashboard1 = () => {
                 <FormControl fullWidth size="small" required error={!!errors.civilStatus}>
                   <InputLabel id="civil-status-label">Civil Status</InputLabel>
                   <Select
+                    readOnly
                     labelId="civil-status-label"
                     id="civilStatus"
-                    readOnly
                     name="civilStatus"
-                    value={person.civilStatus || ""}
+                    value={person.civilStatus ?? ""}
                     onChange={handleChange}
                     onBlur={handleBlur}
                     label="Civil Status"
@@ -2154,11 +2385,11 @@ const AdminDashboard1 = () => {
                 <FormControl fullWidth size="small" required error={!!errors.tribeEthnicGroup}>
                   <InputLabel id="tribe-label">Tribe/Ethnic Group</InputLabel>
                   <Select
+                    readOnly
                     labelId="tribe-label"
                     id="tribeEthnicGroup"
-                    readOnly
                     name="tribeEthnicGroup"
-                    value={person.tribeEthnicGroup || ""}
+                    value={person.tribeEthnicGroup ?? ""}
                     onChange={handleChange}
                     onBlur={handleBlur}
                     label="Tribe/Ethnic Group"
@@ -2233,14 +2464,14 @@ const AdminDashboard1 = () => {
                   Cellphone Number:
                 </Typography>
                 <TextField
+                  InputProps={{ readOnly: true }}
+
                   fullWidth
                   size="small"
                   name="cellphoneNumber"
                   placeholder="Enter your Cellphone Number +63"
                   required
-                  InputProps={{ readOnly: true }}
-
-                  value={person.cellphoneNumber}
+                  value={person.cellphoneNumber ?? ""}
                   onBlur={handleBlur}
                   onChange={handleChange}
                   error={!!errors.cellphoneNumber}
@@ -2254,13 +2485,13 @@ const AdminDashboard1 = () => {
                   Email Address:
                 </Typography>
                 <TextField
+                  InputProps={{ readOnly: true }}
+
                   fullWidth
                   size="small"
                   name="emailAddress"
-                  InputProps={{ readOnly: true }}
-
                   required
-                  value={person.emailAddress}
+                  value={person.emailAddress ?? ""}
                   placeholder="Enter your Email Address (e.g., username@gmail.com)"
                   onBlur={handleBlur}
                   onChange={handleChange}
@@ -2282,12 +2513,12 @@ const AdminDashboard1 = () => {
               <Box flex={1}>
                 <Typography mb={1} fontWeight="medium">Present Street</Typography>
                 <TextField
-                  fullWidth
-                  size="small"
                   InputProps={{ readOnly: true }}
 
+                  fullWidth
+                  size="small"
                   name="presentStreet"
-                  value={person.presentStreet}
+                  value={person.presentStreet ?? ""}
                   onBlur={handleBlur}
                   placeholder="Enter your Present Street"
                   onChange={handleChange}
@@ -2299,13 +2530,13 @@ const AdminDashboard1 = () => {
               <Box flex={1}>
                 <Typography mb={1} fontWeight="medium">Present Zip Code</Typography>
                 <TextField
-                  fullWidth
-                  size="small"
                   InputProps={{ readOnly: true }}
 
+                  fullWidth
+                  size="small"
                   name="presentZipCode"
                   placeholder="Enter your Zip Code"
-                  value={person.presentZipCode}
+                  value={person.presentZipCode ?? ""}
                   onBlur={handleBlur}
                   onChange={handleChange}
                   error={!!errors.presentZipCode}
@@ -2320,10 +2551,10 @@ const AdminDashboard1 = () => {
               <FormControl fullWidth size="small" required error={!!errors.presentRegion}>
                 <InputLabel id="present-region-label">Region</InputLabel>
                 <Select
+                  readOnly
                   labelId="present-region-label"
                   name="presentRegion"
-                  readOnly
-                  value={person.presentRegion || ""}
+                  value={person.presentRegion ?? ""}
                   onBlur={handleBlur}
                   onChange={(e) => {
                     handleChange(e);
@@ -2356,10 +2587,10 @@ const AdminDashboard1 = () => {
               <FormControl fullWidth size="small" required error={!!errors.presentProvince}>
                 <InputLabel id="present-province-label">Province</InputLabel>
                 <Select
+                  readOnly
                   labelId="present-province-label"
                   name="presentProvince"
-                  readOnly
-                  value={person.presentProvince || ""}
+                  value={person.presentProvince ?? ""}
                   onBlur={handleBlur}
                   onChange={(e) => {
                     handleChange(e);
@@ -2396,8 +2627,7 @@ const AdminDashboard1 = () => {
                 <Select
                   labelId="present-municipality-label"
                   name="presentMunicipality"
-                  readOnly
-                  value={person.presentMunicipality || ""}
+                  value={person.presentMunicipality ?? ""}
                   onBlur={handleBlur}
                   onChange={(e) => {
                     handleChange(e);
@@ -2429,8 +2659,7 @@ const AdminDashboard1 = () => {
                 <Select
                   labelId="present-barangay-label"
                   name="presentBarangay"
-                  readOnly
-                  value={person.presentBarangay || ""}
+                  value={person.presentBarangay ?? ""}
                   onBlur={handleBlur}
                   onChange={(e) => {
                     handleChange(e);
@@ -2460,12 +2689,12 @@ const AdminDashboard1 = () => {
             <Box mb={2}>
               <Typography mb={1} fontWeight="medium">Present DSWD Household Number</Typography>
               <TextField
+                InputProps={{ readOnly: true }}
+
                 fullWidth
                 size="small"
                 name="presentDswdHouseholdNumber"
-                InputProps={{ readOnly: true }}
-
-                value={person.presentDswdHouseholdNumber}
+                value={person.presentDswdHouseholdNumber ?? ""}
                 onBlur={handleBlur}
                 onChange={handleChange}
                 placeholder="Enter your Present DSWD Household Number"
@@ -2480,8 +2709,8 @@ const AdminDashboard1 = () => {
             <FormControlLabel
               control={
                 <Checkbox
-                  name="same_as_present_address"
                   disabled
+                  name="same_as_present_address"
                   checked={person.same_as_present_address === 1}
                   onChange={(e) => {
                     const checked = e.target.checked;
@@ -2521,13 +2750,13 @@ const AdminDashboard1 = () => {
               <Box flex={1}>
                 <Typography mb={1} fontWeight="medium">Permanent Street</Typography>
                 <TextField
+                  InputProps={{ readOnly: true }}
+
                   fullWidth
                   size="small"
                   name="permanentStreet"
-                  InputProps={{ readOnly: true }}
-
                   placeholder="Enter your Permanent Street"
-                  value={person.permanentStreet}
+                  value={person.permanentStreet ?? ""}
                   onBlur={handleBlur}
                   onChange={handleChange}
                   error={!!errors.permanentStreet}
@@ -2538,13 +2767,13 @@ const AdminDashboard1 = () => {
               <Box flex={1}>
                 <Typography mb={1} fontWeight="medium">Permanent Zip Code</Typography>
                 <TextField
+                  InputProps={{ readOnly: true }}
+
                   fullWidth
                   size="small"
                   name="permanentZipCode"
-                  InputProps={{ readOnly: true }}
-
                   placeholder="Enter your Permanent Zip Code"
-                  value={person.permanentZipCode}
+                  value={person.permanentZipCode ?? ""}
                   onBlur={handleBlur}
                   onChange={handleChange}
                   error={!!errors.permanentZipCode}
@@ -2560,11 +2789,11 @@ const AdminDashboard1 = () => {
                 <FormControl fullWidth size="small" required error={!!errors.permanentRegion}>
                   <InputLabel id="permanent-region-label">Select Region</InputLabel>
                   <Select
+                    readOnly
                     labelId="permanent-region-label"
                     id="permanentRegion"
-                    readOnly
                     name="permanentRegion"
-                    value={person.permanentRegion || ""}
+                    value={person.permanentRegion ?? ""}
                     label="Select Region"
                     onBlur={handleBlur}
                     onChange={(e) => {
@@ -2600,11 +2829,11 @@ const AdminDashboard1 = () => {
                 <FormControl fullWidth size="small" required error={!!errors.permanentProvince}>
                   <InputLabel id="permanent-province-label">Select Province</InputLabel>
                   <Select
+                    readOnly
                     labelId="permanent-province-label"
                     id="permanentProvince"
-                    readOnly
                     name="permanentProvince"
-                    value={person.permanentProvince || ""}
+                    value={person.permanentProvince ?? ""}
                     label="Select Province"
                     onBlur={handleBlur}
                     onChange={(e) => {
@@ -2642,11 +2871,11 @@ const AdminDashboard1 = () => {
                 <FormControl fullWidth size="small" required error={!!errors.permanentMunicipality}>
                   <InputLabel id="permanent-municipality-label">Select Municipality</InputLabel>
                   <Select
+                    readOnly
                     labelId="permanent-municipality-label"
                     id="permanentMunicipality"
-                    readOnly
                     name="permanentMunicipality"
-                    value={person.permanentMunicipality || ""}
+                    value={person.permanentMunicipality ?? ""}
                     label="Select Municipality"
                     onBlur={handleBlur}
                     onChange={(e) => {
@@ -2679,11 +2908,11 @@ const AdminDashboard1 = () => {
                 <FormControl fullWidth size="small" required error={!!errors.permanentBarangay}>
                   <InputLabel id="permanent-barangay-label">Select Barangay</InputLabel>
                   <Select
+                    readOnly
                     labelId="permanent-barangay-label"
                     id="permanentBarangay"
-                    readOnly
                     name="permanentBarangay"
-                    value={person.permanentBarangay || ""}
+                    value={person.permanentBarangay ?? ""}
                     label="Select Barangay"
                     onBlur={handleBlur}
                     onChange={(e) => {
@@ -2714,14 +2943,14 @@ const AdminDashboard1 = () => {
             <Box mb={2}>
               <Typography mb={1} fontWeight="medium">Permanent DSWD Household Number</Typography>
               <TextField
+                InputProps={{ readOnly: true }}
+
                 fullWidth
                 size="small"
                 variant="outlined"
                 placeholder="Enter your Permanent DSWD Household Number"
                 name="permanentDswdHouseholdNumber"
-                InputProps={{ readOnly: true }}
-
-                value={person.permanentDswdHouseholdNumber || ""}
+                value={person.permanentDswdHouseholdNumber ?? ""}
                 onBlur={handleBlur}
                 onChange={handleChange}
                 error={!!errors.permanentDswdHouseholdNumber}
@@ -2881,7 +3110,6 @@ const AdminDashboard1 = () => {
                     Select Your Image:
                   </Typography>
                   <input
-                    disabled
                     type="file"
                     accept=".jpg,.jpeg,.png"
                     onClick={(e) => (e.target.value = null)}
@@ -2898,6 +3126,7 @@ const AdminDashboard1 = () => {
 
                   {/* Upload Button */}
                   <Button
+                    disabled
                     variant="contained"
                     fullWidth
                     onClick={handleUpload}
@@ -2915,6 +3144,7 @@ const AdminDashboard1 = () => {
                 </Box>
               </Box>
             </Modal>
+
 
             <Modal
               open={examPermitModalOpen}
@@ -2979,31 +3209,26 @@ const AdminDashboard1 = () => {
               </Button>
               <Button
                 variant="contained"
-                onClick={(e) => {
+                onClick={() => {
                   handleUpdate();
-
-                  if (isFormValid()) {
-                    navigate("/admin_dashboard2");
-                  } else {
-                    alert("Please complete all required fields before proceeding.");
-                  }
+                  navigate("/admin_dashboard2");
                 }}
                 endIcon={
                   <ArrowForwardIcon
                     sx={{
-                      color: '#fff',
-                      transition: 'color 0.3s',
+                      color: "#fff",
+                      transition: "color 0.3s",
                     }}
                   />
                 }
                 sx={{
-                  backgroundColor: '#6D2323',
-                  color: '#fff',
-                  '&:hover': {
-                    backgroundColor: '#E8C999',
-                    color: '#000',
-                    '& .MuiSvgIcon-root': {
-                      color: '#000',
+                  backgroundColor: "#6D2323",
+                  color: "#fff",
+                  "&:hover": {
+                    backgroundColor: "#E8C999",
+                    color: "#000",
+                    "& .MuiSvgIcon-root": {
+                      color: "#000",
                     },
                   },
                 }}
@@ -3011,7 +3236,6 @@ const AdminDashboard1 = () => {
                 Next Step
               </Button>
             </Box>
-
 
           </Container>
         </form>

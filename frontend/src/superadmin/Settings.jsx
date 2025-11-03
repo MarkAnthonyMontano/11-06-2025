@@ -16,12 +16,8 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import Unauthorized from "../components/Unauthorized";
 import LoadingOverlay from "../components/LoadingOverlay";
 
-
 function Settings({ onUpdate }) {
-
-
-
-    // Also put it at the very top
+    // User states
     const [userID, setUserID] = useState("");
     const [user, setUser] = useState("");
     const [userRole, setUserRole] = useState("");
@@ -29,12 +25,12 @@ function Settings({ onUpdate }) {
     const [hasAccess, setHasAccess] = useState(null);
     const [loading, setLoading] = useState(false);
 
-
     const pageId = 80;
 
-    //Put this After putting the code of the past code
-    useEffect(() => {
+    // ✅ New state for short term
+    const [shortTerm, setShortTerm] = useState("");
 
+    useEffect(() => {
         const storedUser = localStorage.getItem("email");
         const storedRole = localStorage.getItem("role");
         const storedID = localStorage.getItem("person_id");
@@ -65,16 +61,11 @@ function Settings({ onUpdate }) {
         } catch (error) {
             console.error('Error checking access:', error);
             setHasAccess(false);
-            if (error.response && error.response.data.message) {
-                console.log(error.response.data.message);
-            } else {
-                console.log("An unexpected error occurred.");
-            }
             setLoading(false);
         }
     };
 
-
+    // Settings states
     const [companyName, setCompanyName] = useState("");
     const [address, setAddress] = useState("");
     const [logo, setLogo] = useState(null);
@@ -96,12 +87,14 @@ function Settings({ onUpdate }) {
         setSnack((prev) => ({ ...prev, open: false }));
     };
 
+    // ✅ Fetch settings (including short_term)
     useEffect(() => {
         axios
             .get("http://localhost:5000/api/settings")
             .then((response) => {
                 const {
                     company_name,
+                    short_term,
                     address,
                     logo_url,
                     bg_image,
@@ -110,6 +103,7 @@ function Settings({ onUpdate }) {
                     footer_color,
                 } = response.data;
                 setCompanyName(company_name || "");
+                setShortTerm(short_term || "");
                 setAddress(address || "");
                 setPreviewLogo(logo_url ? `http://localhost:5000${logo_url}` : null);
                 setPreviewBg(bg_image ? `http://localhost:5000${bg_image}` : null);
@@ -127,10 +121,12 @@ function Settings({ onUpdate }) {
             });
     }, []);
 
+    // ✅ Submit form
     const handleSubmit = async (event) => {
         event.preventDefault();
         const formData = new FormData();
         formData.append("company_name", companyName || "");
+        formData.append("short_term", shortTerm || ""); // <-- NEW FIELD
         formData.append("address", address || "");
         if (logo) formData.append("logo", logo);
         if (bgImage) formData.append("bg_image", bgImage);
@@ -162,34 +158,27 @@ function Settings({ onUpdate }) {
         }
     };
 
-
-    // Put this at the very bottom before the return 
+    // Access handling
     if (loading || hasAccess === null) {
         return <LoadingOverlay open={loading} message="Check Access" />;
     }
 
     if (!hasAccess) {
-        return (
-            <Unauthorized />
-        );
+        return <Unauthorized />;
     }
-
-
-
-
 
     return (
         <Box
             sx={{
                 width: "100%",
-                height: "100vh", // ✅ full viewport height
+                height: "100vh",
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "flex-start",
                 backgroundColor: "transparent",
-                overflowY: "auto", // ✅ enables scroll inside this component
+                overflowY: "auto",
                 overflowX: "hidden",
-                padding: "40px 0", // top/bottom space so button not clipped
+                padding: "40px 0",
             }}
         >
             <Paper
@@ -202,10 +191,9 @@ function Settings({ onUpdate }) {
                     backgroundColor: "#fff",
                     border: "2px solid maroon",
                     boxShadow: "0px 4px 20px rgba(0,0,0,0.1)",
-                    mb: 12, // ✅ add some bottom space
+                    mb: 12,
                 }}
             >
-
                 <Box textAlign="center" mb={2}>
                     <SettingsIcon
                         sx={{
@@ -228,7 +216,7 @@ function Settings({ onUpdate }) {
                 <Divider sx={{ mb: 2 }} />
 
                 <form onSubmit={handleSubmit}>
-                    {/* ✅ Company Name */}
+                    {/* ✅ School Name */}
                     <Box mb={2}>
                         <InputLabel>School Name</InputLabel>
                         <TextField
@@ -237,6 +225,19 @@ function Settings({ onUpdate }) {
                             fullWidth
                             size="small"
                             variant="outlined"
+                        />
+                    </Box>
+
+                    {/* ✅ Short Term (Abbreviation) */}
+                    <Box mb={2}>
+                        <InputLabel>Short Term</InputLabel>
+                        <TextField
+                            value={shortTerm}
+                            onChange={(e) => setShortTerm(e.target.value)}
+                            fullWidth
+                            size="small"
+                            variant="outlined"
+                            placeholder="School Short Name Called"
                         />
                     </Box>
 

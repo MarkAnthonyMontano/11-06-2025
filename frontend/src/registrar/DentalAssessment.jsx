@@ -31,6 +31,7 @@ import UploadFileIcon from '@mui/icons-material/UploadFile';
 import { motion } from "framer-motion";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import Unauthorized from "../components/Unauthorized";
+import LoadingOverlay from "../components/LoadingOverlay";
 
 const DentalAssessment = () => {
     const [studentNumber, setStudentNumber] = useState("");
@@ -409,17 +410,17 @@ const DentalAssessment = () => {
                 e.stopPropagation();
             }
         });
-        
-        // Put this at the very bottom before the return 
-    if (loading || hasAccess === null) {
-        return <LoadingOverlay open={loading} message="Check Access" />;
-    }
 
-    if (!hasAccess) {
-        return (
-            <Unauthorized />
-        );
-    }
+        // Put this at the very bottom before the return 
+        if (loading || hasAccess === null) {
+            return <LoadingOverlay open={loading} message="Check Access" />;
+        }
+
+        if (!hasAccess) {
+            return (
+                <Unauthorized />
+            );
+        }
 
         return (
             <Box
@@ -511,7 +512,7 @@ const DentalAssessment = () => {
         );
     };
 
-    
+
 
 
     return (
@@ -523,7 +524,7 @@ const DentalAssessment = () => {
                     justifyContent: "space-between",
                     alignItems: "center",
                     mb: 1,
-                    p: 1,
+                   
                 }}
             >
                 {/* 🦷 Left side: Title */}
@@ -531,10 +532,9 @@ const DentalAssessment = () => {
                     variant="h4"
                     fontWeight="bold"
                     sx={{
-                        color: "#6D2323",
-
-                        letterSpacing: 1,
-                        marginTop: "-10px",
+                        fontWeight: "bold",
+                        color: "maroon",
+                        fontSize: "36px",
                     }}
                 >
                     DENTAL ASSESSMENT

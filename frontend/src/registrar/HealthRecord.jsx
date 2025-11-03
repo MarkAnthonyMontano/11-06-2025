@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useContext, useRef } from "react";
-import { Box, Container, TextField, Button } from "@mui/material";
+import { Box, Container, TextField, Button, Typography } from "@mui/material";
 import axios from "axios";
 import { FcPrint } from "react-icons/fc";
 import { useLocation } from "react-router-dom";
 import { SettingsContext } from "../App";
 import Unauthorized from "../components/Unauthorized";
 import LoadingOverlay from "../components/LoadingOverlay";
+import SearchIcon from "@mui/icons-material/Search";
+
 
 const HealthRecord = () => {
     const settings = useContext(SettingsContext); // ✅ Access the global settings
@@ -316,88 +318,90 @@ const HealthRecord = () => {
         );
     }
 
+
     return (
+        <Box sx={{ height: 'calc(100vh - 150px)', overflowY: 'auto', pr: 1, }}>
+            {/* Header with Search aligned right */}
+            <Box
+                sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
 
-        <Box sx={{ height: 'calc(95vh - 80px)', overflowY: 'auto', paddingRight: 1, backgroundColor: 'transparent' }}>
+                    mb: 2,
 
-            <div>
-                <style>
-                    {`
-          @media print {
-            button {
-              display: none;
-            }
-          }
-        `}
-                </style>
-
-
-            </div>
-            <Container>
-                <Container
+                }}
+            >
+                <Typography
+                    variant="h4"
                     sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        marginTop: "10px"
-                    }}
-                >
-                    <h1
-                        style={{
-                            fontSize: "40px",
-                            fontWeight: "bold",
-                            textAlign: "left",
-                            color: "maroon",
-                        }}
-                    >
-                        HEALTH RECORD
-                    </h1>
-
-                    {/* ✅ Search Bar */}
-                    <Box sx={{ display: "flex", gap: 1 }}>
-                        <TextField
-                            size="small"
-                            placeholder="Search by Student Number or Name or Email..."
-                            value={searchQuery}
-                            style={{ width: "350px" }}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === "Enter") fetchPersonBySearch(searchQuery);
-                            }}
-                        />
-
-                    </Box>
-                </Container>
-
-                <hr style={{ border: "1px solid #ccc", width: "100%" }} />
-
-                <button
-                    onClick={printDiv}
-                    style={{
-                        marginBottom: "1rem",
-                        padding: "10px 20px",
-                        border: "2px solid black",
-                        backgroundColor: "#f0f0f0",
-                        color: "black",
-                        borderRadius: "5px",
-                        marginTop: "20px",
-                        cursor: "pointer",
-                        fontSize: "16px",
                         fontWeight: "bold",
-                        transition: "background-color 0.3s, transform 0.2s",
+                        color: "maroon",
+                        fontSize: "36px",
                     }}
-                    onMouseEnter={(e) => (e.target.style.backgroundColor = "#d3d3d3")}
-                    onMouseLeave={(e) => (e.target.style.backgroundColor = "#f0f0f0")}
-                    onMouseDown={(e) => (e.target.style.transform = "scale(0.95)")}
-                    onMouseUp={(e) => (e.target.style.transform = "scale(1)")}
                 >
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <FcPrint size={20} />
-                        Print Health Record
-                    </span>
-                </button>
+                    HEALTH RECORDS
+                </Typography>
 
-            </Container>
+                <TextField
+                    size="small"
+                    placeholder="Search by Student Number / Name / Email"
+                    value={searchQuery}
+
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter") fetchPersonBySearch(searchQuery);
+                    }}
+                    sx={{
+                        width: 450,
+                        backgroundColor: "#fff",
+                        borderRadius: 1,
+                        "& .MuiOutlinedInput-root": {
+                            borderRadius: "10px",
+                        },
+                    }}
+                    InputProps={{
+                        startAdornment: <SearchIcon sx={{ mr: 1, color: "gray" }} />,
+                    }}
+                />
+
+            </Box>
+
+
+            <hr style={{ border: "1px solid #ccc", width: "100%" }} />
+
+
+            <br />
+
+            <button
+                onClick={printDiv}
+                style={{
+                    marginBottom: "1rem",
+                    padding: "10px 20px",
+                    border: "2px solid black",
+                    backgroundColor: "#f0f0f0",
+                    color: "black",
+                    borderRadius: "5px",
+                    marginTop: "20px",
+                    cursor: "pointer",
+                    fontSize: "16px",
+                    fontWeight: "bold",
+                    transition: "background-color 0.3s, transform 0.2s",
+                }}
+                onMouseEnter={(e) => (e.target.style.backgroundColor = "#d3d3d3")}
+                onMouseLeave={(e) => (e.target.style.backgroundColor = "#f0f0f0")}
+                onMouseDown={(e) => (e.target.style.transform = "scale(0.95)")}
+                onMouseUp={(e) => (e.target.style.transform = "scale(1)")}
+            >
+                <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <FcPrint size={20} />
+                    Print Health Record
+                </span>
+            </button>
+
+
+
 
             <div ref={divToPrintRef}>
                 <table
@@ -2136,6 +2140,7 @@ const HealthRecord = () => {
             </div>
 
         </Box >
+
     );
 };
 

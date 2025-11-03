@@ -424,7 +424,7 @@ const MedicalRequirements = () => {
           justifyContent: "space-between",
           alignItems: "center",
           mb: 1,
-       
+
         }}
       >
         {/* 🦷 Left side: Title */}
@@ -432,10 +432,9 @@ const MedicalRequirements = () => {
           variant="h4"
           fontWeight="bold"
           sx={{
-            color: "#6D2323",
-
-            letterSpacing: 1,
-            marginTop: "-10px",
+            fontWeight: "bold",
+            color: "maroon",
+            fontSize: "36px",
           }}
         >
           MEDICAL AND PHYSICAL EXAMINATION
@@ -447,7 +446,7 @@ const MedicalRequirements = () => {
             display: "flex",
             alignItems: "center",
             gap: 1.5,
-            marginTop: "-5px",
+
           }}
         >
           <TextField

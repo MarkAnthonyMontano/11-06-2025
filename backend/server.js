@@ -251,7 +251,6 @@ const settingsStorage = multer.diskStorage({
       return cb(new Error("Invalid file type. Only PNG, JPG, JPEG, or PDF allowed."));
     }
 
-    // Name files based on their field
     if (file.fieldname === "logo") {
       cb(null, "Logo" + ext);
     } else if (file.fieldname === "bg_image") {
@@ -281,6 +280,7 @@ app.get("/api/settings", async (req, res) => {
     if (rows.length === 0) {
       return res.json({
         company_name: "",
+        short_term: "",
         address: "",
         header_color: "#ffffff",
         footer_text: "",
@@ -306,6 +306,7 @@ app.post(
   async (req, res) => {
     try {
       const companyName = req.body.company_name || "";
+      const shortTerm = req.body.short_term || ""; // <-- new field
       const address = req.body.address || "";
       const headerColor = req.body.header_color || "#ffffff";
       const footerText = req.body.footer_text || "";
@@ -322,8 +323,8 @@ app.post(
 
         let query = `
           UPDATE company_settings 
-          SET company_name=?, address=?, header_color=?, footer_text=?, footer_color=?`;
-        const params = [companyName, address, headerColor, footerText, footerColor];
+          SET company_name=?, short_term=?, address=?, header_color=?, footer_text=?, footer_color=?`;
+        const params = [companyName, shortTerm, address, headerColor, footerText, footerColor];
 
         if (logoUrl) {
           query += ", logo_url=?";
@@ -344,10 +345,11 @@ app.post(
       } else {
         const insertQuery = `
           INSERT INTO company_settings 
-          (company_name, address, header_color, footer_text, footer_color, logo_url, bg_image)
-          VALUES (?, ?, ?, ?, ?, ?, ?)`;
+          (company_name, short_term, address, header_color, footer_text, footer_color, logo_url, bg_image)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
         await db.query(insertQuery, [
           companyName,
+          shortTerm,
           address,
           headerColor,
           footerText,
@@ -364,7 +366,6 @@ app.post(
   }
 );
 //----------------------------End Settings----------------------------//
-
 
 /*---------------------------------START---------------------------------------*/
 // ----------------- REGISTER -----------------
@@ -3435,7 +3436,6 @@ app.post("/api/update-requirement", async (req, res) => {
 //     return res.status(500).json({ message: "Server error", error: err.message });
 //   }
 // });
-// OTP storage: otp, expiry, and cooldown
 // ----------------- GLOBAL STORES -----------------
 let otpStore = {};
 // Structure: { email: { otp, expiresAt, cooldownUntil } }
@@ -3478,9 +3478,9 @@ app.post("/request-otp", async (req, res) => {
     });
 
     await transporter.sendMail({
-      from: `"EARIST OTP Verification" <${process.env.EMAIL_USER}>`,
+      from: `" OTP Verification" <${process.env.EMAIL_USER}>`,
       to: email,
-      subject: "Your EARIST OTP Code",
+      subject: "Your OTP Code is",
       text: `Your OTP is: ${otp} (Valid for 5 minutes)`,
     });
 
@@ -3673,9 +3673,9 @@ UNION ALL
 
     try {
       await transporter.sendMail({
-        from: `"EARIST OTP Verification" <${process.env.EMAIL_USER}>`,
+        from: `"OTP Verification" <${process.env.EMAIL_USER}>`,
         to: user.email,
-        subject: "Your EARIST OTP Code",
+        subject: "Your OTP Code",
         text: `Your OTP is: ${otp} (Valid for 5 minutes)`,
       });
     } catch (err) {
@@ -3925,20 +3925,22 @@ app.post("/superadmin-reset-applicant", async (req, res) => {
       },
     });
 
-
     await transporter.sendMail({
-      from: '"EARIST Info System" <your_email@gmail.com>',
+      from: `"Information System" <${process.env.EMAIL_USER}>`,
       to: email,
       subject: "Password Reset",
-      text: `Your new temporary password is: ${newPassword}`,
+      text: `Your new temporary password is: ${newPassword}\n\nPlease change it after logging in.`,
     });
 
-    res.json({ message: "Password reset successfully. Check your email for the new password." });
+    res.json({
+      message: "Password reset successfully. Check your email for the new password.",
+    });
   } catch (err) {
     console.error("Reset password error:", err);
     res.status(500).json({ message: "Internal server error" });
   }
 });
+
 
 // ---------------- Applicant: Update Status ---------------- //
 app.post("/superadmin-update-status-applicant", async (req, res) => {
@@ -4084,7 +4086,6 @@ app.post("/forgot-password", async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
-
 // 🔹 Email sender
 async function sendResetEmail(to, tempPassword, accountType) {
   try {
@@ -4097,17 +4098,16 @@ async function sendResetEmail(to, tempPassword, accountType) {
     });
 
     const mailOptions = {
-      from: `"EARIST MIS" <${process.env.EMAIL_USER}>`,
+      from: `"Information System" <${process.env.EMAIL_USER}>`, 
       to,
       subject: `🔐 ${accountType} Password Reset`,
       html: `
         <div style="font-family: Arial, sans-serif; color: #333;">
-          <h2 style="color:#6D2323;">${accountType} Password Reset</h2>
+          <h2 style="color:#1E90FF;">${accountType} Password Reset</h2>
           <p>Hello,</p>
           <p>Your new temporary password is:</p>
-          <p style="font-size: 18px; font-weight: bold; color:#6D2323;">${tempPassword}</p>
+          <p style="font-size: 18px; font-weight: bold; color:#1E90FF;">${tempPassword}</p>
           <p>Please log in using this password and change it immediately.</p>
-       
         </div>
       `,
     };
@@ -4118,7 +4118,6 @@ async function sendResetEmail(to, tempPassword, accountType) {
     console.error("❌ Email send error:", emailErr);
   }
 }
-
 
 // ---------------- Registrar: Update Status ----------------
 app.post("/superadmin-update-status-registrar", async (req, res) => {
@@ -4166,8 +4165,6 @@ app.post("/superadmin-get-faculty", async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
-
-// FACULTY RESET PASSWORD 
 // ---------------- Faculty: Reset Password ----------------
 app.post("/superadmin-reset-faculty", async (req, res) => {
   const { email } = req.body;
@@ -4209,12 +4206,18 @@ app.post("/superadmin-reset-faculty", async (req, res) => {
     });
 
     await transporter.sendMail({
-      from: `"EARIST MIS" <${process.env.EMAIL_USER}>`,
+      from: `"Information System" <${process.env.EMAIL_USER}>`, 
       to: email,
-      subject: "Your Faculty Password has been Reset",
-      html: `<p>Hello,</p>
-             <p>Your new temporary password is: <b>${newPassword}</b></p>
-             <p>Please change it immediately after logging in.</p>`,
+      subject: "Faculty Password Reset",
+      html: `
+        <div style="font-family: Arial, sans-serif; color: #333;">
+          <h2 style="color:#1E90FF;">Faculty Password Reset</h2>
+          <p>Hello,</p>
+          <p>Your new temporary password is:</p>
+          <p style="font-size: 18px; font-weight: bold; color:#1E90FF;">${newPassword}</p>
+          <p>Please log in using this password and change it immediately.</p>
+        </div>
+      `,
     });
 
     res.json({ message: "Password reset successfully. Email sent." });
@@ -8033,7 +8036,24 @@ app.get("/schedule-plotting/day_list", async (req, res) => {
   }
 });
 
-//SCHEDULE CHECKER
+app.delete("/api/delete/schedule/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const deleteQuery = `DELETE FROM time_table WHERE id = ?`;
+    const [result] = await db3.execute(deleteQuery, [id]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Schedule not found." });
+    }
+
+    res.json({ message: "Schedule deleted successfully." });
+  } catch (error) {
+    console.error("Error deleting schedule:", error);
+    res.status(500).json({ error: "Database error while deleting schedule." });
+  }
+});
+
 //SCHEDULE CHECKER
 app.post("/api/check-subject", async (req, res) => {
   const { section_id, school_year_id, subject_id, day_of_week } = req.body;
@@ -11094,7 +11114,6 @@ app.put("/api/interview_applicants/:applicant_id/action", async (req, res) => {
 
 
 
-
 app.post("/api/send-email", async (req, res) => {
   const { to, subject, html, senderName } = req.body;
 
@@ -11103,9 +11122,8 @@ app.post("/api/send-email", async (req, res) => {
   }
 
   try {
-
     await transporter.sendMail({
-      from: `"${senderName || "EARIST Enrollment Office"}" <noreply-earistmis@gmail.com>`,
+      from: `"${senderName || "Enrollment Office"}" <${process.env.EMAIL_USER}>`, // ✅ Neutral name + dynamic email
       to,
       subject,
       html,
@@ -11117,6 +11135,7 @@ app.post("/api/send-email", async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to send email" });
   }
 });
+
 
 app.put("/api/interview_applicants/accept-top", async (req, res) => {
   const { count, dprtmnt_id } = req.body;
@@ -13311,6 +13330,60 @@ app.get("/api/verification-status/:applicant_number", async (req, res) => {
   } catch (error) {
     console.error("Error checking applicant verification:", error);
     res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+app.get("/api/student_data_as_applicant/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [[person]] = await db3.query(`
+      SELECT 
+        pt.*,
+        ant.applicant_number
+      FROM enrollment.person_table pt
+      JOIN admission.applicant_numbering_table ant ON pt.person_id = ant.person_id
+      WHERE pt.person_id = ? OR ant.applicant_number = ?
+      LIMIT 1
+    `, [id, id]);
+
+    if (!person) {
+      return res.status(404).json({ message: "Person not found" });
+    }
+
+    // get latest document status + evaluator
+    const [rows] = await db.query(`
+      SELECT 
+        ru.document_status    AS upload_document_status,
+        rt.id                 AS requirement_id,
+        ua.email              AS evaluator_email,
+        ua.role               AS evaluator_role,
+        pr.fname              AS evaluator_fname,
+        pr.mname              AS evaluator_mname,
+        pr.lname              AS evaluator_lname,
+        ru.created_at,
+        ru.last_updated_by
+      FROM enrollment.requirement_uploads AS ru
+      LEFT JOIN enrollment.requirements_table AS rt ON ru.requirements_id = rt.id
+      LEFT JOIN enrollment.user_accounts ua ON ru.last_updated_by = ua.person_id
+      LEFT JOIN enrollment.prof_table pr   ON ua.person_id = pr.person_id
+      WHERE ru.person_id = ?
+      ORDER BY ru.created_at DESC
+      LIMIT 1
+    `, [person.person_id]);
+
+    if (rows.length > 0) {
+      person.document_status = rows[0].upload_document_status || "On process";
+      person.evaluator = rows[0];
+    } else {
+      person.document_status = "On process";
+      person.evaluator = null;
+    }
+
+    res.json(person);
+  } catch (err) {
+    console.error("❌ Error fetching person_with_applicant:", err);
+    res.status(500).json({ error: "Failed to fetch person" });
   }
 });
 

@@ -7,6 +7,8 @@ import { useLocation } from "react-router-dom";
 import Search from '@mui/icons-material/Search';
 import Unauthorized from "../components/Unauthorized";
 import LoadingOverlay from "../components/LoadingOverlay";
+import SearchIcon from "@mui/icons-material/Search";
+
 
 const MedicalCertificate = () => {
     const settings = useContext(SettingsContext);
@@ -133,16 +135,6 @@ const MedicalCertificate = () => {
     });
 
 
-
-    // ✅ Fetch person data from backend
-    const fetchPersonData = async (id) => {
-        try {
-            const res = await axios.get(`http://localhost:5000/api/person/${id}`);
-            setPerson(res.data); // make sure backend returns the correct format
-        } catch (error) {
-            console.error("Failed to fetch person:", error);
-        }
-    };
 
 
     const location = useLocation();
@@ -392,81 +384,90 @@ const MedicalCertificate = () => {
         );
     }
 
+
+
     return (
-        <Box sx={{ height: 'calc(95vh - 80px)', overflowY: 'auto', paddingRight: 1, backgroundColor: 'transparent' }}>
-            <Container>
-                <Container
+        <Box sx={{ height: 'calc(100vh - 150px)', overflowY: 'auto', pr: 1, }}>
+            {/* Header with Search aligned right */}
+            <Box
+                sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+
+                    mb: 2,
+
+                }}
+            >
+                <Typography
+                    variant="h4"
                     sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        marginTop: "25px"
-                    }}
-                >
-                    <h1
-                        style={{
-                            fontSize: "40px",
-                            fontWeight: "bold",
-                            textAlign: "left",
-                            color: "maroon",
-                        }}
-                    >
-                        MEDICAL CERTIFICATE
-                    </h1>
-
-                    {/* ✅ Search Bar */}
-                    <Box sx={{ display: "flex", gap: 1 }}>
-                        <TextField
-                            size="small"
-                            placeholder="Search by Student Number or Name or Email..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === "Enter") fetchPersonBySearch(searchQuery);
-                            }}
-                        />
-                        <Button
-                            variant="contained"
-                            sx={{
-                                backgroundColor: "#800000",
-                                "&:hover": { backgroundColor: "#600000" },
-                            }}
-                            onClick={() => fetchPersonBySearch(searchQuery)}
-                        >
-                            Search
-                        </Button>
-                    </Box>
-                </Container>
-
-
-                <hr style={{ border: "1px solid #ccc", width: "100%" }} />
-                <button
-                    onClick={printDiv}
-                    style={{
-                        marginBottom: "1rem",
-                        padding: "10px 20px",
-                        border: "2px solid black",
-                        backgroundColor: "#f0f0f0",
-                        color: "black",
-                        borderRadius: "5px",
-                        marginTop: "20px",
-                        cursor: "pointer",
-                        fontSize: "16px",
                         fontWeight: "bold",
-                        transition: "background-color 0.3s, transform 0.2s",
+                        color: "maroon",
+                        fontSize: "36px",
                     }}
-                    onMouseEnter={(e) => (e.target.style.backgroundColor = "#d3d3d3")}
-                    onMouseLeave={(e) => (e.target.style.backgroundColor = "#f0f0f0")}
-                    onMouseDown={(e) => (e.target.style.transform = "scale(0.95)")}
-                    onMouseUp={(e) => (e.target.style.transform = "scale(1)")}
                 >
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <FcPrint size={20} />
-                        Print Medical Certificate
-                    </span>
-                </button>
+                    MEDICAL CERTIFICATE
+                </Typography>
 
-            </Container>
+                <TextField
+                    size="small"
+                    placeholder="Search by Student Number / Name / Email"
+                    value={searchQuery}
+
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter") fetchPersonBySearch(searchQuery);
+                    }}
+                    sx={{
+                        width: 450,
+                        backgroundColor: "#fff",
+                        borderRadius: 1,
+                        "& .MuiOutlinedInput-root": {
+                            borderRadius: "10px",
+                        },
+                    }}
+                    InputProps={{
+                        startAdornment: <SearchIcon sx={{ mr: 1, color: "gray" }} />,
+                    }}
+                />
+
+            </Box>
+
+
+            <hr style={{ border: "1px solid #ccc", width: "100%" }} />
+
+
+            <br />
+
+
+            <button
+                onClick={printDiv}
+                style={{
+                    marginBottom: "1rem",
+                    padding: "10px 20px",
+                    border: "2px solid black",
+                    backgroundColor: "#f0f0f0",
+                    color: "black",
+                    borderRadius: "5px",
+                    marginTop: "20px",
+                    cursor: "pointer",
+                    fontSize: "16px",
+                    fontWeight: "bold",
+                    transition: "background-color 0.3s, transform 0.2s",
+                }}
+                onMouseEnter={(e) => (e.target.style.backgroundColor = "#d3d3d3")}
+                onMouseLeave={(e) => (e.target.style.backgroundColor = "#f0f0f0")}
+                onMouseDown={(e) => (e.target.style.transform = "scale(0.95)")}
+                onMouseUp={(e) => (e.target.style.transform = "scale(1)")}
+            >
+                <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <FcPrint size={20} />
+                    Print Medical Certificate
+                </span>
+            </button>
+
             <Container>
                 <div ref={divToPrintRef}>
                     <div>
@@ -492,7 +493,7 @@ const MedicalCertificate = () => {
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center", // Center horizontally
-                                padding: "10px 20px",
+                                padding: "10px 10px",
                                 width: "100%",
 
                                 boxSizing: "border-box"
@@ -518,7 +519,7 @@ const MedicalCertificate = () => {
                                     />
                                 </div>
 
-                                <div style={{ height: "20px" }}></div>
+
                                 <div>
                                     {/* Top Line: Republic */}
                                     <div style={{
@@ -566,7 +567,7 @@ const MedicalCertificate = () => {
                                         fontSize: "16px",
                                         fontWeight: "bold",
                                         fontFamily: "Times, New Roman",
-                                        marginLeft: "-10px",
+                                        marginLeft: "-18px",
 
                                         marginTop: "30px"
                                     }}>
@@ -897,13 +898,12 @@ const MedicalCertificate = () => {
                                     </td>
                                 </tr>
 
-                                <tr>
-                                    <td colSpan={40} style={{ borderBottom: "1px solid black", height: "14px" }}></td>
-                                </tr>
+
                             </tbody>
                         </table>
                     </Container>
 
+                    <hr style={{ border: "2px solid black", width: "100%" }} />
 
                     <Container>
 
@@ -915,7 +915,7 @@ const MedicalCertificate = () => {
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center", // Center horizontally
-                                padding: "10px 20px",
+                                padding: "10px 10px",
                                 width: "100%",
 
                                 boxSizing: "border-box"
@@ -942,7 +942,7 @@ const MedicalCertificate = () => {
                                 </div>
 
 
-                                <div style={{ height: "20px" }}></div>
+
                                 <div>
                                     {/* Top Line: Republic */}
                                     <div style={{
@@ -990,7 +990,7 @@ const MedicalCertificate = () => {
                                         fontSize: "16px",
                                         fontWeight: "bold",
                                         fontFamily: "Times, New Roman",
-                                        marginLeft: "-10px",
+                                        marginLeft: "-18px",
 
                                         marginTop: "30px"
                                     }}>
