@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "../styles/TempStyles.css";
 import axios from "axios";
 import {
@@ -24,12 +24,14 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import CheckIcon from "@mui/icons-material/Check";
+import AddIcon from "@mui/icons-material/Add";
 import { Dialog } from "@mui/material";
 import KeyboardBackspaceIcon from '@mui/icons-material/KeyboardBackspace';
 
-
-
 const ApplicantDashboard = (props) => {
+  const { profileImage, setProfileImage } = props;
+  const [hovered, setHovered] = useState(false);
+  const fileInputRef = useRef(null);
   const [openImage, setOpenImage] = useState(null);
   const [userID, setUserID] = useState("");
   const [user, setUser] = useState("");
@@ -517,6 +519,48 @@ const ApplicantDashboard = (props) => {
     });
   };
 
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+  
+    try {
+      const person_id = localStorage.getItem("person_id");
+      const role = localStorage.getItem("role");
+
+      // ✅ Get user_account_id
+      const res = await axios.get(
+        `http://localhost:5000/api/get_applicant_account_id/${person_id}`
+      );
+
+      const user_account_id = res.data.user_account_id;
+
+      const formData = new FormData();
+      
+      formData.append("profile_picture", file);
+      
+      // ✅ Upload image using same backend API
+      await axios.post(
+        `http://localhost:5000/update_applicant/${user_account_id}`,
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } }
+      );
+      
+      // ✅ Refresh profile info to display the new image
+      const updated = await axios.get(
+        `http://localhost:5000/api/person_data/${person_id}/${role}`
+      );
+      
+      setPerson(updated.data);
+      fetchPersonData(person_id, role);
+      
+      const baseUrl = `http://localhost:5000/uploads/${updated.data.profile_image}`;
+      setProfileImage(`${baseUrl}?t=${Date.now()}`);
+  
+      console.log("✅ Profile updated successfully!");
+    } catch (err) {
+      console.error("❌ Upload failed:", err);
+    }
+  };
 
   return (
     <Box
@@ -528,8 +572,6 @@ const ApplicantDashboard = (props) => {
         overflowY: "auto",
       }}
     >
-
-
 
       <Grid container spacing={3}>
         {/* Applicant Information */}
@@ -561,10 +603,55 @@ const ApplicantDashboard = (props) => {
                   {!person?.profile_img ? (
                     <PersonIcon sx={{ color: "maroon" }} fontSize="large" />
                   ) : (
-                    <Avatar
-                      src={`http://localhost:5000/uploads/${person.profile_img}`}
-                      sx={{ width: 80, height: 80, border: "2px solid maroon" }}
-                    />
+                    <Box
+                      position="relative"
+                      display="inline-block"
+                      mr={2}
+                      onMouseEnter={() => setHovered(true)}
+                      onMouseLeave={() => setHovered(false)}
+                    >
+                      <Avatar
+                        src={profileImage || `http://localhost:5000/uploads/${person?.profile_img}`}
+                        alt={person?.fname}
+                        sx={{
+                          width: 90,
+                          height: 90,
+                          border: "2px solid maroon",
+                          cursor: "pointer",
+                          mt: -1.5,
+                        }}
+                        onClick={() => fileInputRef.current.click()}
+                      >
+                        {person?.fname?.[0]}
+                      </Avatar>
+
+                      {/* Hover upload button */}
+                      {hovered && (
+                        <IconButton
+                          size="small"
+                          sx={{
+                            position: "absolute",
+                            bottom: 0,
+                            right: 0,
+                            bgcolor: "maroon",
+                            color: "white",
+                            "&:hover": { bgcolor: "#6D2323" },
+                          }}
+                          onClick={() => fileInputRef.current.click()}
+                        >
+                          <AddIcon fontSize="small" />
+                        </IconButton>
+                      )}
+
+                      {/* Hidden file input */}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        ref={fileInputRef}
+                        style={{ display: "none" }}
+                        onChange={handleFileChange}
+                      />
+                    </Box>
                   )}
 
                   <Box>

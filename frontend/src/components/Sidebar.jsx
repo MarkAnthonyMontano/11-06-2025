@@ -31,7 +31,7 @@ import AssessmentIcon from "@mui/icons-material/Assessment";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
 
 
-const SideBar = ({ setIsAuthenticated }) => {
+const SideBar = ({ setIsAuthenticated, profileImage, setProfileImage }) => {
   const navigate = useNavigate();
   const [role, setRole] = useState("");
   const [personData, setPersonData] = useState({
@@ -95,44 +95,6 @@ const SideBar = ({ setIsAuthenticated }) => {
     }
   };
 
-  const [uploading, setUploading] = useState(false);
-
-  const handleProfileUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    try {
-      setUploading(true);
-      const role = localStorage.getItem("role");
-
-      // ✅ Get the user_account_id using person_id
-      const accountRes = await axios.get(
-        `http://localhost:5000/api/get_user_account_id/${personData.person_id}`
-      );
-      const user_account_id = accountRes.data.user_account_id;
-
-      const formData = new FormData();
-      formData.append("profile_picture", file);
-
-      // ✅ Use the same backend route
-      await axios.post(
-        `http://localhost:5000/update_registrar/${user_account_id}`,
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
-      );
-
-      // ✅ Refresh person data to show the new image
-      const refreshed = await axios.get(
-        `http://localhost:5000/api/person_data/${personData.person_id}/${role}`
-      );
-      setPersonData(refreshed.data);
-    } catch (err) {
-      console.error("❌ Upload failed:", err);
-    } finally {
-      setUploading(false);
-    }
-  };
-
 
   return (
     <div className="h-full w-enough hidden-print">
@@ -152,7 +114,7 @@ const SideBar = ({ setIsAuthenticated }) => {
             />
           ) : (
             <Avatar
-              src={`http://localhost:5000/uploads/${personData.profile_image}`}
+              src={profileImage || `http://localhost:5000/uploads/${personData.profile_image}`}
               sx={{
                 width: 116,
                 height: 116,
@@ -216,6 +178,73 @@ const SideBar = ({ setIsAuthenticated }) => {
                       `http://localhost:5000/api/person_data/${person_id}/${role}`
                     );
                     setPersonData(updated.data);
+                    const baseUrl = `http://localhost:5000/uploads/${updated.data.profile_image}`;
+                    setProfileImage(`${baseUrl}?t=${Date.now()}`);
+                  } catch (error) {
+                    console.error("❌ Upload failed:", error);
+                  }
+                }}
+                style={{ display: "none" }}
+              />
+            </>
+          )}
+          {role === "applicant" && (
+            <>
+              <label
+                htmlFor="sidebar-profile-upload"
+                style={{
+                  position: "absolute",
+                  bottom: "64px",
+                  right: "calc(50% - 55px)",
+                  cursor: "pointer",
+                }}
+              >
+                <AddCircleIcon
+                  sx={{
+                    color: "#800000",
+                    fontSize: 32,
+                    backgroundColor: "white",
+                    borderRadius: "50%",
+                  }}
+                />
+              </label>
+              <input
+                id="sidebar-profile-upload"
+                type="file"
+                accept="image/*"
+                onChange={async (e) => {
+                  const file = e.target.files[0];
+                  if (!file) return;
+
+                  try {
+                    const person_id = localStorage.getItem("person_id");
+                    const role = localStorage.getItem("role");
+
+                    // ✅ Get user_account_id
+                    const res = await axios.get(
+                      `http://localhost:5000/api/get_applicant_account_id/${person_id}`
+                    );
+                    const user_account_id = res.data.user_account_id;
+
+                    const formData = new FormData();
+                    formData.append("profile_picture", file);
+
+                    // ✅ Upload image using same backend API
+                    await axios.post(
+                      `http://localhost:5000/update_applicant/${user_account_id}`,
+                      formData,
+                      { headers: { "Content-Type": "multipart/form-data" } }
+                    );
+
+                    // ✅ Refresh profile info to display the new image
+                    const updated = await axios.get(
+                      `http://localhost:5000/api/person_data/${person_id}/${role}`
+                    );
+                    setPersonData(updated.data);
+                    fetchPersonData(person_id, role);
+                    
+                    const baseUrl = `http://localhost:5000/uploads/${updated.data.profile_image}`;
+                    setProfileImage(`${baseUrl}?t=${Date.now()}`);
                   } catch (error) {
                     console.error("❌ Upload failed:", error);
                   }

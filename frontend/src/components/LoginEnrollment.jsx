@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect, useContext } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
-import { Modal, TextField } from "@mui/material";
 import {
-  Container,
+  Modal,
+  TextField,
   Box,
+  Container,
   Typography,
   Button,
   Snackbar,
@@ -18,10 +19,11 @@ import {
   Person as PersonIcon,
   ArrowDropDown as ArrowDropDownIcon,
 } from "@mui/icons-material";
-import "../styles/Container.css";
 import CloseIcon from "@mui/icons-material/Close";
 import Logo from "../assets/Logo.png";
 import { SettingsContext } from "../App";
+import LoadingOverlay from "../components/LoadingOverlay"; // ✅ Import overlay
+import "../styles/Container.css";
 
 const LoginEnrollment = ({ setIsAuthenticated }) => {
   const settings = useContext(SettingsContext);
@@ -35,10 +37,11 @@ const LoginEnrollment = ({ setIsAuthenticated }) => {
   const [tempLoginData, setTempLoginData] = useState(null);
   const [resendTimer, setResendTimer] = useState(60);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false); // ✅ New state
   const [lockout, setLockout] = useState(false);
   const [lockoutTimer, setLockoutTimer] = useState(0);
   const [currentYear, setCurrentYear] = useState("");
-  const [loginType, setLoginType] = useState("user"); // ✅ Added for dropdown
+  const [loginType, setLoginType] = useState("user");
   const navigate = useNavigate();
   const otpInputRef = useRef(null);
 
@@ -55,16 +58,13 @@ const LoginEnrollment = ({ setIsAuthenticated }) => {
     ? `http://localhost:5000${settings.logo_url}`
     : Logo;
 
+  // 🔹 LOGIN FUNCTION
   const handleLogin = async () => {
     if (isLoggingIn || lockoutTimer > 0) return;
     setIsLoggingIn(true);
 
     if (!email || !password) {
-      setSnack({
-        open: true,
-        message: "Please fill in all fields",
-        severity: "warning",
-      });
+      setSnack({ open: true, message: "Please fill in all fields", severity: "warning" });
       setIsLoggingIn(false);
       return;
     }
@@ -79,7 +79,6 @@ const LoginEnrollment = ({ setIsAuthenticated }) => {
       setTempLoginData(res.data);
 
       if (loginType === "applicant") {
-        // Applicant direct login (no OTP)
         localStorage.setItem("token", res.data.token);
         localStorage.setItem("email", res.data.email);
         localStorage.setItem("role", res.data.role);
@@ -89,14 +88,10 @@ const LoginEnrollment = ({ setIsAuthenticated }) => {
         return;
       }
 
-      // User OTP login
+      // ✅ Show OTP modal after login success
       setShowOtpModal(true);
       startResendTimer();
-      setSnack({
-        open: true,
-        message: "OTP sent to your email",
-        severity: "success",
-      });
+      setSnack({ open: true, message: "OTP sent to your email", severity: "success" });
     } catch (error) {
       const msg = error.response?.data?.message || "Login failed";
       setSnack({ open: true, message: msg, severity: "error" });
@@ -105,12 +100,27 @@ const LoginEnrollment = ({ setIsAuthenticated }) => {
     }
   };
 
+  // 🔹 VERIFY OTP FUNCTION
   const verifyOtp = async () => {
+    if (!otp.trim()) {
+      setSnack({ open: true, message: "Please enter OTP", severity: "warning" });
+      return;
+    }
+
+    setIsVerifyingOtp(true); // ✅ Show overlay immediately
+
+    const startTime = Date.now(); // Track when verification starts
+
     try {
       const res = await axios.post("http://localhost:5000/verify-otp", {
         email: tempLoginData.email,
         otp,
       });
+
+      // ✅ Wait until at least 5s have passed (even if server is faster)
+      const elapsed = Date.now() - startTime;
+      const remaining = 3000 - elapsed;
+      if (remaining > 0) await new Promise((resolve) => setTimeout(resolve, remaining));
 
       localStorage.setItem("token", tempLoginData.token);
       localStorage.setItem("email", tempLoginData.email);
@@ -134,8 +144,11 @@ const LoginEnrollment = ({ setIsAuthenticated }) => {
         message: err.response?.data?.message || "Invalid OTP",
         severity: "error",
       });
+    } finally {
+      setIsVerifyingOtp(false); // ✅ Hide overlay after total ~5s
     }
   };
+
 
   const startResendTimer = () => {
     setResendTimer(300);
@@ -155,11 +168,7 @@ const LoginEnrollment = ({ setIsAuthenticated }) => {
       await axios.post("http://localhost:5000/request-otp", {
         email: tempLoginData.email,
       });
-      setSnack({
-        open: true,
-        message: "OTP resent to your email",
-        severity: "success",
-      });
+      setSnack({ open: true, message: "OTP resent to your email", severity: "success" });
       startResendTimer();
     } catch (err) {
       setSnack({
@@ -179,26 +188,26 @@ const LoginEnrollment = ({ setIsAuthenticated }) => {
     if (showOtpModal) otpInputRef.current?.focus();
   }, [showOtpModal]);
 
-  // 🔒 Disable right-click
-  document.addEventListener('contextmenu', (e) => e.preventDefault());
-
-  // 🔒 Block DevTools shortcuts + Ctrl+P silently
-  document.addEventListener('keydown', (e) => {
+  // 🔒 Security
+  document.addEventListener("contextmenu", (e) => e.preventDefault());
+  document.addEventListener("keydown", (e) => {
     const isBlockedKey =
-      e.key === 'F12' || // DevTools
-      e.key === 'F11' || // Fullscreen
-      (e.ctrlKey && e.shiftKey && (e.key.toLowerCase() === 'i' || e.key.toLowerCase() === 'j')) || // Ctrl+Shift+I/J
-      (e.ctrlKey && e.key.toLowerCase() === 'u') || // Ctrl+U (View Source)
-      (e.ctrlKey && e.key.toLowerCase() === 'p');   // Ctrl+P (Print)
-
+      e.key === "F12" ||
+      e.key === "F11" ||
+      (e.ctrlKey && e.shiftKey && (e.key.toLowerCase() === "i" || e.key.toLowerCase() === "j")) ||
+      (e.ctrlKey && e.key.toLowerCase() === "u") ||
+      (e.ctrlKey && e.key.toLowerCase() === "p");
     if (isBlockedKey) {
       e.preventDefault();
       e.stopPropagation();
     }
   });
-  
+
   return (
     <>
+      {/* ✅ Overlay only appears when verifying OTP */}
+      <LoadingOverlay open={isVerifyingOtp} message="Verifying OTP..." />
+
       <Box
         sx={{
           backgroundImage,
@@ -213,11 +222,7 @@ const LoginEnrollment = ({ setIsAuthenticated }) => {
         }}
       >
         <Container
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
+          style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
           maxWidth={false}
         >
           <div style={{ border: "5px solid black" }} className="Container">
@@ -234,7 +239,7 @@ const LoginEnrollment = ({ setIsAuthenticated }) => {
             </div>
 
             <div className="Body">
-              {/* ✅ Login Type Dropdown (copied from Login.jsx) */}
+              {/* Login Type */}
               <div className="TextField" style={{ position: "relative" }}>
                 <label htmlFor="loginType">Login As</label>
                 <select
@@ -253,14 +258,11 @@ const LoginEnrollment = ({ setIsAuthenticated }) => {
                     width: "100%",
                     padding: "0.8rem 2.5rem 0.8rem 2.5rem",
                     borderRadius: "6px",
-                    border: "2px solid maroon", // warm brown-gray
-
+                    border: "2px solid maroon",
                     fontSize: "1rem",
                     backgroundColor: "white",
                     outline: "none",
                     appearance: "none",
-                    WebkitAppearance: "none",
-                    MozAppearance: "none",
                     cursor: "pointer",
                   }}
                 >
@@ -371,7 +373,7 @@ const LoginEnrollment = ({ setIsAuthenticated }) => {
                     {lockout
                       ? `Locked (${lockoutTimer}s)`
                       : isLoggingIn
-                        ? "Logging in..."
+                        ? "Logging In..."
                         : "Log In"}
                   </button>
                 </div>
@@ -383,10 +385,7 @@ const LoginEnrollment = ({ setIsAuthenticated }) => {
                 </span>
               </div>
 
-              <div
-                className="LinkContainer RegistrationLink"
-                style={{ margin: "0.1rem 0rem" }}
-              >
+              <div className="LinkContainer RegistrationLink" style={{ margin: "0.1rem 0rem" }}>
                 <p>Doesn't Have an Account?</p>
                 <span>
                   <Link to={"/register"}>Register Here</Link>
@@ -457,12 +456,7 @@ const LoginEnrollment = ({ setIsAuthenticated }) => {
 
             <Typography
               variant="h6"
-              sx={{
-                mb: 2,
-                fontWeight: "bold",
-                fontSize: "20px",
-                color: "#6D2323",
-              }}
+              sx={{ mb: 2, fontWeight: "bold", fontSize: "20px", color: "#6D2323" }}
             >
               Enter the 6-digit OTP
             </Typography>
@@ -477,10 +471,7 @@ const LoginEnrollment = ({ setIsAuthenticated }) => {
               onChange={(e) => setOtp(e.target.value)}
               placeholder="Enter OTP"
               inputRef={otpInputRef}
-              inputProps={{
-                maxLength: 6,
-                style: { textAlign: "center", fontSize: "18px" },
-              }}
+              inputProps={{ maxLength: 6, style: { textAlign: "center", fontSize: "18px" } }}
               onKeyDown={(e) => {
                 if (e.key === "Enter") verifyOtp();
               }}

@@ -68,7 +68,7 @@ const RequirementUploader = () => {
         setSnack({
           open: true,
           message:
-            "🎉 Congratulations! You have successfully confirmed your slot at Eulogio Amang Rodriguez Institute of Science and Technology.",
+            "🎉 Congratulations! You have successfully submitted your Application at Eulogio Amang Rodriguez Institute of Science and Technology.",
           severity: "success",
         });
       }

@@ -25,7 +25,7 @@ import AddIcon from "@mui/icons-material/Add";
 import ExaminationProfile from "../registrar/ExaminationProfile";
 
 
-const Dashboard = () => {
+const Dashboard = ({ profileImage, setProfileImage }) => {
   const [userID, setUserID] = useState("");
   const [user, setUser] = useState("");
   const [userRole, setUserRole] = useState("");
@@ -255,6 +255,9 @@ const Dashboard = () => {
       `http://localhost:5000/api/person_data/${personData.person_id}/${role}`
     );
     setPersonData(refreshed.data);
+    
+    const baseUrl = `http://localhost:5000/uploads/${refreshed.data.profile_image}`;
+    setProfileImage(`${baseUrl}?t=${Date.now()}`);
 
     console.log("✅ Profile updated successfully!");
   } catch (err) {
@@ -304,11 +307,7 @@ const Dashboard = () => {
                     onMouseLeave={() => setHovered(false)}
                   >
                     <Avatar
-                      src={
-                        personData?.profile_image
-                          ? `http://localhost:5000/uploads/${personData.profile_image}`
-                          : undefined
-                      }
+                      src={profileImage || `http://localhost:5000/uploads/${personData?.profile_image}`}
                       alt={personData?.fname}
                       sx={{
                         width: 90,

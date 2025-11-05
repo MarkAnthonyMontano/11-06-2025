@@ -52,7 +52,16 @@ const ReadmissionDashboard2 = () => {
         guardian_middle_name: "", guardian_ext: "", guardian_nickname: "", guardian_address: "", guardian_contact: "", guardian_email: "", annual_income: "",
     });
 
+ const handleNavigateStep = (index, to) => {
+        setCurrentStep(index);
 
+        const pid = sessionStorage.getItem("admin_edit_person_id");
+        if (pid) {
+            navigate(`${to}?person_id=${pid}`);
+        } else {
+            navigate(to);
+        }
+    };
 
     const [hasAccess, setHasAccess] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -161,40 +170,6 @@ const ReadmissionDashboard2 = () => {
     };
 
 
-
-    useEffect(() => {
-        let consumedFlag = false;
-
-        const tryLoad = async () => {
-            if (queryPersonId) {
-                await fetchByPersonId(queryPersonId);
-                setExplicitSelection(true);
-                consumedFlag = true;
-                return;
-            }
-
-            // fallback only if it's a fresh selection from Applicant List
-            const source = sessionStorage.getItem("admin_edit_person_id_source");
-            const tsStr = sessionStorage.getItem("admin_edit_person_id_ts");
-            const id = sessionStorage.getItem("admin_edit_person_id");
-            const ts = tsStr ? parseInt(tsStr, 10) : 0;
-            const isFresh = source === "applicant_list" && Date.now() - ts < 5 * 60 * 1000;
-
-            if (id && isFresh) {
-                await fetchByPersonId(id);
-                setExplicitSelection(true);
-                consumedFlag = true;
-            }
-        };
-
-        tryLoad().finally(() => {
-            // consume the freshness so it won't auto-load again later
-            if (consumedFlag) {
-                sessionStorage.removeItem("admin_edit_person_id_source");
-                sessionStorage.removeItem("admin_edit_person_id_ts");
-            }
-        });
-    }, [queryPersonId]);
 
     const [activeStep, setActiveStep] = useState(1);
     const [clickedSteps, setClickedSteps] = useState([]);

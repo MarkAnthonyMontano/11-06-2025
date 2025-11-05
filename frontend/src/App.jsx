@@ -196,6 +196,7 @@ export const SettingsContext = createContext(null);
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [settings, setSettings] = useState(null);
+  const [profileImage, setProfileImage] = useState(null);
 
   // ✅ Fetch settings from backend
   const fetchSettings = async () => {
@@ -254,7 +255,7 @@ function App() {
               {/* Sidebar */}
               {isAuthenticated && (
                 <aside className="min-w-[21rem] min-h-full">
-                  <SideBar setIsAuthenticated={setIsAuthenticated} />
+                  <SideBar setIsAuthenticated={setIsAuthenticated} profileImage={profileImage} setProfileImage={setProfileImage}/>
                 </aside>
               )}
 
@@ -323,9 +324,9 @@ function App() {
                     <Route path="/superadmin_registrar_reset_password" element={<ProtectedRoute><SuperAdminRegistrarPassword /></ProtectedRoute>} />
 
 
-                    <Route path="/registrar_dashboard" element={<ProtectedRoute><RegistrarDashboard /></ProtectedRoute>} />
+                    <Route path="/registrar_dashboard" element={<ProtectedRoute><RegistrarDashboard profileImage={profileImage} setProfileImage={setProfileImage}/></ProtectedRoute>} />
                     <Route path="/faculty_dashboard" element={<ProtectedRoute allowedRoles={['faculty']}><FacultyDashboard /></ProtectedRoute>} />
-                    <Route path="/applicant_dashboard" element={<ProtectedRoute><ApplicantDashboard /></ProtectedRoute>} />
+                    <Route path="/applicant_dashboard" element={<ProtectedRoute><ApplicantDashboard profileImage={profileImage} setProfileImage={setProfileImage}/></ProtectedRoute>} />
                     <Route path="/register_prof" element={<ProtectedRoute><RegisterProf /></ProtectedRoute>} />
                     <Route path="/register_registrar" element={<ProtectedRoute><RegisterRegistrar /></ProtectedRoute>} />
                     <Route path="/register_student" element={<ProtectedRoute><RegisterStudent /></ProtectedRoute>} />
