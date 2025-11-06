@@ -8904,7 +8904,6 @@ app.delete("/courses/user/:userId", async (req, res) => {
 
 
 // Login User (UPDATED!)
-
 app.post("/student-tagging", async (req, res) => {
   const { studentNumber } = req.body;
 
@@ -8964,10 +8963,10 @@ app.post("/student-tagging", async (req, res) => {
     console.log(student)
     const isEnrolled = student.enrolled_status === 1;
 
-    const token = webtoken.sign(
+    const token2 = webtoken.sign(
       {
         id: student.student_status_id,
-        person_id: student.person_id,
+        person_id2: student.person_id,
         studentNumber: student.student_number,
         section: student.section_description,
         activeCurriculum: student.active_curriculum,
@@ -8993,9 +8992,9 @@ app.post("/student-tagging", async (req, res) => {
     );
 
     console.log("Search response:", {
-      token,
+      token2,
       studentNumber: student.student_number,
-      person_id: student.person_id,
+      person_id2: student.person_id,
       activeCurriculum: student.active_curriculum,
       section: student.section_description,
       major: student.major,
@@ -9018,9 +9017,9 @@ app.post("/student-tagging", async (req, res) => {
 
     res.json({
       message: "Search successful",
-      token,
+      token2,
       studentNumber: student.student_number,
-      person_id: student.person_id,
+      person_id2: student.person_id,
       section: student.section_description,
       activeCurriculum: student.active_curriculum,
       major: student.major,
@@ -14077,6 +14076,28 @@ app.post("/update_student/:user_id", profileUpload.single("profile_picture"), as
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
+// ✅ Check if applicant already has a student number
+app.get("/api/student_status/:person_id", async (req, res) => {
+  const { person_id } = req.params;
+  try {
+    const [rows] = await db3.query(
+      "SELECT student_number FROM student_numbering_table WHERE person_id = ?",
+      [person_id]
+    );
+
+    if (rows.length > 0 && rows[0].student_number) {
+      res.json({ hasStudentNumber: true, student_number: rows[0].student_number });
+    } else {
+      res.json({ hasStudentNumber: false });
+    }
+  } catch (error) {
+    console.error("❌ Error checking student number:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+
 
 http.listen(5000, () => {
   console.log("Server with Socket.IO running on port 5000");

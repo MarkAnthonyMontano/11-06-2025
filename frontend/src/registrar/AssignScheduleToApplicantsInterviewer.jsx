@@ -557,7 +557,7 @@ const AssignScheduleToApplicantsInterviewer = () => {
 
         // 📝 Pre-fill the message before opening the dialog
         setEmailMessage(
-            `Dear {first_name} {last_name},
+            `Dear ${first_name} ${middle_name} ${last_name},
 
 You are scheduled for an interview on:
 
@@ -567,10 +567,18 @@ You are scheduled for an interview on:
 🕒 Time: ${formattedStart} - ${formattedEnd}
 👤 Interviewer: ${sched.interviewer}
 
-Please bring the following requirements:`
+Please bring the following requirements:
+
+1. Go to Applicant Form > Print the Admission Form Process.
+2. Proceed to the Guidance Office to verify if you are qualified to take the Qualifying / Interview Exam.
+3. You must have your Admission Form signed at the Guidance Office before proceeding to take the exam.
+
+Thank you and good luck on your Qualifying / Interview Exam!
+`
         );
 
         setConfirmOpen(true); // finally open the dialog
+        // finally open the dialog
     };
 
 

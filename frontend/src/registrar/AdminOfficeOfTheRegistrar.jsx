@@ -414,7 +414,7 @@ if (loading || hasAccess === null) {
                                             height: "120px",
                                             objectFit: "cover",
                                             marginLeft: "10px",
-                                            marginTop: "-25px",
+                                            marginTop: "-10px",
                                             borderRadius: "50%", // ✅ Perfect circle
 
                                         }}

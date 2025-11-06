@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useContext, useRef } from "react";
+import { SettingsContext } from "../App";
 import "../styles/TempStyles.css";
 import axios from "axios";
 import {
@@ -29,6 +30,37 @@ import { Dialog } from "@mui/material";
 import KeyboardBackspaceIcon from '@mui/icons-material/KeyboardBackspace';
 
 const ApplicantDashboard = (props) => {
+  const settings = useContext(SettingsContext);
+  const [fetchedLogo, setFetchedLogo] = useState(null);
+  const [companyName, setCompanyName] = useState("");
+  const [shortTerm, setShortTerm] = useState("");
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/api/settings");
+        const data = response.data;
+
+        if (data.logo_url) {
+          setFetchedLogo(`http://localhost:5000${data.logo_url}`);
+        } else {
+          setFetchedLogo(EaristLogo);
+        }
+
+        // ✅ set company + short term + address
+        setCompanyName(data.company_name || "");
+        setShortTerm(data.short_term || "");
+        setCampusAddress(data.address || "");
+      } catch (err) {
+        console.error("Error fetching settings in ApplicantDashboard:", err);
+      }
+    };
+
+    fetchSettings();
+  }, []);
+
+
+
   const { profileImage, setProfileImage } = props;
   const [hovered, setHovered] = useState(false);
   const fileInputRef = useRef(null);
@@ -430,12 +462,43 @@ const ApplicantDashboard = (props) => {
     5: <PersonIcon />,
   };
 
-  const getCurrentStep = () => {
-    // ✅ Step 6 – Final status reached
-    if (person?.final_status === "Accepted" || person?.final_status === "Rejected") return 5;
+  const [hasStudentNumber, setHasStudentNumber] = useState(false);
+  const [studentNumber, setStudentNumber] = useState(null);
 
-    // ✅ Step 5 – Medical submitted
-    if (medicalUploads.length > 0) return 4;
+  const checkStudentNumber = async (personId) => {
+    try {
+      const res = await axios.get(`http://localhost:5000/api/student_status/${personId}`);
+      if (res.data.hasStudentNumber) {
+        setHasStudentNumber(true);
+        setStudentNumber(res.data.student_number);
+      } else {
+        setHasStudentNumber(false);
+      }
+    } catch (err) {
+      console.error("❌ Failed to check student number:", err);
+    }
+  };
+
+  useEffect(() => {
+    const storedID = localStorage.getItem("person_id");
+    if (storedID) {
+      fetchPersonData(storedID);
+      fetchApplicantNumber(storedID);
+      checkStudentNumber(storedID); // 👈 ADD THIS LINE
+    }
+  }, []);
+
+  const getCurrentStep = () => {
+    // ✅ Step 6 – Final status reached OR student number issued
+    if (
+      person?.final_status === "Accepted" ||
+      person?.final_status === "Rejected" ||
+      hasStudentNumber
+    )
+      return 5;
+
+    // ✅ Step 5 – Display only (no automatic advancement)
+    // — intentionally skipped in logic
 
     // ✅ Step 4 – College approval received
     if (collegeApproval === "Accepted" || collegeApproval === "Rejected") return 3;
@@ -467,9 +530,9 @@ const ApplicantDashboard = (props) => {
   const steps = [
     "Documents Submitted",
     "Admission Entrance Exam",
-    "Interview Schedule Qualifying Exam",
+    "Interview /  Qualifying Exam Schedule",
     "College Approval",
-    "Medical Submitted",
+    "Medical And Dental Service",
     "Applicant Status",
   ];
 
@@ -522,7 +585,7 @@ const ApplicantDashboard = (props) => {
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-  
+
     try {
       const person_id = localStorage.getItem("person_id");
       const role = localStorage.getItem("role");
@@ -535,32 +598,37 @@ const ApplicantDashboard = (props) => {
       const user_account_id = res.data.user_account_id;
 
       const formData = new FormData();
-      
+
       formData.append("profile_picture", file);
-      
+
       // ✅ Upload image using same backend API
       await axios.post(
         `http://localhost:5000/update_applicant/${user_account_id}`,
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );
-      
+
       // ✅ Refresh profile info to display the new image
       const updated = await axios.get(
         `http://localhost:5000/api/person_data/${person_id}/${role}`
       );
-      
+
       setPerson(updated.data);
       fetchPersonData(person_id, role);
-      
+
       const baseUrl = `http://localhost:5000/uploads/${updated.data.profile_image}`;
       setProfileImage(`${baseUrl}?t=${Date.now()}`);
-  
+
       console.log("✅ Profile updated successfully!");
     } catch (err) {
       console.error("❌ Upload failed:", err);
     }
   };
+
+
+
+
+
 
   return (
     <Box
@@ -1340,36 +1408,54 @@ const ApplicantDashboard = (props) => {
                   )}
 
 
-                  {/* Step 5: Medical Submitted */}
+
                   {/* Step 5: Medical Submitted */}
                   {index === 4 && (
                     <>
-                      {medicalUploads.length === 0
-                        ? "⏳ Pending Medical Submission"
-                        : medicalUploads.map((doc) => (
-                          <div key={doc.upload_id}>
-                            {doc.status === 1
-                              ? "✅ Documents Verified"
-                              : doc.status === 2
-                                ? "❌ Rejected"
-                                : "⏳ On Process"}
-
-                          </div>
-                        ))}
+                      ⏳ Apply For Medical Processing
                     </>
                   )}
+
 
 
                   {/* Step 6: Applicant Status */}
                   {index === 5 && (
                     <>
-                      {person?.final_status === "Accepted"
-                        ? "🎉 Congratulations! You are Accepted."
-                        : person?.final_status === "Rejected"
-                          ? "❌ Unfortunately, you were not accepted."
-                          : "⏳ Application in Progress"}
+                      {person?.final_status === "Rejected" ? (
+                        "❌ Unfortunately, you were not accepted."
+                      ) : hasStudentNumber ? (
+                        <>
+                          🎉 <strong>Congratulations!</strong> You are now accepted at{" "}
+                          <strong>
+                            {shortTerm
+                              ? `${shortTerm.toUpperCase()} - ${companyName || ""}`
+                              : companyName || ""}
+                          </strong>.
+
+                          <div style={{ marginTop: "6px", lineHeight: "1.6" }}>
+                            1. Proceed to your <strong>College</strong> for your Subjects tagging <br />
+                            2. Get your <strong>Class Schedule</strong> from your department. <br />
+                            {studentNumber && (
+                              <span
+                                style={{
+                                  display: "block",
+                                  fontWeight: "bold",
+                                  marginTop: "5px",
+                                }}
+                              >
+                                Your Student Number: {studentNumber}
+                              </span>
+                            )}
+                          </div>
+                        </>
+                      ) : person?.final_status === "Accepted" ? (
+                        "✅ You have been accepted. Please wait while your student number is being processed."
+                      ) : (
+                        "⏳ Application in Progress"
+                      )}
                     </>
                   )}
+
                 </Box>
               </Grid>
             ))}

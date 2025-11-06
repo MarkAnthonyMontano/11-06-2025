@@ -1172,25 +1172,29 @@ th, td {
         });
 
         // ✅ Use dynamic company name from settings
-        const companyName = settings?.company_name || "Your Institution";
+        const companyName = settings?.company_name || "Student Information System";
 
-        const defaultMessage = `
+   const defaultMessage = `
 Dear ${applicant?.first_name || "Applicant"} ${applicant?.last_name || ""},
 
-Congratulations on passing the Interview/Qualifying Exam!  
+Congratulations on passing the Interview/Qualifying Exam!
 
-You must first proceed to the Clinic for your Medical Examination.  
-Please bring and present your Medical Examination Permit so the Clinic can verify if you are fit to enroll.  
+Please follow the steps below to complete your Admission process:
 
-After completing your Medical Examination, you may then proceed to the Registrar’s Office to submit your Original Documents within 7 days.  
-Submissions are accepted only during working hours, Monday to Friday, from 7:00 AM to 4:00 PM.  
-Failure to comply within 7 days may result in the slot being given to another applicant.  
+1. Proceed to the Clinic for your Medical Examination.  
+   - Bring and present your Medical Examination Permit for verification of fitness to enroll.
 
-This email is valid until ${formattedValidUntil}.  
+2. After completing your Medical Examination, proceed to the Registrar’s Office to submit your Original Documents within 7 days.  
+   - Submissions are accepted only during working hours, Monday to Friday, from 7:00 AM to 4:00 PM.
+
+3. Please note that failure to comply within 7 days may result in your slot being given to another applicant.
+
+This email is valid until ${formattedValidUntil}.
 
 Thank you,  
-${companyName} Registrar's Office
+${companyName} Registrar’s Office
 `.trim();
+
 
         setSelectedApplicant(applicant?.applicant_number || null);
         setEmailMessage(defaultMessage);

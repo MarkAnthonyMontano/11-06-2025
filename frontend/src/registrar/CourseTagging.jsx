@@ -319,11 +319,11 @@ const CourseTagging = () => {
     try {
       const response = await axios.post("http://localhost:5000/student-tagging", { studentNumber }, { headers: { "Content-Type": "application/json" } });
 
-      const { token, person_id, studentNumber: studentNum, section: section, activeCurriculum: active_curriculum, yearLevel, courseCode: courseCode, courseDescription: courseDescription, firstName: first_name,
+      const { token2, person_id2, studentNumber: studentNum, section: section, activeCurriculum: active_curriculum, yearLevel, courseCode: courseCode, courseDescription: courseDescription, firstName: first_name,
         middleName: middle_name, lastName: last_name, } = response.data;
 
-      localStorage.setItem("token", token);
-      localStorage.setItem("person_id", person_id);
+      localStorage.setItem("token2", token2);
+      localStorage.setItem("person_id2", person_id2);
       localStorage.setItem("studentNumber", studentNum);
       localStorage.setItem("activeCurriculum", active_curriculum);
       localStorage.setItem("yearLevel", yearLevel);

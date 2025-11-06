@@ -158,7 +158,7 @@ const AdmissionDashboardPanel = () => {
       ],
     },
     {
-      label: "REGISTRAR OFFICE",
+      label: "REGISTRAR'S OFFICE",
       items: [
         { title: "APPLICANT LIST", link: "/super_admin_applicant_list", icon: <ListAltOutlined className="text-maroon-500 text-2xl" /> },
         { title: "PERSONAL INFORMATION", link: "/readmission_dashboard1", icon: <AccountCircle className="text-maroon-500 text-2xl" /> },
